@@ -96,3 +96,5 @@ document.addEventListener("click",e=>{if(e.target.id==="share-report")mkskRoster
 document.addEventListener("click",e=>{if(e.target.id==="mksk-share-report"){e.preventDefault();mkskRosterImage();}});
 
 function mkskDownload(canvas,fileName,title){canvas.toBlob(async blob=>{const download=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fileName;a.click();};const file=new File([blob],fileName,{type:"image/png"});try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title,files:[file]});return;}}catch(error){}download();},"image/png");}
+
+window.addEventListener("unhandledrejection",event=>{const box=document.getElementById("login-error");if(box)box.textContent="Giriş tamamlandı ancak yetki kaydı okunamadı: "+(event.reason?.message||"Bilinmeyen hata");});
