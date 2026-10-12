@@ -48,3 +48,5 @@
     <script type="module" src="app.js"></script>
   </body>
 </html>
+
+<script>document.addEventListener("DOMContentLoaded",()=>{const actions=document.querySelector(".admin-actions");if(!actions||document.getElementById("share-report"))return;const tools=[["share-report","Takım listesini paylaş"],["goals","Gol krallığı"],["assists","Asist krallığı"],["most","En çok maç"],["least","En az maç"]];tools.reverse().forEach(([id,text])=>{const b=document.createElement("button");b.type="button";b.textContent=text;if(id==="share-report")b.id=id;else{b.className="rank-share";b.dataset.rank=id;}actions.prepend(b);});});</script>
