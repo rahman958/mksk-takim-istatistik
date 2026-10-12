@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MKSK Takım İstatistikleri</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Mecidiye Karahisar Spor Kulübü</p>
+          <h1>Takım İstatistikleri</h1>
+          <p id="season-label">2026–2027 Sezonu</p>
+        </div>
+        <button id="logout" class="secondary hidden">Çıkış yap</button>
+      </header>
+
+      <section id="login-view" class="login-card">
+        <p class="eyebrow">Oyuncu ve yönetici girişi</p>
+        <h2>İstatistiklerine eriş</h2>
+        <form id="login-form">
+          <label>E-posta<input id="email" type="email" autocomplete="email" required /></label>
+          <label>Şifre<input id="password" type="password" autocomplete="current-password" required /></label>
+          <button type="submit">Giriş yap</button>
+          <p id="login-error" class="error" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="player-view" class="hidden">
+        <div class="welcome"><p class="eyebrow">Oyuncu paneli</p><h2 id="player-name"></h2></div>
+        <div id="player-summary" class="summary-grid"></div>
+        <section class="card"><h3>Sezon istatistikleri</h3><div id="player-stats" class="stat-list"></div></section>
+      </section>
+
+      <section id="admin-view" class="hidden">
+        <div class="admin-heading">
+          <div><p class="eyebrow">Yönetici paneli</p><h2>Kadro ve istatistikler</h2></div>
+          <div class="admin-actions"><button id="share-report" type="button">Özeti görsel paylaş</button><input id="search" type="search" placeholder="Oyuncu ara" aria-label="Oyuncu ara" /></div>
+        </div>
+        <form id="add-player-form" class="add-player"><strong>Yeni oyuncu ekle</strong><input name="full_name" placeholder="Ad soyad" required /><input name="jersey_number" type="number" min="0" placeholder="Forma no" /><input name="position" placeholder="Mevki" /><button type="submit">Oyuncu ekle</button></form>
+        <div id="admin-message" class="notice" aria-live="polite"></div>
+        <div id="roster" class="roster"></div>
+      </section>
+    </main>
+    <script src="config.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
