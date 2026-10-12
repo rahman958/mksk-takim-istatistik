@@ -84,3 +84,5 @@ async function start() {
   await refresh();
 }
 start();
+
+Object.assign(labels, { attendance_matches:"Antrenman / katılım maçı", attendance_goals:"Antrenman golü", attendance_points:"Antrenman puanı" });
