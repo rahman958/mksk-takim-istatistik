@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+function show(id){var ids=["login-view","reset-view","player-view","admin-view"];ids.forEach(function(x){var node=el(x);if(node){node.classList.toggle("hidden",x!==id);}});var logout=el("logout");if(logout){logout.classList.toggle("hidden",id==="login-view");}}import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
