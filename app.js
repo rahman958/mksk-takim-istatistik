@@ -94,3 +94,5 @@ function mkskRankImage(kind){const info={goals:["GOL KRALLIĞI","goals","GOL",tr
 document.addEventListener("click",e=>{if(e.target.id==="share-report")mkskRosterImage();if(e.target.matches(".rank-share"))mkskRankImage(e.target.dataset.rank);});
 
 document.addEventListener("click",e=>{if(e.target.id==="mksk-share-report"){e.preventDefault();mkskRosterImage();}});
+
+function mkskDownload(canvas,fileName,title){canvas.toBlob(async blob=>{const download=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fileName;a.click();};const file=new File([blob],fileName,{type:"image/png"});try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title,files:[file]});return;}}catch(error){}download();},"image/png");}
