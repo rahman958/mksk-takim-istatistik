@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const fields = ["matches","points","goals","assists","man_of_match","goals_conceded","success_rate","attendance_matches","attendance_goals","attendance_points","discipline_referrals"];import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const config = window.MKSK_CONFIG;
 const $ = (id) => document.getElementById(id);
