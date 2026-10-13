@@ -1,8 +1,8 @@
-function show(id){var ids=["login-view","reset-view","player-view","admin-view"];ids.forEach(function(x){var node=el(x);if(node){node.classList.toggle("hidden",x!==id);}});var logout=el("logout");if(logout){logout.classList.toggle("hidden",id==="login-view");}}import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
-function show(id){var ids=["login-view","reset-view","player-view","admin-view"];ids.forEach(function(x){el(x).classList.toggle("hidden",x!==id);});el("logout").classList.toggle("hidden",id==="login-view");}
+function show(id){var ids=["login-view","reset-view","player-view","admin-view"];ids.forEach(function(x){var node=el(x);if(node){node.classList.toggle("hidden",x!==id);}});var logout=el("logout");if(logout){logout.classList.toggle("hidden",id==="login-view");}}
 function numberValue(v){return Number(v||0);}
 function playerHtml(label,value){return "<div class='metric'><span>"+label+"</span><strong>"+value+"</strong></div>";}
 async function loadPlayer(playerId){var result=await supabase.from("players").select("*,player_season_stats(*)").eq("id",playerId).single();if(result.error){throw result.error;}var p=result.data;var s=(p.player_season_stats&&p.player_season_stats[0])||{};el("player-name").textContent=p.full_name;el("player-summary").innerHTML=playerHtml("Forma no",p.jersey_number||"—")+playerHtml("Mevki",p.position||"—")+playerHtml("Maç",numberValue(s.matches))+playerHtml("Puan",numberValue(s.points));el("player-stats").innerHTML="<div class='stat'><span>Gol</span><strong>"+numberValue(s.goals)+"</strong></div><div class='stat'><span>Asist</span><strong>"+numberValue(s.assists)+"</strong></div><div class='stat'><span>Maçın adamı</span><strong>"+numberValue(s.man_of_match)+"</strong></div><div class='stat'><span>Başarı yüzdesi</span><strong>"+numberValue(s.success_rate)+"%</strong></div>";show("player-view");}
