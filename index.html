@@ -40,7 +40,7 @@
       <section id="admin-view" class="hidden">
         <div class="admin-heading">
           <div><p class="eyebrow">Yönetici paneli</p><h2>Kadro ve istatistikler</h2></div>
-          <div class="admin-actions"><button id="share-report" type="button">Özeti görsel paylaş</button><input id="search" type="search" placeholder="Oyuncu ara" aria-label="Oyuncu ara" /></div>
+          <div class="admin-actions"><button id="share-report" type="button">Takım listesini paylaş</button><button class="rank-share" data-rank="goals" type="button">Gol krallığı</button><button class="rank-share" data-rank="assists" type="button">Asist krallığı</button><button class="rank-share" data-rank="most" type="button">En çok maç</button><button class="rank-share" data-rank="least" type="button">En az maç</button><input id="search" type="search" placeholder="Oyuncu ara" aria-label="Oyuncu ara" /></div>
         </div>
         <form id="add-player-form" class="add-player"><strong>Yeni oyuncu ekle</strong><input name="full_name" placeholder="Ad soyad" required /><input name="jersey_number" type="number" min="0" placeholder="Forma no" /><input name="position" placeholder="Mevki" /><button type="submit">Oyuncu ekle</button></form>
         <div id="admin-message" class="notice" aria-live="polite"></div>
@@ -48,12 +48,6 @@
       </section>
     </main>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=20261014-history"></script>
+    <script type="module" src="app.js?v=20261014-sharing"></script>
   </body>
 </html>
-
-<script>document.addEventListener("DOMContentLoaded",()=>{const actions=document.querySelector(".admin-actions");if(!actions||document.getElementById("share-report"))return;const tools=[["share-report","Takım listesini paylaş"],["goals","Gol krallığı"],["assists","Asist krallığı"],["most","En çok maç"],["least","En az maç"]];tools.reverse().forEach(([id,text])=>{const b=document.createElement("button");b.type="button";b.textContent=text;if(id==="share-report")b.id=id;else{b.className="rank-share";b.dataset.rank=id;}actions.prepend(b);});});</script>
-
-<script>document.addEventListener("DOMContentLoaded",()=>{const a=document.querySelector(".admin-actions");if(!a)return;[["goals","Gol krallığı"],["assists","Asist krallığı"],["most","En çok maç"],["least","En az maç"]].reverse().forEach(([id,text])=>{if(a.querySelector('[data-rank="'+id+'"]'))return;const b=document.createElement("button");b.type="button";b.className="rank-share";b.dataset.rank=id;b.textContent=text;a.prepend(b);});const share=document.getElementById("share-report");if(share)share.textContent="Takım listesini paylaş";});document.addEventListener("click",e=>{if(e.target.id==="share-report"){e.preventDefault();e.stopImmediatePropagation();mkskRosterImage();}},true);</script>
-
-<script>document.addEventListener("DOMContentLoaded",()=>{const old=document.getElementById("share-report");if(!old)return;const fresh=old.cloneNode(true);fresh.id="mksk-share-report";fresh.textContent="Takım listesini paylaş";old.replaceWith(fresh);});</script>
