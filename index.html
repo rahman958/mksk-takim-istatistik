@@ -14,6 +14,19 @@
 
 body{font-size:17px}body *{text-transform:uppercase}#email,#password,input[type=email],input[type=password]{text-transform:none}.club-logo{width:84px;height:84px;object-fit:contain;border:3px solid #f6db31;border-radius:16px;box-shadow:0 6px 16px #173f7230;flex-shrink:0}.topbar{gap:16px;align-items:center}.topbar>div{flex:1;min-width:0}.panel-logo{width:90px;height:90px;object-fit:contain;border:3px solid #f6db31;border-radius:14px;box-shadow:0 4px 10px #173f7225}.performance-badge{display:inline-block;font-size:12px;font-weight:800;border-radius:20px;padding:7px 11px;margin-top:8px;border:1px solid transparent;letter-spacing:.2px}.performance-badge.unrated{background:#e5ebf2;color:#51647a;border-color:#c7d2df}.performance-badge.star{background:linear-gradient(110deg,#ffe681,#f4c346);color:#63410a;border-color:#d2a421;box-shadow:0 3px 8px #d2a42125}.performance-badge.great{background:#ded5f3;color:#513776;border-color:#bda7dd}.performance-badge.fit{background:#cceedd;color:#185a3c;border-color:#8bceaa}.performance-badge.rising{background:#d4ebff;color:#175780;border-color:#94c7e9}.performance-badge.improve{background:#ffead0;color:#8a571a;border-color:#eac18d}.performance-badge.unfit{background:#f9dfe3;color:#933847;border-color:#e5a8b4}.development-text{white-space:pre-wrap;line-height:1.65;background:#f4f0fb;border-left:4px solid #a17abe;padding:14px;border-radius:10px;overflow-wrap:anywhere}.goal-presets{background:linear-gradient(135deg,#e4f1fb,#ecf8f2);padding:14px;border:1px solid #c7dde8;border-radius:12px;margin:12px 0}.goal-presets p{color:#315a79;font-size:14px;line-height:1.5}.goal-presets button{display:inline-block;background:#fff;color:#315a79;border:1px solid #b9cedf;border-radius:20px;padding:8px 11px;font-size:12px;margin:5px;box-shadow:0 2px 5px #173f7210}.data-entry-body select[name=performance_label]{display:block;width:100%;padding:12px;margin-top:8px;font:inherit;border:1px solid #b7cce5;border-radius:8px;background:white}.data-entry-body:has([name=development_goal]) [name=development_goal]{background:#fbf8ff;border:2px solid #cfbce5;min-height:120px}#player-performance{margin:18px 0;background:linear-gradient(130deg,#fff8d7,#eef4fe);border-left:5px solid #f6db31;border-radius:14px;padding:20px;box-shadow:0 5px 14px #173f7217}#player-performance h3,#player-performance h4{color:#173f72}.player-message-tab{border-bottom-color:#a483ce!important}#player-message-box details{margin-top:16px;background:#e5ddf1;padding:12px;border-radius:10px}#player-nav{margin-bottom:18px}.name-info>small{font-size:13px}.dashboard-tabs button{line-height:1.35}.share-preview,.player-stat-dialog{font-size:16px}@media(max-width:600px){body{font-size:16px}.club-logo{width:66px;height:66px}.topbar{gap:12px}.topbar>div{flex:1 1 210px}.topbar h1{font-size:25px}.topbar .eyebrow{font-size:12px;line-height:1.5}.name-info>button{font-size:17px;overflow-wrap:anywhere}.name-actions button{font-size:12px;line-height:1.4}.dashboard-tabs button{font-size:13px}.performance-badge{font-size:11px;max-width:100%;box-sizing:border-box}.panel-logo{width:72px;height:72px}#player-performance{padding:15px}#player-nav{grid-template-columns:repeat(2,minmax(0,1fr))}#player-nav .player-message-tab{grid-column:1/-1}.player-stat-dialog .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+<style id="club-info-colors">
+#jersey-panel button{background:linear-gradient(135deg,#159a78,#076957);color:white;border:0;box-shadow:0 4px 10px #08745a24;padding:12px 16px;font-weight:700}
+#jersey-panel button:hover{background:#075e4b}
+#jersey-panel .free-jersey-grid button{padding:14px 6px}
+#jersey-panel .jersey-assign{background:#d9f2e8;border:1px solid #8fceb8;border-radius:16px;padding:18px}
+#jersey-panel label{display:block;margin:12px 0;font-weight:700}
+#player-info-panel .club-info-item{box-shadow:0 5px 14px #65438e12;background:linear-gradient(135deg,#ffffff,#f5f0ff)}
+#player-info-panel .summary-grid .metric{border-bottom:3px solid #ac8dd4;background:#f4edff}
+.club-info-fields{background:#f0e7fc;border-radius:14px;padding:16px}
+.club-info-fields~button,.close-club-dates{background:linear-gradient(135deg,#8e60c4,#573391);color:white;border:0;border-radius:10px;padding:12px 18px;font-weight:700}
+.birthday-notice{box-shadow:0 4px 12px #b78b1a12;background:linear-gradient(135deg,#ffe9a0,#fff6dd)}
+@media(max-width:600px){#jersey-panel .jersey-assign{padding:12px}.club-info-item .summary-grid{grid-template-columns:1fr}.club-info-item{padding:14px}}
+</style>
 </head>
   <body>
     <main class="shell">
@@ -54,6 +67,6 @@ body{font-size:17px}body *{text-transform:uppercase}#email,#password,input[type=
       </section>
     </main>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=20261014-player-info-jerseys-1"></script>
+    <script type="module" src="app.js?v=20261014-player-info-jerseys-2"></script>
   </body>
 </html>
