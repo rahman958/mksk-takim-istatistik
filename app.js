@@ -128,7 +128,7 @@ var beforeEditorSections=compactCards;compactCards=function(){beforeEditorSectio
 setInterval(()=>{if(activeRole==='admin'&&dashboardPage==='visits'&&document.visibilityState==='visible')el('visit-panel')?.querySelector('button')?.click();},30000);
 start();
 
-import './navigation.js?v=20261015-clock-2';
+import './navigation.js?v=20261016-menu-1';
 
 import './club-leaves.js?v=20261016-leaves-2';
 
