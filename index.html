@@ -138,5 +138,22 @@ html[data-theme=dark] .performance-badge{color:#162942}html[data-theme=dark] .li
 
 <script type="module" src="club-tools.js?v=20261015-tools-2"></script>
 <script type="module" src="club-directory.js?v=20261016-directory-3"></script>
+
+<style id="phone-help-style">
+.phone-help-launch{display:inline-flex;justify-content:center;align-items:center;gap:9px;min-height:46px;padding:12px 20px;border:1px solid #8772bd;border-radius:13px;background:linear-gradient(120deg,#6945a7,#345d9f);color:#fff!important;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 5px 14px #493c7b24}#login-view .phone-help-launch{width:100%;margin-top:14px}.phone-help-launch:focus-visible,#phone-help-dialog button:focus-visible{outline:3px solid #e9bc38;outline-offset:3px}
+#phone-help-dialog{box-sizing:border-box;width:min(94vw,560px);max-height:88dvh;overflow:auto;padding:24px;border:1px solid #a79ac8;border-radius:22px;background:linear-gradient(135deg,#f0eaff,#e7efff);color:#253657;box-shadow:0 20px 70px #16213b55}#phone-help-dialog::backdrop{background:#101b39a8}#phone-help-dialog h2{font-size:22px;color:#263967;margin:0 0 12px}#phone-help-dialog h3{font-size:16px;color:#46328b;margin-top:0}#phone-help-dialog article{padding:18px;margin:14px 0;background:#ffffffdd;border:1px solid #c5c8e6;border-left:5px solid #7953b8;border-radius:14px}#phone-help-dialog article+article{border-left-color:#3c70b4}#phone-help-dialog ol{padding-left:24px;margin-bottom:0}#phone-help-dialog li{margin:10px 0;line-height:1.5}#phone-help-dialog p{line-height:1.6}#phone-help-dialog .phone-help-note{font-size:13px;color:#4e6080}#phone-help-dialog .phone-close{width:100%;padding:13px;border:0;border-radius:12px;background:#344f8c;color:white;font:inherit;font-weight:800}
+[data-theme="dark"] #phone-help-dialog{background:linear-gradient(135deg,#28203e,#192c47);color:#f4f0ff}[data-theme="dark"] #phone-help-dialog article{background:#26314d;border-color:#655986}[data-theme="dark"] #phone-help-dialog h2,[data-theme="dark"] #phone-help-dialog h3{color:#f0e7ff}[data-theme="dark"] #phone-help-dialog .phone-help-note{color:#d3dbef}
+</style>
+<dialog id="phone-help-dialog" aria-labelledby="phone-help-title">
+<h2 id="phone-help-title">TELEFONA EKLE</h2>
+<p>MECİDİYE KARAHİSAR SPOR KULÜBÜ'NE ANA EKRANINDAN TEK DOKUNUŞLA ULAŞ.</p>
+<article><h3>ANDROID · CHROME</h3><ol><li>SANA GÖNDERİLEN UYGULAMA BAĞLANTISINI CHROME'DA AÇ.</li><li>SAĞ ÜSTTEKİ ÜÇ NOKTA (⋮) MENÜSÜNE DOKUN.</li><li>ANA EKRANA EKLE SEÇENEĞİNİ SEÇ VE EKLE İLE ONAYLA. TARAYICINA GÖRE SEÇENEK ADI DEĞİŞEBİLİR.</li></ol></article>
+<article><h3>IPHONE · SAFARI</h3><ol><li>SANA GÖNDERİLEN UYGULAMA BAĞLANTISINI SAFARI'DE AÇ.</li><li>PAYLAŞ SİMGESİNE (KARE İÇİNDEN YUKARI OK) DOKUN.</li><li>ANA EKRANA EKLE SEÇENEĞİNİ BUL VE EKLE'YE DOKUN.</li></ol></article>
+<p class="phone-help-note">WHATSAPP VEYA BAŞKA BİR UYGULAMANIN İÇİNDE AÇTIYSAN ÖNCE CHROME YA DA SAFARI'DE AÇ. BU BUTON YARDIM ADIMLARINI GÖSTERİR; EKLEMEYİ TELEFONUNUN TARAYICI MENÜSÜNDEN TAMAMLARSIN. ŞİFREN VE ERİŞİM YETKİLERİN DEĞİŞMEZ.</p>
+<button type="button" class="phone-close">ANLADIM · KAPAT</button>
+</dialog>
+<script>
+(()=>{const dialog=document.getElementById('phone-help-dialog');let opener;function add(target){if(!target)return;const b=document.createElement('button');b.type='button';b.className='phone-help-launch';b.textContent='TELEFONA EKLE';b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls',dialog.id);b.onclick=()=>{opener=b;if(!dialog.open)dialog.showModal();};target.appendChild(b);}add(document.getElementById('login-view'));add(document.querySelector('#player-view .welcome'));dialog.querySelector('.phone-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{if(opener?.isConnected)opener.focus();});})();
+</script>
 </body>
 </html>
