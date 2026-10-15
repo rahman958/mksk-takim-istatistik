@@ -130,7 +130,7 @@ start();
 
 import './navigation.js?v=20261015-clock-2';
 
-import './club-leaves.js?v=20261015-leaves-1';
+import './club-leaves.js?v=20261016-leaves-2';
 
 // Admin-only read-only player preview. Authentication and database roles stay unchanged.
 window.MKSK_OPEN_PLAYER_PREVIEW=async function(id){
