@@ -155,3 +155,8 @@ loadPlayer=async function(id){
 };
 var beforeExpandedPlayerPage=setPlayerPage;setPlayerPage=function(page){beforeExpandedPlayerPage(page);if(el('player-profile-extra'))el('player-profile-extra').hidden=page!=='stats';};
 import './player-management.js?v=20261016-management-1';
+
+var beforeLastFiveFormPlayer=loadPlayer;
+loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='stats');};
+var beforeLastFiveFormPage=setPlayerPage;setPlayerPage=function(page){beforeLastFiveFormPage(page);window.MKSK_SHOW_PLAYER_FORM?.(page==='stats');};
+import './player-form.js?v=20261016-form-1';
