@@ -108,6 +108,19 @@ html[data-theme="dark"] #club-tools-panel .ct-history-item h4{color:#f3f6ff!impo
 html[data-theme="dark"] #club-tools-panel .ct-warning{background:#493b28!important;color:#ffedbd!important}
 html[data-theme="dark"] #club-tools-panel input[type="checkbox"]{accent-color:#9c80d8}
 </style>
+<style id="roster-mobile-actions-20261016">
+#roster-list .name-actions button{word-break:normal;overflow-wrap:normal;hyphens:none;min-height:46px;transition:filter .18s,box-shadow .18s}
+#roster-list .name-actions button:focus-visible{outline:3px solid #9672ed;outline-offset:3px}
+#roster-list .name-actions .open-stats{background:linear-gradient(120deg,#315caa,#7250ab);color:#fff;border:1px solid #8d9bd6;box-shadow:0 4px 12px #283b7426;font-weight:800}
+@media(max-width:600px){
+#roster-list .name-row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px}
+#roster-list .name-row>.jersey-circle{grid-column:1;grid-row:1;align-self:start;margin-top:3px}
+#roster-list .name-row>.name-info{grid-column:2;min-width:0}
+#roster-list .name-row>.name-actions{grid-column:1/-1;width:100%;padding:12px 0 0;margin-top:2px;border-top:1px solid #96a8c644;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#roster-list .name-actions>button{width:100%;margin:0;padding:12px 8px;border-radius:12px;font-size:13px;line-height:1.45;white-space:normal;word-break:normal;overflow-wrap:normal}
+#roster-list .name-actions>.open-stats{grid-column:1/-1;font-size:14px;padding:14px 10px;letter-spacing:.25px}
+}
+</style>
 </head>
   <body>
     <main class="shell">
