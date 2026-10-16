@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MECİDİYE KARAHİSAR SPOR KULÜBÜ — Takım İstatistikleri</title>
+    <title>MECİDİYE KARAHİSAR SPOR KULÜBÜ — MKSK KULÜP YÖNETİM SİSTEMİ</title>
     <link rel="stylesheet" href="styles.css" /><link rel="icon" type="image/jpeg" href="güncel logo.jfif" />
   <style>
 .player-row{display:block;border:1px solid #cbdced;border-top:5px solid #173f72;border-radius:16px;background:linear-gradient(135deg,#fff,#f3f8ff);padding:22px;margin-bottom:20px;box-shadow:0 5px 18px #173f7212}.player-edit>h3{background:#173f72;color:#fff;border-left:6px solid #f6db31;border-radius:8px;padding:14px;margin:0 0 18px}.player-edit>label{display:block;background:#eef4fb;padding:12px;border-radius:8px;margin:10px 0;color:#173f72;font-weight:600}.player-edit>h4{background:#fff4b8;color:#173f72;padding:12px;border-radius:8px;margin:20px 0 12px}.player-edit .stats-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.player-edit .stats-form label{background:#eaf3ff;border:1px solid #d0e1f5;border-radius:10px;padding:12px}.player-edit input,.player-edit textarea{display:block;width:100%;box-sizing:border-box;background:#fff;border:1px solid #b7cce5;border-radius:7px;padding:10px;margin-top:7px;font:inherit}.player-edit>label:has(textarea){background:#dff1ff;border:2px solid #82b7e5;padding:16px}.player-edit textarea{min-height:120px;resize:vertical}.player-edit>button{background:#173f72;color:white;border:0;border-bottom:4px solid #f6db31;border-radius:9px;padding:14px 20px;margin-top:14px;font-weight:700}.save-message{color:#175c37;font-weight:600}.add-player{background:#fff4b8;border:1px solid #edcf63;border-radius:12px;padding:18px}#player-report{border-left:6px solid #f6db31;background:#e6f3ff;border-radius:12px;padding:20px}#player-report h3{color:#173f72}@media(max-width:600px){.player-row{padding:12px}.player-edit .stats-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -156,13 +156,20 @@ html[data-theme="dark"] #player-view #player-summary .metric span,html[data-them
 html[data-theme="dark"] #player-view #player-summary .metric strong,html[data-theme="dark"] #player-view #player-profile-extra .metric strong,html[data-theme="dark"] #player-view #player-personal-info .metric strong,html[data-theme="dark"] #player-view .player-detail-values .metric strong{color:#fff!important}
 @media(max-width:600px){#player-view .welcome{padding:16px}#player-view #player-summary>.metric,#player-view #player-profile-extra .metric,#player-view #player-personal-info .metric{padding:14px}#player-nav>button{font-size:13px;padding:13px 9px}#player-view .player-detail-group{padding:13px}#player-view .player-detail-values .metric{padding:12px}#player-view #player-profile-extra,#player-view #player-personal-info{padding:15px}}
 </style>
+<style id="club-overview-20261016">
+.club-foundation-banner{margin:12px 0 20px;padding:15px 20px;border:1px solid #b8bce0;border-left:5px solid #7853b5;border-radius:14px;background:linear-gradient(120deg,#e5edff,#eee2fa);color:#293e6d;font-weight:800;box-shadow:0 5px 14px #34477515}.club-foundation-banner time{display:inline-block;margin-left:8px;color:#663e98}
+#team-summary.club-team-overview,#player-team-overview{padding:22px;border:1px solid #bbc5e1;border-left:5px solid #7351b4;border-radius:20px;background:linear-gradient(130deg,#e6eeff,#eee5fc);box-shadow:0 7px 20px #3447751c;margin-top:24px;color:#273d67}
+.club-team-overview h3{color:#303e76!important;line-height:1.5}.club-team-overview .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}.club-team-overview .metric{background:linear-gradient(130deg,#f9fbff,#dce7ff);border:1px solid #b7c9e9;border-top:4px solid #5575b7;border-radius:14px;padding:16px}.club-team-overview .metric:nth-child(2n){background:linear-gradient(130deg,#f8f0ff,#e7ddf7);border-top-color:#8b5fb5}.club-team-overview .metric span{color:#4b5778!important;font-size:12px;font-weight:700;line-height:1.5}.club-team-overview .metric strong{color:#253e70!important;font-size:25px;display:block;margin-top:8px}.club-founded{padding:12px 14px;border-radius:10px;background:#dcd6f3;color:#41316b;font-weight:800}.overview-help,.auto-rate-help{font-size:12px;line-height:1.7;color:#4e5b7b}.auto-rate-help{display:block;margin-top:6px}.team-count-edit{margin-top:18px;padding:12px;border-radius:12px;background:#dde5f6}.team-count-edit summary{cursor:pointer;font-weight:700}.team-count-edit input{display:block;padding:10px;max-width:100%;margin:10px 0}.team-count-edit button{background:#4d4b96;color:#fff;padding:12px;border-radius:10px}
+html[data-theme=dark] .club-foundation-banner,html[data-theme=dark] #team-summary.club-team-overview,html[data-theme=dark] #player-team-overview{background:linear-gradient(130deg,#203652,#35284a);color:#edf2ff;border-color:#62698b}html[data-theme=dark] .club-foundation-banner time,html[data-theme=dark] .club-team-overview h3{color:#f2eaff!important}html[data-theme=dark] .club-team-overview .metric,html[data-theme=dark] .club-team-overview .metric:nth-child(2n){background:linear-gradient(130deg,#293b59,#3b3052);border-color:#657298}html[data-theme=dark] .club-team-overview .metric span,html[data-theme=dark] .overview-help,html[data-theme=dark] .auto-rate-help{color:#d9e2f7!important}html[data-theme=dark] .club-team-overview .metric strong{color:white!important}html[data-theme=dark] .club-founded,html[data-theme=dark] .team-count-edit{background:#3b335d;color:#f1eaff}
+@media(max-width:600px){.club-team-overview .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#team-summary.club-team-overview,#player-team-overview{padding:15px}.club-team-overview .metric{padding:13px}.club-foundation-banner{padding:13px;font-size:14px}.topbar h1{font-size:23px;line-height:1.3}}
+</style>
 </head>
   <body>
     <main class="shell">
       <header class="topbar"><img class="club-logo" src="güncel logo.jfif" alt="MECİDİYE KARAHİSAR SPOR KULÜBÜ logosu">
         <div>
           <p class="eyebrow">MECİDİYE KARAHİSAR SPOR KULÜBÜ</p>
-          <h1>Takım İstatistikleri</h1>
+          <h1>MKSK KULÜP YÖNETİM SİSTEMİ</h1>
           <p id="season-label">2026–2027 Sezonu</p>
         </div>
         <button id="logout" class="secondary hidden">Çıkış yap</button>
@@ -196,7 +203,7 @@ html[data-theme="dark"] #player-view #player-summary .metric strong,html[data-th
       </section>
     </main>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=20261016-player-note-1"></script>
+    <script type="module" src="app.js?v=20261016-club-overview-1"></script>
   <script type="module" src="lineups.js?v=20261015-kadro-3"></script>
 <script type="module" src="global-search.js?v=20261016-search-3"></script>
 <script>(function(){var controls=document.createElement('div');controls.className='theme-controls';var button=document.createElement('button');button.type='button';button.className='theme-toggle';button.id='theme-toggle';function update(){var dark=document.documentElement.dataset.theme==='dark';button.textContent=dark?'GÜNDÜZ MODU':'GECE MODU';button.setAttribute('aria-pressed',String(dark));button.title=dark?'Açık temaya geç':'Koyu temaya geç';}button.onclick=function(){var next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('mksk-theme',next);}catch(e){}update();};controls.appendChild(button);document.querySelector('.topbar').after(controls);update();})();</script>
@@ -220,5 +227,6 @@ html[data-theme="dark"] #player-view #player-summary .metric strong,html[data-th
 <script>
 (()=>{const dialog=document.getElementById('phone-help-dialog');let opener;function add(target){if(!target)return;const b=document.createElement('button');b.type='button';b.className='phone-help-launch';b.textContent='TELEFONA EKLE';b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls',dialog.id);b.onclick=()=>{opener=b;if(!dialog.open)dialog.showModal();};target.appendChild(b);}add(document.getElementById('login-view'));add(document.querySelector('#player-view .welcome'));dialog.querySelector('.phone-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{if(opener?.isConnected)opener.focus();});})();
 </script>
+<script>(()=>{const b=document.createElement('aside');b.className='club-foundation-banner';b.innerHTML='TAKIM KURULUŞ TARİHİ: <time datetime="2008-06-11">11.06.2008</time>';document.querySelector('.topbar')?.after(b);})();</script>
 </body>
 </html>
