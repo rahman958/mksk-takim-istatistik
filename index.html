@@ -91,6 +91,23 @@ html[data-theme=dark] .performance-badge{color:#162942}html[data-theme=dark] .li
 [data-theme="dark"] #roster-list .name-row.pinned-name .name-info>.open-stats{color:#f4efff!important}
 [data-theme="dark"] #roster-list .name-row.pinned-name .name-info>small{color:#d1d9f1!important}
 </style>
+<style id="match-dark-contrast-fix">
+html[data-theme="dark"] #club-tools-panel .ct-match-player,
+html[data-theme="dark"] #club-tools-panel .ct-history-item,
+html[data-theme="dark"] #club-tools-panel .ct-callout{background:linear-gradient(125deg,#20334e,#302b49)!important;color:#f3f6ff!important;border-color:#7183aa!important}
+html[data-theme="dark"] #club-tools-panel .ct-match-player:has(.ct-played:checked){background:linear-gradient(125deg,#243e60,#3c2d59)!important;color:#fff!important;border-color:#9aa9dd!important;border-left-color:#a88add!important;box-shadow:0 0 0 2px #9383c650}
+html[data-theme="dark"] #club-tools-panel .ct-match-player label,
+html[data-theme="dark"] #club-tools-panel .ct-match-player .ct-check,
+html[data-theme="dark"] #club-tools-panel .ct-match-player strong,
+html[data-theme="dark"] #club-tools-panel .ct-callout p,
+html[data-theme="dark"] #club-tools-panel .ct-callout strong{color:#f3f6ff!important;opacity:1!important}
+html[data-theme="dark"] #club-tools-panel input:not([type="checkbox"]),html[data-theme="dark"] #club-tools-panel select,
+html[data-theme="dark"] .ct-dialog input,html[data-theme="dark"] .ct-dialog select{background:#14243b!important;color:#fff!important;border-color:#8192b6!important;opacity:1!important}
+html[data-theme="dark"] #club-tools-panel input::placeholder,html[data-theme="dark"] .ct-dialog input::placeholder{color:#c6d1e9!important;opacity:1!important}
+html[data-theme="dark"] #club-tools-panel .ct-history-item h4{color:#f3f6ff!important}
+html[data-theme="dark"] #club-tools-panel .ct-warning{background:#493b28!important;color:#ffedbd!important}
+html[data-theme="dark"] #club-tools-panel input[type="checkbox"]{accent-color:#9c80d8}
+</style>
 </head>
   <body>
     <main class="shell">
@@ -131,7 +148,7 @@ html[data-theme=dark] .performance-badge{color:#162942}html[data-theme=dark] .li
       </section>
     </main>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=20261016-graph-tab-1"></script>
+    <script type="module" src="app.js?v=20261016-dark-match-1"></script>
   <script type="module" src="lineups.js?v=20261015-kadro-3"></script>
 <script type="module" src="global-search.js?v=20261016-search-3"></script>
 <script>(function(){var controls=document.createElement('div');controls.className='theme-controls';var button=document.createElement('button');button.type='button';button.className='theme-toggle';button.id='theme-toggle';function update(){var dark=document.documentElement.dataset.theme==='dark';button.textContent=dark?'GÜNDÜZ MODU':'GECE MODU';button.setAttribute('aria-pressed',String(dark));button.title=dark?'Açık temaya geç':'Koyu temaya geç';}button.onclick=function(){var next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('mksk-theme',next);}catch(e){}update();};controls.appendChild(button);document.querySelector('.topbar').after(controls);update();})();</script>
