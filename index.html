@@ -227,6 +227,17 @@ html[data-theme="dark"] :is(#admin-inbox,#player-message-box,#player-manager-mes
 html[data-theme="dark"] :is(#admin-inbox,#player-message-box,#player-manager-messages) summary{padding:14px;border-bottom:1px solid #8193b4;cursor:pointer}
 @media(max-width:600px){html[data-theme="dark"] :is(#admin-inbox,#player-message-box,#player-manager-messages) .awards-filters{padding:12px;grid-template-columns:1fr}html[data-theme="dark"] :is(#admin-inbox,#player-message-box,#player-manager-messages) .awards-actions{gap:10px}html[data-theme="dark"] :is(#admin-inbox,#player-message-box,#player-manager-messages) .awards-actions button{width:100%}}
 </style>
+
+<style id="login-autofill-contrast-20261020">
+#login-view{--mksk-login-field-bg:#edf3ff;--mksk-login-field-text:#19365f;--mksk-login-field-border:#8298bb;--mksk-login-placeholder:#526985}
+html[data-theme="dark"] #login-view{--mksk-login-field-bg:#0d1b30;--mksk-login-field-text:#f2f5ff;--mksk-login-field-border:#9aadcd;--mksk-login-placeholder:#c2cee4}
+#login-view #login-form input{background:var(--mksk-login-field-bg)!important;background-image:none!important;color:var(--mksk-login-field-text)!important;-webkit-text-fill-color:var(--mksk-login-field-text)!important;caret-color:var(--mksk-login-field-text)!important;opacity:1!important;border:2px solid var(--mksk-login-field-border)!important;-webkit-box-shadow:0 0 0 1000px var(--mksk-login-field-bg) inset!important;box-shadow:0 0 0 1000px var(--mksk-login-field-bg) inset!important;transition:border-color .15s,outline-color .15s!important}
+#login-view #login-form input::placeholder{color:var(--mksk-login-placeholder)!important;-webkit-text-fill-color:var(--mksk-login-placeholder)!important;opacity:1!important}
+#login-view #login-form input:-webkit-autofill,#login-view #login-form input:-webkit-autofill:hover,#login-view #login-form input:-webkit-autofill:focus,#login-view #login-form input:-webkit-autofill:active{background:var(--mksk-login-field-bg)!important;color:var(--mksk-login-field-text)!important;-webkit-text-fill-color:var(--mksk-login-field-text)!important;caret-color:var(--mksk-login-field-text)!important;-webkit-box-shadow:0 0 0 1000px var(--mksk-login-field-bg) inset!important;box-shadow:0 0 0 1000px var(--mksk-login-field-bg) inset!important;border:2px solid var(--mksk-login-field-border)!important}
+#login-view #login-form input:autofill{background:var(--mksk-login-field-bg)!important;color:var(--mksk-login-field-text)!important;-webkit-text-fill-color:var(--mksk-login-field-text)!important;caret-color:var(--mksk-login-field-text)!important;box-shadow:0 0 0 1000px var(--mksk-login-field-bg) inset!important;border:2px solid var(--mksk-login-field-border)!important}
+#login-view #login-form input:focus{outline:3px solid #ad8ed8!important;outline-offset:3px}
+html[data-theme="dark"] #login-view #login-form input{color-scheme:dark}
+</style>
 </head>
   <body>
     <main class="shell">
