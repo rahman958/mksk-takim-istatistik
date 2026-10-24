@@ -283,7 +283,7 @@ html[data-theme="dark"] #login-view #login-form input{color-scheme:dark}
       </section>
     </main>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=20261024-roster-colors-3"></script>
+    <script type="module" src="app.js?v=20261024-roster-colors-4"></script>
   <script type="module" src="lineups.js?v=20261023-player-flow-1"></script>
 <script type="module" src="global-search.js?v=20261016-search-3"></script>
 <script>(function(){var controls=document.createElement('div');controls.className='theme-controls';var button=document.createElement('button');button.type='button';button.className='theme-toggle';button.id='theme-toggle';function update(){var dark=document.documentElement.dataset.theme==='dark';button.textContent=dark?'GÜNDÜZ MODU':'GECE MODU';button.setAttribute('aria-pressed',String(dark));button.title=dark?'Açık temaya geç':'Koyu temaya geç';}button.onclick=function(){var next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('mksk-theme',next);}catch(e){}update();};controls.appendChild(button);document.querySelector('.topbar').after(controls);update();})();</script>

@@ -23,7 +23,7 @@ export function rosterGroup(p) {
 const groupOrder=['KALECİLER','SAVUNMA','ORTA SAHA','FORVETLER','DİĞER MEVKİLER','MEVKİ BELİRTİLMEDİ'];
 const isRahman=p=>String(p.full_name||'').toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/İ/g,'I').trim()==='RAHMAN ISMAIL BENEK';
 const rowGroup=p=>isRahman(p)?'GENEL BAŞKAN':rosterGroup(p);
-const groupColor=group=>({'GENEL BAŞKAN':['#d8e8f7','#24496c'],'KALECİLER':['#d9e9fc','#234e85'],'SAVUNMA':['#d8eee5','#205c49'],'ORTA SAHA':['#e8ddf5','#593782'],'FORVETLER':['#f7e1d3','#874323']}[group]||['#e2e8f0','#334155']);
+const groupColor=group=>({'GENEL BAŞKAN':['#24496c','#ffffff'],'KALECİLER':['#215bab','#ffffff'],'SAVUNMA':['#147451','#ffffff'],'ORTA SAHA':['#713aa4','#ffffff'],'FORVETLER':['#b44920','#ffffff']}[group]||['#475569','#ffffff']);
 const headerColor=key=>['full_name','jersey_number','position','management_role','group_name'].includes(key)?'#cfe2f3':key.startsWith('attendance_')?'#bde5dd':['status','performance_label'].includes(key)?'#ded4ed':key==='success'?'#e5cf91':'#f7e773';
 export function rosterStats(p,season) {return (p.player_season_stats||[]).find(s=>s.season===season)||{};}
 export function rosterValues(p,season) {
@@ -87,7 +87,7 @@ export function drawRosterImage(canvas,players,options={}) {
     ctx.strokeStyle='#9bb0c4';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(margin,y+row.height);ctx.lineTo(width-margin,y+row.height);ctx.stroke();y+=row.height;
   }
   ctx.strokeStyle='#55738f';ctx.lineWidth=2;ctx.beginPath();left=margin;ctx.moveTo(left,headerTop);ctx.lineTo(left,y);for(const col of rosterColumns){left+=col[2];ctx.moveTo(left,headerTop);ctx.lineTo(left,y);}ctx.moveTo(margin,headerTop);ctx.lineTo(width-margin,headerTop);ctx.moveTo(margin,headerTop+headerHeight);ctx.lineTo(width-margin,headerTop+headerHeight);ctx.moveTo(margin,y);ctx.lineTo(width-margin,y);ctx.stroke();
-  for(const band of bands){ctx.fillStyle=groupColor(band.group)[1];ctx.textAlign='left';ctx.font='700 24px Arial';ctx.fillText(band.group,margin+12,band.y+34);}
+  for(const band of bands){ctx.fillStyle=groupColor(band.group)[1];ctx.textAlign='left';ctx.font='700 27px Arial';ctx.fillText(band.group,margin+12,band.y+35);}
   const team=options.team||{};ctx.fillStyle='#243f68';ctx.fillRect(0,y+24,width,height-y-24);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='700 28px Arial';
   ctx.fillText(`TAKIM: ${team.matches??'—'} MAÇ · GALİBİYET: ${team.wins??'—'} · BERABERLİK: ${team.draws??'—'} · MAĞLUBİYET: ${team.losses??'—'}`,margin,y+73);
   ctx.font='25px Arial';ctx.fillText('KURULUŞ: 11.06.2008 · ŞEREFİNLE OYNA, ŞEREFİNLE KAZAN',margin,y+121);
