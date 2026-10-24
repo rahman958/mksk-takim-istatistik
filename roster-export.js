@@ -23,7 +23,7 @@ export function rosterGroup(p) {
 const groupOrder=['KALECİLER','SAVUNMA','ORTA SAHA','FORVETLER','DİĞER MEVKİLER','MEVKİ BELİRTİLMEDİ'];
 const isRahman=p=>String(p.full_name||'').toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/İ/g,'I').trim()==='RAHMAN ISMAIL BENEK';
 const rowGroup=p=>isRahman(p)?'GENEL BAŞKAN':rosterGroup(p);
-const groupColor=group=>({'GENEL BAŞKAN':['#24496c','#ffffff'],'KALECİLER':['#215bab','#ffffff'],'SAVUNMA':['#922f50','#ffffff'],'ORTA SAHA':['#713aa4','#ffffff'],'FORVETLER':['#b44920','#ffffff']}[group]||['#475569','#ffffff']);
+const groupColor=group=>({'GENEL BAŞKAN':['#24496c','#ffffff'],'KALECİLER':['#215bab','#ffffff'],'SAVUNMA':['#475569','#ffffff'],'ORTA SAHA':['#713aa4','#ffffff'],'FORVETLER':['#b44920','#ffffff']}[group]||['#475569','#ffffff']);
 const headerColor=key=>['full_name','jersey_number','position','management_role','group_name'].includes(key)?'#cfe2f3':key.startsWith('attendance_')?'#c6dafa':['status','performance_label'].includes(key)?'#ded4ed':key==='success'?'#e5cf91':'#f7e773';
 export function rosterStats(p,season) {return (p.player_season_stats||[]).find(s=>s.season===season)||{};}
 export function rosterValues(p,season) {
@@ -61,6 +61,7 @@ export function drawRosterImage(canvas,players,options={}) {
     (Number(a.jersey_number??9999)-Number(b.jersey_number??9999))||
     String(a.full_name).localeCompare(String(b.full_name),'tr'));
   if(!rows.length)throw Error('Paylaşılacak oyuncu yok.');
+  const groupCounts=new Map();for(const p of rows){const g=rowGroup(p);groupCounts.set(g,(groupCounts.get(g)||0)+1);}
   const margin=34,font=26,line=33,headerTop=278,bandHeight=52;
   const headers=rosterColumns.map(([,text,w])=>{const label=text.toLocaleUpperCase('tr-TR');let size=24;while(size>17&&label.split(/\s+/).some(word=>{ctx.font=`700 ${size}px Arial`;return ctx.measureText(word).width>w-20;}))size--;return {size,lines:wrapRosterText(ctx,label,w-20,size,true)};});
   const headerHeight=Math.max(128,...headers.map(h=>h.lines.length*(h.size+7)+32));
@@ -75,7 +76,7 @@ export function drawRosterImage(canvas,players,options={}) {
   ctx.fillStyle='#243f68';ctx.fillRect(0,0,width,234);ctx.fillStyle='#d7bd77';ctx.fillRect(0,234,width,7);
   ctx.fillStyle='#fff';ctx.font='700 51px Arial';ctx.fillText('MECİDİYE KARAHİSAR SPOR KULÜBÜ',margin,76);
   ctx.font='700 42px Arial';ctx.fillText('TAKIM LİSTESİ',margin,142);
-  ctx.fillStyle='#e3ecf8';ctx.font='27px Arial';ctx.fillText(`${season} · LİSTE TARİHİ: ${options.date||new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'})} · ${rows.length} OYUNCU · TEK GÖRSEL`,margin,195);
+  ctx.fillStyle='#e3ecf8';ctx.font='27px Arial';ctx.fillText(`${season} · LİSTE TARİHİ: ${options.date||new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'})} · TOPLAM OYUNCU: ${rows.length} KİŞİ · TEK GÖRSEL`,margin,195);
   if(options.logo)ctx.drawImage(options.logo,width-198,32,160,160);
   let left=margin;
   rosterColumns.forEach(([key,label,colWidth],j)=>{const h=headers[j];ctx.fillStyle=headerColor(key);ctx.fillRect(left,headerTop,colWidth,headerHeight);ctx.fillStyle='#18314b';ctx.font=`700 ${h.size}px Arial`;ctx.textAlign=key==='full_name'?'left':'center';const top=headerTop+(headerHeight-h.lines.length*(h.size+7))/2+h.size;h.lines.forEach((t,i)=>ctx.fillText(t,key==='full_name'?left+10:left+colWidth/2,top+i*(h.size+7)));left+=colWidth;});
@@ -87,7 +88,7 @@ export function drawRosterImage(canvas,players,options={}) {
     ctx.strokeStyle='#9bb0c4';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(margin,y+row.height);ctx.lineTo(width-margin,y+row.height);ctx.stroke();y+=row.height;
   }
   ctx.strokeStyle='#55738f';ctx.lineWidth=2;ctx.beginPath();left=margin;ctx.moveTo(left,headerTop);ctx.lineTo(left,y);for(const col of rosterColumns){left+=col[2];ctx.moveTo(left,headerTop);ctx.lineTo(left,y);}ctx.moveTo(margin,headerTop);ctx.lineTo(width-margin,headerTop);ctx.moveTo(margin,headerTop+headerHeight);ctx.lineTo(width-margin,headerTop+headerHeight);ctx.moveTo(margin,y);ctx.lineTo(width-margin,y);ctx.stroke();
-  for(const band of bands){ctx.fillStyle=groupColor(band.group)[1];ctx.textAlign='left';ctx.font='700 27px Arial';ctx.fillText(band.group,margin+12,band.y+35);}
+  for(const band of bands){const label=band.group+' · '+groupCounts.get(band.group)+' KİŞİ';ctx.fillStyle=groupColor(band.group)[1];ctx.textAlign='left';let size=27;while(size>15){ctx.font=`700 ${size}px Arial`;if(ctx.measureText(label).width<=rosterColumns[0][2]-24)break;size--;}ctx.font=`700 ${size}px Arial`;ctx.fillText(label,margin+12,band.y+35);}
   const team=options.team||{};ctx.fillStyle='#243f68';ctx.fillRect(0,y+24,width,height-y-24);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='700 28px Arial';
   ctx.fillText(`TAKIM: ${team.matches??'—'} MAÇ · GALİBİYET: ${team.wins??'—'} · BERABERLİK: ${team.draws??'—'} · MAĞLUBİYET: ${team.losses??'—'}`,margin,y+73);
   const half=(width-margin*2-24)/2;
