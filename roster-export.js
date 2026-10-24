@@ -66,7 +66,7 @@ export function drawRosterImage(canvas,players,options={}) {
   const headerHeight=Math.max(128,...headers.map(h=>h.lines.length*(h.size+7)+32));
   const width=rosterColumns.reduce((sum,c)=>sum+c[2],0)+margin*2;
   const prepared=rows.map(p=>{const values=rosterValues(p,season),lines=values.map((v,i)=>wrapRosterText(ctx,v,rosterColumns[i][2]-20,font,i===0));return {p,values,lines,height:Math.max(82,...lines.map(a=>a.length*line+26))};});
-  let height=headerTop+headerHeight+190,last='';
+  let height=headerTop+headerHeight+330,last='';
   for(const row of prepared){const group=rowGroup(row.p);if(group!==last){height+=bandHeight;last=group;}height+=row.height;}
   // Keep a single image within a conservative mobile canvas pixel budget.
   const scale=Math.min(1,Math.sqrt(12000000/(width*height)),8192/height,4096/width);
@@ -90,6 +90,8 @@ export function drawRosterImage(canvas,players,options={}) {
   for(const band of bands){ctx.fillStyle=groupColor(band.group)[1];ctx.textAlign='left';ctx.font='700 27px Arial';ctx.fillText(band.group,margin+12,band.y+35);}
   const team=options.team||{};ctx.fillStyle='#243f68';ctx.fillRect(0,y+24,width,height-y-24);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='700 28px Arial';
   ctx.fillText(`TAKIM: ${team.matches??'—'} MAÇ · GALİBİYET: ${team.wins??'—'} · BERABERLİK: ${team.draws??'—'} · MAĞLUBİYET: ${team.losses??'—'}`,margin,y+73);
-  ctx.font='25px Arial';ctx.fillText('KURULUŞ: 11.06.2008 · ŞEREFİNLE OYNA, ŞEREFİNLE KAZAN',margin,y+121);
+  const half=(width-margin*2-24)/2;
+  [['TAKIMIN ATTIĞI TOPLAM GOL',team.goals,'#244f86'],['TAKIMIN YEDİĞİ TOPLAM GOL',team.conceded,'#71364f']].forEach(([label,value,color],i)=>{const x=margin+i*(half+24);ctx.fillStyle=color;ctx.fillRect(x,y+99,half,130);ctx.fillStyle='#fff';ctx.font='700 33px Arial';ctx.fillText(label,x+22,y+144);ctx.font='700 52px Arial';ctx.fillText(value==null?'—':Number(value).toLocaleString('tr-TR'),x+22,y+206);});
+  ctx.font='25px Arial';ctx.fillText('KURULUŞ: 11.06.2008 · ŞEREFİNLE OYNA, ŞEREFİNLE KAZAN',margin,y+284);
   return {width:canvas.width,height:canvas.height,players:rows.length,columns:rosterColumns.length,scale};
 }
