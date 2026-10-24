@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { drawRosterImage } from './roster-export.js?v=20261024-mobile-roster-1';
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
@@ -148,7 +149,7 @@ start();
 
 import './navigation.js?v=20261016-back-2';
 
-import './club-leaves.js?v=20261024-simple-entry-1';
+import './club-leaves.js?v=20261024-mobile-roster-1';
 
 // Admin-only read-only player preview. Authentication and database roles stay unchanged.
 window.MKSK_OPEN_PLAYER_PREVIEW=async function(id){
@@ -606,3 +607,71 @@ var primaryStaffBase=openStaffPanel;openStaffPanel=async function(){await primar
 var primaryShellBase=simpleAdminShell;simpleAdminShell=function(){primaryShellBase();var host=el('simple-admin-menu');if(!host||!staffState?.owner)return;var b=document.createElement('button');b.type='button';b.className='primary-shortcut';b.textContent='YETKİLER / ANA YÖNETİCİ';b.onclick=openStaffPanel;host.appendChild(b);};
 var primaryApplyBase=staffApply;staffApply=function(){primaryApplyBase();document.querySelectorAll('.primary-shortcut').forEach(b=>b.hidden=!staffState?.owner);};
 (function(){var s=document.createElement('style');s.textContent='.primary-shortcut{margin:8px 0 0 8px;min-height:44px!important;padding:11px!important;font-size:12px!important;background:#246979!important;color:#fff!important;-webkit-text-fill-color:#fff!important}.primary-shortcut[hidden]{display:none!important}';document.head.appendChild(s);})();
+// Single-purpose screens: late metadata refreshes must not reopen unrelated cards.
+function normalizeRosterSearch(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').trim();}
+function rosterScreenContext(){if(entryMode)return 'entry';var tools=el('club-tools-panel');return tools&&!tools.hidden?'tools':dashboardPage;}
+function syncRosterChrome(){
+  var context=rosterScreenContext();if(document.body.dataset.adminContext!==context)document.body.dataset.adminContext=context;
+  if(document.body.dataset.playerContext!==playerDashboardPage)document.body.dataset.playerContext=playerDashboardPage;
+  var box=el('roster-filters'),search=el('search'),details=box?.querySelector('details');
+  if(details&&search&&!details.contains(search)){var label=document.createElement('label');label.className='roster-search-label';label.textContent='OYUNCU ARA';label.appendChild(search);details.querySelector('summary').after(label);}
+  if(search&&['roster','statistics'].includes(context))search.hidden=false;
+  if(box&&!box.dataset.mobileFilterBound){box.dataset.mobileFilterBound='1';box.addEventListener('change',applyFilters);}
+  var launch=el('club-search-launch');if(launch&&!launch.querySelector('.roster-search-launch')){var button=document.createElement('button');button.type='button';button.className='roster-search-launch';button.textContent='OYUNCU ARA / FİLTRELE';button.onclick=()=>{simpleActivate(simplePick('roster'));requestAnimationFrame(()=>{var d=el('roster-filters')?.querySelector('details');if(d)d.open=true;var input=el('search');if(input){input.hidden=false;input.scrollIntoView({block:'center'});input.focus({preventScroll:true});}});};launch.prepend(button);}
+  syncOwnLeaveVisibility();
+}
+applyFilters=function(){
+  var box=el('roster-filters');if(!box||!el('search'))return;
+  var query=normalizeRosterSearch(el('search').value),metric=el('filter-stat').value,min=el('filter-min').value,max=el('filter-max').value,matched=[];
+  document.querySelectorAll('.player-edit').forEach(f=>{
+    var value=key=>f.querySelector('[name="'+key+'"]')?.value??'';
+    var match=normalizeRosterSearch(value('full_name')+' '+value('jersey_number')).includes(query);
+    box.querySelectorAll('[data-filter]').forEach(s=>{if(!s.value)return;var v=value(s.dataset.filter).trim();if(s.dataset.filter==='position')v=positionGroup({position:v});if((v||'__empty__')!==s.value)match=false;});
+    var access=el('filter-access').value,role=el('filter-role').value;
+    if(access&&(f.dataset.disabled==='true'?'closed':'open')!==access)match=false;
+    if(role&&(accountRoles[f.dataset.id]||'unlinked')!==role)match=false;
+    if(metric){var raw=metric==='missed_matches'?missedMatches(value('matches')):metric==='manager_rating'?f.querySelector('.fair-manager-input')?.value:value(metric),n=Number(raw||0);if(min!==''&&n<Number(min))match=false;if(max!==''&&n>Number(max))match=false;}
+    f.dataset.outsideFilter='false';var article=f.closest('article');article.hidden=!match||!article.classList.contains('editing');if(match)matched.push(f);
+  });
+  el('filter-count').textContent=matched.length+' oyuncu filtreye uyuyor. Takım özeti tüm kadroyu kapsar.';
+  renderRosterList(matched);syncRosterChrome();
+};
+var mobileShareStats=shareStats;shareStats=async function(kind){if(kind!=='team')return mobileShareStats(kind);return shareMobileRoster();};
+async function shareMobileRoster(){
+  var message=el('admin-message');if(message)message.textContent='Tek PNG takım listesi hazırlanıyor…';
+  try{
+    applyFilters();var response=await supabase.from('players').select('*,player_season_stats(*)').is('archived_at',null);if(response.error)throw response.error;
+    await applyAutoSuccess(response.data);var ids=new Set(Array.from(document.querySelectorAll('#roster-list .name-row[data-player]')).map(n=>n.dataset.player));
+    var players=response.data.filter(p=>ids.has(p.id));if(!players.length)throw Error('Filtreye uygun oyuncu yok.');
+    var canvas=document.createElement('canvas'),team=await fetchClubOverview(),logo=await loadClubLogo();
+    drawRosterImage(canvas,players,{season:selectedSeason,date:new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),team,logo});
+    var blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Görsel oluşturulamadı.');
+    var file=new File([blob],'mksk-takim-listesi-tek-gorsel.png',{type:'image/png'}),url=URL.createObjectURL(blob),d=document.createElement('dialog');
+    d.className='share-preview mobile-roster-preview';d.innerHTML='<h3>TAKIM LİSTESİ · TEK GÖRSEL</h3><p>Tüm oyuncular ve 17 sütun tek PNG dosyasında. Tam boy açıp yakınlaştırabilirsin.</p><a class="full-roster-image" target="_blank" rel="noopener">TAM BOY AÇ / YAKINLAŞTIR</a><img alt="Mevkilere ayrılmış tek sayfalık takım listesi"><div class="mobile-roster-actions"><a class="download-roster-image">PNG GÖRSELİ İNDİR</a><button type="button" class="send-roster-image">PAYLAŞ</button><button type="button" class="close-roster-image">KAPAT</button></div><p class="mobile-roster-status" role="status"></p>';
+    d.querySelector('img').src=url;d.querySelector('.full-roster-image').href=url;var download=d.querySelector('.download-roster-image');download.href=url;download.download=file.name;
+    d.querySelector('.close-roster-image').onclick=()=>d.close();d.querySelector('.send-roster-image').onclick=async()=>{try{if(navigator.share&&navigator.canShare?.({files:[file]}))await navigator.share({title:'MKSK Takım Listesi',files:[file]});else d.querySelector('[role=status]').textContent='Bu tarayıcıda doğrudan paylaşım yok. PNG görselini indirip gönderebilirsin.';}catch(error){if(error.name!=='AbortError')d.querySelector('[role=status]').textContent='Paylaşım açılamadı. PNG görselini indirip gönderebilirsin.';}};
+    d.onclose=()=>{URL.revokeObjectURL(url);d.remove();};document.body.appendChild(d);d.showModal();if(message)message.textContent='Tek PNG takım listesi hazır.';
+  }catch(error){if(message)message.textContent='Görsel hazırlanamadı: '+error.message;}
+}
+var ownLeavePlayer=null,ownLeaveName='',ownLeaveRequest=0,ownLeaveRows=[];
+function syncOwnLeaveVisibility(){var box=el('player-own-leave');if(box)box.hidden=playerDashboardPage!=='hub_profile'||!ownLeaveRows.length;}
+async function refreshOwnLeave(){
+  var player=ownLeavePlayer,name=ownLeaveName,token=++ownLeaveRequest;if(!player||!name)return;
+  try{var today=clubToday(),r=await supabase.from('club_leave_periods').select('id,person_name,person_kind,starts_on,ends_on,enabled,public_reason').eq('enabled',true).lte('starts_on',today).gte('ends_on',today).order('ends_on');if(r.error)throw r.error;
+    if(token!==ownLeaveRequest||player!==ownLeavePlayer)return;
+    ownLeaveRows=r.data.filter(row=>normalizeRosterSearch(row.person_name)===normalizeRosterSearch(name));var box=el('player-own-leave');
+    if(!box){box=document.createElement('section');box.id='player-own-leave';box.className='card player-own-leave';var root=el('player-view'),welcome=root.querySelector('.welcome');if(welcome)welcome.after(box);else root.prepend(box);}
+    box.innerHTML='<h3>İZİNLİSİN</h3>'+ownLeaveRows.map(row=>'<p><strong>'+safe(clubDate(row.starts_on))+' – '+safe(clubDate(row.ends_on))+'</strong></p><p>İzin nedeni: '+safe(row.public_reason||'Belirtilmedi')+'</p>').join('');syncOwnLeaveVisibility();
+  }catch(error){if(token===ownLeaveRequest){ownLeaveRows=[];syncOwnLeaveVisibility();console.warn('Kişisel izin bilgisi alınamadı.');}}
+}
+var mobileLoadPlayer=loadPlayer;loadPlayer=async function(id){ownLeavePlayer=null;ownLeaveRows=[];ownLeaveRequest++;el('player-own-leave')?.remove();await mobileLoadPlayer(id);ownLeavePlayer=id;ownLeaveName=el('player-name')?.textContent||'';await refreshOwnLeave();syncRosterChrome();};
+var mobileAdminPage=setDashboardPage;setDashboardPage=function(page){mobileAdminPage(page);syncRosterChrome();requestAnimationFrame(syncRosterChrome);};
+var mobilePlayerPage=setPlayerPage;setPlayerPage=function(page){mobilePlayerPage(page);syncRosterChrome();};
+var mobileEntryOpen=entryOpen;entryOpen=function(mode){mobileEntryOpen(mode);syncRosterChrome();requestAnimationFrame(syncRosterChrome);};
+var mobileStaffApply=staffApply;staffApply=function(){mobileStaffApply();syncRosterChrome();};
+window.addEventListener('mksk-leaves-updated',()=>{if(ownLeavePlayer&&!el('player-view')?.classList.contains('hidden'))void refreshOwnLeave();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ownLeavePlayer&&!el('player-view')?.classList.contains('hidden'))void refreshOwnLeave();});
+setInterval(()=>{if(!document.hidden&&ownLeavePlayer&&!el('player-view')?.classList.contains('hidden'))void refreshOwnLeave();},60000);
+var rosterChromeFrame=0;new MutationObserver(()=>{if(rosterChromeFrame)return;rosterChromeFrame=requestAnimationFrame(()=>{rosterChromeFrame=0;syncRosterChrome();});}).observe(document.body,{childList:true,subtree:true});
+(function(){var s=document.createElement('style');s.textContent='body:not([data-admin-context="hub_home"]) #birthday-notice{display:none!important}body:not([data-admin-context="roster"]) #add-player-area{display:none!important}body:not([data-admin-context="roster"]):not([data-admin-context="statistics"]) #roster-filters{display:none!important}body[data-admin-context="entry"] #club-search-launch,body[data-admin-context="tools"] #club-search-launch{display:none!important}#player-info-panel .birthday-list{display:none!important}#club-search-launch>button:not(.roster-search-launch),#club-search-launch>p{display:none!important}.roster-search-label{display:block;padding:12px;font-weight:700}.roster-search-label input{display:block;width:100%;font-size:16px!important;margin-top:8px}#player-view .leave-nav,#player-view .leave-alert,#player-view .leave-panel{display:none!important}body:not([data-player-context="hub_profile"]) #player-own-leave{display:none!important}.player-own-leave{border-left:5px solid #397588;background:#e5f2f5;color:#193f51;padding:18px;margin:14px 0}.player-own-leave h3,.player-own-leave p,.player-own-leave strong{color:inherit!important;-webkit-text-fill-color:currentColor!important}.player-own-leave p{line-height:1.6;overflow-wrap:break-word}.mobile-roster-preview{width:min(94vw,1200px);max-height:90dvh;overflow:auto;border:0;border-radius:16px;padding:18px}.mobile-roster-preview img{display:block;width:100%;height:auto;margin:16px 0}.mobile-roster-actions{display:flex;gap:10px;flex-wrap:wrap}.mobile-roster-actions a,.mobile-roster-actions button,.full-roster-image{min-height:44px;padding:12px;box-sizing:border-box}html[data-theme=dark] .player-own-leave{background:#173a46;color:#effaff;border-color:#77afbf}html[data-theme=dark] .mobile-roster-preview{background:#192a40;color:#eff5ff}html[data-theme=dark] .mobile-roster-preview p,html[data-theme=dark] .mobile-roster-preview [role=status]{color:#eff5ff}';document.head.appendChild(s);})();
+syncRosterChrome();
