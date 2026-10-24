@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { drawRosterImage } from './roster-export.js?v=20261024-roster-colors-4';
+import { drawRosterImage } from './roster-export.js?v=20261024-roster-colors-5';
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
