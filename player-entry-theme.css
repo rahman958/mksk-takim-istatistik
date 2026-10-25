@@ -1,0 +1,13 @@
+/* The add-player form and late-inserted date fields share one sizing model. */
+#add-player-form,#add-player-form *{box-sizing:border-box;min-width:0}
+#add-player-form>div{width:100%;max-width:100%;grid-column:1/-1}
+#add-player-form :is(input,select,textarea){display:block;box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;min-inline-size:0!important;margin-left:0!important;margin-right:0!important}
+#add-player-form input[type=date]{inline-size:100%!important;max-inline-size:100%!important;min-inline-size:0!important;min-height:48px;-webkit-appearance:none;appearance:none}
+html[data-theme=dark] #add-player-area{background:#222c44!important;border-color:#8491b0!important}
+html[data-theme=dark] #add-player-form{background:#1d2e48!important;border:1px solid #7e91af!important;color:#f3f6ff!important;-webkit-text-fill-color:#f3f6ff!important}
+html[data-theme=dark] #add-player-form :is(strong,h2,h3,h4,p,label,small){color:#f3f6ff!important;-webkit-text-fill-color:#f3f6ff!important}
+html[data-theme=dark] #add-player-form>div{background:#263650!important;border-color:#7e91af!important}
+html[data-theme=dark] #add-player-form :is(input,select,textarea){background:#101f34!important;color:#f3f6ff!important;-webkit-text-fill-color:#f3f6ff!important;border:1px solid #8a9bb7!important;caret-color:#fff;color-scheme:dark}
+html[data-theme=dark] #add-player-form input::placeholder,html[data-theme=dark] #add-player-form textarea::placeholder{color:#bbcbe3!important;-webkit-text-fill-color:#bbcbe3!important;opacity:1}
+html[data-theme=dark] #add-player-form input:focus-visible{outline:3px solid #9eaff2;outline-offset:2px}
+@media(max-width:600px){#add-player-form{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;padding:14px!important}#add-player-form>div{padding:14px!important}#add-player-form label{display:block;max-width:100%}}
