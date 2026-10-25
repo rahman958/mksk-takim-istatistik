@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261024-roster-counts-7';
+import { initQuickEntry } from './quick-entry.js?v=20261026-quick-entry-1';
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
@@ -607,6 +608,13 @@ var primaryStaffBase=openStaffPanel;openStaffPanel=async function(){await primar
 var primaryShellBase=simpleAdminShell;simpleAdminShell=function(){primaryShellBase();var host=el('simple-admin-menu');if(!host||!staffState?.owner)return;var b=document.createElement('button');b.type='button';b.className='primary-shortcut';b.textContent='YETKİLER / ANA YÖNETİCİ';b.onclick=openStaffPanel;host.appendChild(b);};
 var primaryApplyBase=staffApply;staffApply=function(){primaryApplyBase();document.querySelectorAll('.primary-shortcut').forEach(b=>b.hidden=!staffState?.owner);};
 (function(){var s=document.createElement('style');s.textContent='.primary-shortcut{margin:8px 0 0 8px;min-height:44px!important;padding:11px!important;font-size:12px!important;background:#246979!important;color:#fff!important;-webkit-text-fill-color:#fff!important}.primary-shortcut[hidden]{display:none!important}';document.head.appendChild(s);})();
+var quickEntryApp=null,quickAdminBase=loadAdmin;loadAdmin=async function(){await quickAdminBase();if(!quickEntryApp)quickEntryApp=initQuickEntry({db:()=>supabase,can:area=>staffCan(area)||(['statistics','settings'].includes(area)&&staffCan('matches')),season:()=>selectedSeason,changed:()=>{void loadAdmin();}});quickEntryApp.setup();};
+var legacyEntryOpen=entryOpen;entryOpen=function(){if(quickEntryApp)return quickEntryApp.open();return legacyEntryOpen.apply(this,arguments);};
+var oldQuickBulk=openBulkStats;openBulkStats=function(){return quickEntryApp?quickEntryApp.open():oldQuickBulk();};
+document.addEventListener('click',function(e){var b=e.target.closest('[data-club-tool="match"]');if(!b||!quickEntryApp)return;e.preventDefault();e.stopImmediatePropagation();quickEntryApp.open();},true);
+function hideLegacyEntryLinks(){document.querySelectorAll('#dashboard-nav [data-club-tool="match"],#dashboard-nav [data-page="bulk_statistics"]').forEach(b=>b.hidden=true);}
+var quickStaffApply=staffApply;staffApply=function(){quickStaffApply();hideLegacyEntryLinks();quickEntryApp?.setup();};
+var quickInstallBulk=installBulkStats;installBulkStats=function(){quickInstallBulk();hideLegacyEntryLinks();};
 // Single-purpose screens: late metadata refreshes must not reopen unrelated cards.
 function normalizeRosterSearch(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').trim();}
 function rosterScreenContext(){if(entryMode)return 'entry';var tools=el('club-tools-panel');return tools&&!tools.hidden?'tools':dashboardPage;}
