@@ -15,6 +15,7 @@ export function initPlayerHub(api){
   try{const r=await db.from('players').select('id,full_name,jersey_number,position,group_name,status,management_role,birth_date,joined_at,join_year,performance_label,development_goal').eq('id',id).is('archived_at',null).single();if(r.error)throw r.error;if(!d.isConnected||!allowed('roster'))return d.close();const p=r.data;
    d.querySelector('h2').textContent=p.full_name.toLocaleUpperCase('tr-TR');
    box.innerHTML=fields([['FORMA',p.jersey_number],['MEVKİ',p.position],['OYUNCU GRUBU',p.group_name],['DURUM',p.status],['YÖNETİM GÖREVİ',p.management_role],['DOĞUM TARİHİ',p.birth_date],['TAKIMA GİRİŞ',p.joined_at||p.join_year]])+'<div class="hub-actions"><button type="button" class="hub-edit">BİLGİLERİ DÜZENLE</button></div><label>SEZON<select class="hub-season"></select></label><div class="hub-season-data"></div><div class="hub-extras"></div>';
+   const actions=box.querySelector('.hub-actions');for(const [key,label,area] of [['match','MAÇ / ANTRENMAN İŞLE','statistics'],['penalties','CEZA / UYARI EKLE','penalties'],['discipline','DİSİPLİN SEVKİ','penalties'],['messages','MESAJ GÖNDER','messages']]){if(!(allowed(area)||(key==='match'&&allowed('matches'))))continue;const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.hubAction=key;b.onclick=()=>{d.close();api.action?.(key,id,p.full_name);};actions.appendChild(b);}
    box.querySelector('.hub-edit').onclick=()=>{d.close();api.edit(id);};
    let stats=[];if(allowed('statistics')){const q=await db.from('player_season_stats').select('season,matches,goals,assists,goals_conceded,man_of_match,points,attendance_matches,attendance_goals,attendance_points,manager_rating').eq('player_id',id);if(q.error)throw q.error;stats=q.data||[];}
    const season=box.querySelector('.hub-season'),seasons=[...new Set([api.season(),...stats.map(s=>s.season)])].sort().reverse();season.innerHTML=seasons.map(s=>'<option>'+esc(s)+'</option>').join('');season.value=api.season();
@@ -45,5 +46,5 @@ export function initPlayerHub(api){
   document.querySelectorAll('[data-recall]').forEach(recall=>{if(recall.parentElement.querySelector('.hub-readers'))return;const b=document.createElement('button');b.type='button';b.className='hub-readers';b.textContent='KİM OKUDU?';b.onclick=()=>readers(recall.dataset.recall);recall.after(b);});
  }
  let queued=false;new MutationObserver(()=>{if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;setup();});}}).observe(document.body,{childList:true,subtree:true});setup();
- return {dossier,orderDialog,readers,matches};
+ return {dossier,orderDialog,readers,matches,openDirectory};
 }
