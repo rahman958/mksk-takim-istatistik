@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261026-player-home-3';
 import { initPlayerHub } from './player-hub.js?v=20261026-card-fit-7';
 import { initQuickEntry } from './quick-entry.js?v=20261026-quick-entry-1';
+import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
@@ -626,6 +627,15 @@ var matchPlayerShell=simplePlayerShell;simplePlayerShell=function(){matchPlayerS
 
 
 
+var seasonOverviewInstance=null;
+function ensureSeasonOverview(){if(!seasonOverviewInstance)seasonOverviewInstance=initSeasonOverview({db:()=>supabase,season:()=>selectedSeason,adminPage:()=>dashboardPage,playerPage:()=>playerDashboardPage});return seasonOverviewInstance;}
+var seasonOverviewAdmin=loadAdmin;loadAdmin=async function(){await seasonOverviewAdmin();ensureSeasonOverview().refresh();};
+var seasonOverviewPlayer=loadPlayer;loadPlayer=async function(id){await seasonOverviewPlayer(id);ensureSeasonOverview().refresh();};
+var seasonOverviewAdminPage=setDashboardPage;setDashboardPage=function(p){seasonOverviewAdminPage(p);seasonOverviewInstance?.sync();};
+var seasonOverviewPlayerPage=setPlayerPage;setPlayerPage=function(p){seasonOverviewPlayerPage(p);seasonOverviewInstance?.sync();};
+var seasonOverviewShow=show;show=function(id){if(id==='login-view')seasonOverviewInstance?.clear();return seasonOverviewShow(id);};
+var seasonOverviewAllowed=staffPageAllowed;staffPageAllowed=function(page){return page==='stat_overview'?!!staffState:seasonOverviewAllowed(page);};
+
 function openManagerAccess(){if(!staffState?.owner)return;var d=document.createElement('dialog');d.className='player-hub-dialog';d.innerHTML='<header><h2>YÖNETİCİ YETKİLERİ</h2><button type="button" class="close">KAPAT ×</button></header><label>OYUNCU SEÇ<select><option value="">SEÇ</option></select></label><p class="person-status"></p><div class="hub-person-list"><button type="button" class="role" disabled>YÖNETİCİ YAP</button><button type="button" class="primary">ANA YÖNETİCİ / İŞLEM ALANLARI</button></div>';
  var s=d.querySelector('select'),b=d.querySelector('.role');document.querySelectorAll('.player-edit').forEach(f=>{var o=document.createElement('option');o.value=f.dataset.id;o.textContent=f.querySelector('[name=full_name]').value;s.appendChild(o);});s.onchange=()=>{b.disabled=!s.value||!accountRoles[s.value];b.textContent=accountRoles[s.value]==='admin'?'YÖNETİCİ YETKİSİNİ KALDIR':'YÖNETİCİ YAP';d.querySelector('.person-status').textContent=s.value&&!accountRoles[s.value]?'Önce oyuncunun hesabı bağlanmalı.':'';};b.onclick=async()=>{if(!staffState?.owner||!s.value)return;await changeManagerRole(s.value,b);s.onchange();};d.querySelector('.primary').onclick=()=>{d.close();void openStaffPanel();};d.querySelector('.close').onclick=()=>d.close();d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
 }
@@ -648,8 +658,8 @@ function openShareMenu(){
  d.querySelector('button').onclick=()=>d.close();[['team','TAKIM LİSTESİ'],['goals','GOL KRALLIĞI'],['assists','ASİST KRALLIĞI'],['matches','MAÇA KATILIM LİSTESİ']].forEach(([kind,label])=>{var b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{d.close();simpleActivate(simplePick('statistics'));void shareStats(kind);};d.querySelector('.hub-person-list').appendChild(b);});d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
 }
 function arrangeHome(){var admin=el('admin-view');if(!admin||admin.classList.contains('hidden'))return;var home=el('admin-home-panel'),birthday=el('birthday-notice'),menu=el('simple-admin-menu'),leave=el('easy-leave-home');if(dashboardPage==='hub_home'){if(birthday&&menu)menu.after(birthday);if(leave&&birthday)birthday.after(leave);if(home)admin.appendChild(home);}}
-var listAdminShell=simpleAdminShell;simpleAdminShell=function(){listAdminShell();var box=el('simple-admin-menu'),grid=box?.querySelector('.simple-fast-grid');if(!grid)return;grid.classList.add('list-navigation');grid.replaceChildren();var defs=[['files','OYUNCU DOSYALARI','Oyuncuyu seç, işlemlerini aç','roster'],['entry','MAÇ İŞLE','Maç ve antrenman verileri',null],['lineup','KADRO OLUŞTUR','Kadro hazırla ve yayınla','lineup'],['shares','GÖRSEL VE ANALİZ PAYLAŞIMLARI','Takım listesi ve istatistik görselleri','statistics'],['penalties','CEZA YÖNETİMİ','Ceza, uyarı ve disiplin sevki','penalties'],['messages','MESAJLAR','Gelen, gönderilen ve toplu mesajlar','messages']];
- defs.forEach(([key,label,desc,area])=>{if(area&&!staffCan(area)||key==='entry'&&!staffCan('matches')&&!staffCan('statistics'))return;var b=document.createElement('button');b.type='button';b.dataset.listAction=key;b.innerHTML='<span><strong>'+label+'</strong><small>'+desc+'</small></span><b aria-hidden="true">›</b>';b.onclick=()=>{if(key==='files')playerHubInstance?.openDirectory();else if(key==='entry')void quickEntryApp?.open();else if(key==='shares')openShareMenu();else simpleActivate(simplePick(key==='lineup'?'lineup':key));};grid.appendChild(b);});
+var listAdminShell=simpleAdminShell;simpleAdminShell=function(){listAdminShell();var box=el('simple-admin-menu'),grid=box?.querySelector('.simple-fast-grid');if(!grid)return;grid.classList.add('list-navigation');grid.replaceChildren();var defs=[['files','OYUNCU DOSYALARI','Oyuncuyu seç, işlemlerini aç','roster'],['overview','OYUNCU İSTATİSTİK ÖZETİ','Kompakt kartlar ve sezon liderleri',null],['entry','MAÇ İŞLE','Maç ve antrenman verileri',null],['lineup','KADRO OLUŞTUR','Kadro hazırla ve yayınla','lineup'],['shares','GÖRSEL VE ANALİZ PAYLAŞIMLARI','Takım listesi ve istatistik görselleri','statistics'],['penalties','CEZA YÖNETİMİ','Ceza, uyarı ve disiplin sevki','penalties'],['messages','MESAJLAR','Gelen, gönderilen ve toplu mesajlar','messages']];
+ defs.forEach(([key,label,desc,area])=>{if(area&&!staffCan(area)||key==='entry'&&!staffCan('matches')&&!staffCan('statistics'))return;var b=document.createElement('button');b.type='button';b.dataset.listAction=key;b.innerHTML='<span><strong>'+label+'</strong><small>'+desc+'</small></span><b aria-hidden="true">›</b>';b.onclick=()=>{if(key==='files')playerHubInstance?.openDirectory();else if(key==='overview')ensureSeasonOverview().open();else if(key==='entry')void quickEntryApp?.open();else if(key==='shares')openShareMenu();else simpleActivate(simplePick(key==='lineup'?'lineup':key));};grid.appendChild(b);});
  if(staffState?.owner){var b=document.createElement('button');b.type='button';b.className='list-admin-access';b.textContent='YÖNETİCİ YETKİLERİ · YÖNETİCİ / ANA YÖNETİCİ';b.onclick=openManagerAccess;grid.after(b);}arrangeHome();};
 var listPage=setDashboardPage;setDashboardPage=function(p){listPage(p);arrangeHome();};
 
