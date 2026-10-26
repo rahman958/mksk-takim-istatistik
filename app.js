@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { drawRosterImage } from './roster-export.js?v=20261026-position-score-2';
+import { drawRosterImage } from './roster-export.js?v=20261026-player-hub-2';
+import { initPlayerHub } from './player-hub.js?v=20261026-player-hub-2';
 import { initQuickEntry } from './quick-entry.js?v=20261026-quick-entry-1';
 var config=window.MKSK_CONFIG;
 var supabase=null;
@@ -177,7 +178,7 @@ var beforeExpandedPlayerPage=setPlayerPage;setPlayerPage=function(page){beforeEx
 import './player-management.js?v=20261016-management-1';
 
 var beforeLastFiveFormPlayer=loadPlayer;
-loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');var nav=el('player-nav');if(nav&&!nav.querySelector('[data-player-page=form_graph]')){var graphButton=document.createElement('button');graphButton.type='button';graphButton.dataset.playerPage='form_graph';graphButton.className='form-launch';graphButton.textContent='FORM GRAFİĞİ';graphButton.setAttribute('aria-pressed','false');graphButton.onclick=()=>setPlayerPage('form_graph');var statsButton=nav.querySelector('[data-player-page=stats]');if(statsButton)statsButton.after(graphButton);else nav.appendChild(graphButton);}await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='form_graph');};
+loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');var nav=el('player-nav');if(nav&&!nav.querySelector('[data-player-page=form_graph]')){var graphButton=document.createElement('button');graphButton.type='button';graphButton.dataset.playerPage='form_graph';graphButton.className='form-launch';graphButton.textContent='MAÇ KARTLARIM / FORM GRAFİĞİ';graphButton.setAttribute('aria-pressed','false');graphButton.onclick=()=>setPlayerPage('form_graph');var statsButton=nav.querySelector('[data-player-page=stats]');if(statsButton)statsButton.after(graphButton);else nav.appendChild(graphButton);}await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='form_graph');};
 var beforeLastFiveFormPage=setPlayerPage;setPlayerPage=function(page){beforeLastFiveFormPage(page);window.MKSK_SHOW_PLAYER_FORM?.(page==='form_graph');};
 import './player-form.js?v=20261026-position-score-2';
 
@@ -616,6 +617,12 @@ function hideLegacyEntryLinks(){document.querySelectorAll('#dashboard-nav [data-
 var quickStaffApply=staffApply;staffApply=function(){quickStaffApply();hideLegacyEntryLinks();quickEntryApp?.setup();};
 var quickInstallBulk=installBulkStats;installBulkStats=function(){quickInstallBulk();hideLegacyEntryLinks();};
 var legacyMetadataSave=savePlayer;savePlayer=async function(e){e.preventDefault();var f=e.target,msg=f.querySelector('.save-message');try{var latest=await supabase.from('player_season_stats').select('*').eq('player_id',f.dataset.id).eq('season',selectedSeason).maybeSingle();if(latest.error)throw latest.error;Object.keys(statLabels).forEach(k=>{var input=f.querySelector('[name="'+k+'"]');if(input)input.value=latest.data?.[k]??0;});return await legacyMetadataSave(e);}catch(error){if(msg)msg.textContent='Kaydedilemedi: '+error.message;return false;}};
+
+var playerHubInstance=null,playerHubLoadAdmin=loadAdmin;
+loadAdmin=async function(){await playerHubLoadAdmin();if(!playerHubInstance)playerHubInstance=initPlayerHub({db:supabase,can:area=>staffCan(area),owner:()=>!!staffState?.owner,season:()=>selectedSeason,edit:id=>{simpleActivate(simplePick('roster'));openPlayerEditor(id);}});};
+var hubPageAllowed=staffPageAllowed;staffPageAllowed=function(page){if(page==='player_files')return staffCan('roster');if(page==='roster_order')return !!staffState?.owner;if(page==='match_cards')return staffCan('matches')||staffCan('statistics');return hubPageAllowed(page);};
+var matchPlayerShell=simplePlayerShell;simplePlayerShell=function(){matchPlayerShell();const box=el('simple-player-menu');if(box&&!box.querySelector('.player-match-cards')){const b=document.createElement('button');b.type='button';b.className='player-match-cards';b.textContent='MAÇ KARTLARIM / DETAYLAR';b.onclick=()=>{setPlayerPage('form_graph');el('player-form-chart')?.querySelector('.form-games')?.scrollIntoView({block:'start'});};box.appendChild(b);}};
+
 // Single-purpose screens: late metadata refreshes must not reopen unrelated cards.
 function normalizeRosterSearch(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').trim();}
 function rosterScreenContext(){if(entryMode)return 'entry';var tools=el('club-tools-panel');return tools&&!tools.hidden?'tools':dashboardPage;}
@@ -653,7 +660,8 @@ async function shareMobileRoster(){
     await applyAutoSuccess(response.data);var ids=new Set(Array.from(document.querySelectorAll('#roster-list .name-row[data-player]')).map(n=>n.dataset.player));
     var players=response.data.filter(p=>ids.has(p.id));if(!players.length)throw Error('Filtreye uygun oyuncu yok.');
     var canvas=document.createElement('canvas'),team=await fetchClubOverview(),logo=await loadClubLogo();
-    drawRosterImage(canvas,players,{season:selectedSeason,date:new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),team,logo});
+    var rosterOrder=await supabase.rpc('club_roster_order',{p_action:'get'});if(rosterOrder.error)throw rosterOrder.error;
+    drawRosterImage(canvas,players,{orderIds:rosterOrder.data.ids||[],season:selectedSeason,date:new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),team,logo});
     var blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Görsel oluşturulamadı.');
     var file=new File([blob],'mksk-takim-listesi-tek-gorsel.png',{type:'image/png'}),url=URL.createObjectURL(blob),d=document.createElement('dialog');
     d.className='share-preview mobile-roster-preview';d.innerHTML='<h3>TAKIM LİSTESİ · TEK GÖRSEL</h3><p>Tüm oyuncular ve 17 sütun tek PNG dosyasında. Tam boy açıp yakınlaştırabilirsin.</p><a class="full-roster-image" target="_blank" rel="noopener">TAM BOY AÇ / YAKINLAŞTIR</a><img alt="Mevkilere ayrılmış tek sayfalık takım listesi"><div class="mobile-roster-actions"><a class="download-roster-image">PNG GÖRSELİ İNDİR</a><button type="button" class="send-roster-image">PAYLAŞ</button><button type="button" class="close-roster-image">KAPAT</button></div><p class="mobile-roster-status" role="status"></p>';

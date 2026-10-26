@@ -52,14 +52,14 @@ export function wrapRosterText(ctx,value,width,fontSize,bold=false) {
   if(line)lines.push(line);
   return lines.length?lines:['—'];
 }
+export function sortRosterPlayers(players,orderIds=[]) {
+ const ranks=new Map(orderIds.map((id,i)=>[id,i]));
+ return players.filter(p=>!p.archived_at).slice().sort((a,b)=>Number(isRahman(b))-Number(isRahman(a))||groupOrder.indexOf(rosterGroup(a))-groupOrder.indexOf(rosterGroup(b))||(ranks.get(a.id)??999999)-(ranks.get(b.id)??999999)||Number(a.jersey_number??9999)-Number(b.jersey_number??9999)||String(a.full_name).localeCompare(String(b.full_name),'tr'));
+}
 export function drawRosterImage(canvas,players,options={}) {
   const season=options.season||'',ctx=canvas.getContext('2d');
   if(!ctx)throw Error('Görsel çizimi bu tarayıcıda açılamadı.');
-  const rows=players.filter(p=>!p.archived_at).slice().sort((a,b)=>
-    Number(isRahman(b))-Number(isRahman(a))||
-    groupOrder.indexOf(rosterGroup(a))-groupOrder.indexOf(rosterGroup(b))||
-    (Number(a.jersey_number??9999)-Number(b.jersey_number??9999))||
-    String(a.full_name).localeCompare(String(b.full_name),'tr'));
+  const rows=sortRosterPlayers(players,options.orderIds||[]);
   if(!rows.length)throw Error('Paylaşılacak oyuncu yok.');
   const groupCounts=new Map();for(const p of rows){const g=rowGroup(p);groupCounts.set(g,(groupCounts.get(g)||0)+1);}
   const margin=34,font=26,line=33,headerTop=278,bandHeight=52;
