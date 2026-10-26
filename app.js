@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { drawRosterImage } from './roster-export.js?v=20261024-roster-counts-7';
+import { drawRosterImage } from './roster-export.js?v=20261026-position-score-2';
 import { initQuickEntry } from './quick-entry.js?v=20261026-quick-entry-1';
 var config=window.MKSK_CONFIG;
 var supabase=null;
@@ -25,7 +25,7 @@ function renderPlayerPerformance(p){var box=el('player-performance');if(!box){bo
 function setupPlayerSections(){var nav=el('player-nav');if(!nav){nav=document.createElement('nav');nav.id='player-nav';nav.className='dashboard-tabs';nav.setAttribute('aria-label','Oyuncu bölümleri');el('player-view').querySelector('.welcome').after(nav);}nav.innerHTML='<button type="button" data-player-page="stats">İstatistiklerim</button><button type="button" data-player-page="reports">Yönetici raporları</button><button type="button" class="player-message-tab" data-player-page="message">Yönetime mesaj</button>';nav.querySelectorAll('button').forEach(b=>b.onclick=()=>setPlayerPage(b.dataset.playerPage));setPlayerPage(playerDashboardPage);}
 function setPlayerPage(page){playerDashboardPage=page;[['player-summary',page==='stats'],['player-performance',page==='stats'],['player-report',page==='reports'],['player-message-box',page==='message']].forEach(([id,visible])=>{if(el(id))el(id).hidden=!visible;});el('player-stats').closest('section').hidden=page!=='stats';if(el('season-controls'))el('season-controls').hidden=false;el('player-nav').querySelectorAll('button').forEach(b=>{b.classList.toggle('active',b.dataset.playerPage===page);b.setAttribute('aria-pressed',String(b.dataset.playerPage===page));});if(page==='message')el('player-message-box').querySelector('textarea').focus();}
 
-function positionGroup(p){var k=String(p.position||'').trim().toLocaleUpperCase('tr-TR').replace(/Ğ/g,'G');if(k==='DOS'||k==='OOS')return 'OS';return k;}
+function positionGroup(p){var k=String(p.position||'').trim().toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s._-]+/g,'');if(['DOS','OOS','SGK','SLK','SAGKANAT','SOLKANAT'].includes(k))return 'OS';return k;}
 function pinnedPlayer(p){return String(p.full_name||'').trim().toLocaleUpperCase('tr-TR')==='RAHMAN İSMAİL BENEK';}
 function positionOrder(a,b){var pin=Number(pinnedPlayer(b))-Number(pinnedPlayer(a));if(pin)return pin;var groups=['GK','STP','SGB','SLB','OS','SGK','SLK','F'];var ia=groups.indexOf(positionGroup(a)),ib=groups.indexOf(positionGroup(b));if(ia<0)ia=99;if(ib<0)ib=99;var na=a.jersey_number==null||a.jersey_number===''?9999:Number(a.jersey_number),nb=b.jersey_number==null||b.jersey_number===''?9999:Number(b.jersey_number);return ia-ib||na-nb||String(a.full_name).localeCompare(String(b.full_name),'tr');}
 
@@ -179,7 +179,7 @@ import './player-management.js?v=20261016-management-1';
 var beforeLastFiveFormPlayer=loadPlayer;
 loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');var nav=el('player-nav');if(nav&&!nav.querySelector('[data-player-page=form_graph]')){var graphButton=document.createElement('button');graphButton.type='button';graphButton.dataset.playerPage='form_graph';graphButton.className='form-launch';graphButton.textContent='FORM GRAFİĞİ';graphButton.setAttribute('aria-pressed','false');graphButton.onclick=()=>setPlayerPage('form_graph');var statsButton=nav.querySelector('[data-player-page=stats]');if(statsButton)statsButton.after(graphButton);else nav.appendChild(graphButton);}await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='form_graph');};
 var beforeLastFiveFormPage=setPlayerPage;setPlayerPage=function(page){beforeLastFiveFormPage(page);window.MKSK_SHOW_PLAYER_FORM?.(page==='form_graph');};
-import './player-form.js?v=20261016-season-summary-1';
+import './player-form.js?v=20261026-position-score-2';
 
 
 // Season overview and automatic player ratings: pending grades are excluded.
@@ -615,6 +615,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-club
 function hideLegacyEntryLinks(){document.querySelectorAll('#dashboard-nav [data-club-tool="match"],#dashboard-nav [data-page="bulk_statistics"]').forEach(b=>b.hidden=true);}
 var quickStaffApply=staffApply;staffApply=function(){quickStaffApply();hideLegacyEntryLinks();quickEntryApp?.setup();};
 var quickInstallBulk=installBulkStats;installBulkStats=function(){quickInstallBulk();hideLegacyEntryLinks();};
+var legacyMetadataSave=savePlayer;savePlayer=async function(e){e.preventDefault();var f=e.target,msg=f.querySelector('.save-message');try{var latest=await supabase.from('player_season_stats').select('*').eq('player_id',f.dataset.id).eq('season',selectedSeason).maybeSingle();if(latest.error)throw latest.error;Object.keys(statLabels).forEach(k=>{var input=f.querySelector('[name="'+k+'"]');if(input)input.value=latest.data?.[k]??0;});return await legacyMetadataSave(e);}catch(error){if(msg)msg.textContent='Kaydedilemedi: '+error.message;return false;}};
 // Single-purpose screens: late metadata refreshes must not reopen unrelated cards.
 function normalizeRosterSearch(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').trim();}
 function rosterScreenContext(){if(entryMode)return 'entry';var tools=el('club-tools-panel');return tools&&!tools.hidden?'tools':dashboardPage;}

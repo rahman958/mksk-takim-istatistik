@@ -10,14 +10,14 @@ export const rosterColumns = [
   ['performance_label','Performans durumu',270]
 ];
 export function rosterPosition(p) {
-  return String(p.position||'').trim().toLocaleUpperCase('tr-TR').replace(/Ğ/g,'G');
+  return String(p.position||'').trim().toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s._-]+/g,'');
 }
 export function rosterGroup(p) {
   const k=rosterPosition(p);
   if(k==='GK')return 'KALECİLER';
   if(['STP','SGB','SLB'].includes(k))return 'SAVUNMA';
-  if(['OS','DOS','OOS'].includes(k))return 'ORTA SAHA';
-  if(['F','SGK','SLK'].includes(k))return 'FORVETLER';
+  if(['OS','DOS','OOS','SGK','SLK','SAGKANAT','SOLKANAT'].includes(k))return 'ORTA SAHA';
+  if(k==='F')return 'FORVETLER';
   return k?'DİĞER MEVKİLER':'MEVKİ BELİRTİLMEDİ';
 }
 const groupOrder=['KALECİLER','SAVUNMA','ORTA SAHA','FORVETLER','DİĞER MEVKİLER','MEVKİ BELİRTİLMEDİ'];
