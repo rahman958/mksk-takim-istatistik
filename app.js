@@ -154,7 +154,7 @@ start();
 
 import './navigation.js?v=20261016-back-2';
 
-import './club-leaves.js?v=20261024-mobile-roster-1';
+import './club-leaves.js?v=20261030-leave-dark-fix-2';
 
 // Admin-only read-only player preview. Authentication and database roles stay unchanged.
 window.MKSK_OPEN_PLAYER_PREVIEW=async function(id){
