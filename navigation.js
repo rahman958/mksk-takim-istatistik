@@ -24,3 +24,22 @@ document.querySelectorAll('.club-backbar').forEach(b=>b.remove());
 `;document.head.appendChild(style);const bars=new Map();let ticket=0;function openSection(nav,source){const root=nav.closest('#admin-view,#player-view');if(!root||!nav.getClientRects().length)return;let bar=bars.get(nav);if(!bar||!bar.isConnected){bar=document.createElement('div');bar.className='club-section-return';bar.innerHTML='<button type="button" aria-label="Bölümler menüsüne geri dön">GERİ</button><span></span>';root.appendChild(bar);bars.set(nav,bar);new MutationObserver(()=>{if(bar.isConnected&&root.lastElementChild!==bar)root.appendChild(bar);}).observe(root,{childList:true});bar.querySelector('button').addEventListener('click',()=>{ticket++;bar.hidden=true;nav.scrollIntoView({block:'start',behavior:'auto'});const target=bar._source;if(target&&target.isConnected&&target.getClientRects().length)target.focus({preventScroll:true});});}bar._source=source;bar.querySelector('span').textContent=source.textContent.trim().toLocaleUpperCase('tr-TR');bar.hidden=false;if(root.lastElementChild!==bar)root.appendChild(bar);}
 document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;const nav=button.closest('#dashboard-nav,#player-nav');if(!nav)return;const current=++ticket;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(current===ticket&&!document.querySelector('dialog[open]'))openSection(nav,button);}));},true);
 })();
+
+
+// When a section tab is selected, bring that section into view automatically.
+(()=>{if(window.__mkskAutoSectionScroll)return;window.__mkskAutoSectionScroll=true;
+const adminTargets={roster:'roster-list',statistics:'share-actions',messages:'admin-inbox',visits:'visit-panel',settings:'season-controls',penalties:'admin-penalties',jerseys:'jersey-panel',player_info:'player-info-panel'};
+const playerTargets={stats:'player-stat-order',reports:'player-report',message:'player-message-box',penalties:'player-penalties',form_graph:'player-form-graph',self_growth:'player-self-growth',my_lineup:'player-my-lineup'};
+function visible(el){return !!(el&&el.isConnected&&!el.hidden&&el.getClientRects().length);}
+document.addEventListener('click',event=>{const button=event.target.closest('#dashboard-nav button[data-page],#player-nav button[data-player-page]');if(!button)return;
+const isPlayer=button.hasAttribute('data-player-page'),key=isPlayer?button.dataset.playerPage:button.dataset.page;
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+const root=document.getElementById(isPlayer?'player-view':'admin-view');if(!root)return;
+let target=root.querySelector('#'+(isPlayer?playerTargets[key]:adminTargets[key]));
+if(!visible(target)){
+const nav=root.querySelector(isPlayer?'#player-nav':'#dashboard-nav');
+target=Array.from(root.querySelectorAll('section,article,.card,[id]')).find(node=>visible(node)&&(!nav||node.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_PRECEDING));
+}
+if(target&&visible(target)){target.style.scrollMarginTop='14px';target.scrollIntoView({behavior:'smooth',block:'start'});}
+}));});
+})();
