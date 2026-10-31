@@ -183,7 +183,7 @@ import './player-management.js?v=20261016-management-1';
 var beforeLastFiveFormPlayer=loadPlayer;
 loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');var nav=el('player-nav');if(nav&&!nav.querySelector('[data-player-page=form_graph]')){var graphButton=document.createElement('button');graphButton.type='button';graphButton.dataset.playerPage='form_graph';graphButton.className='form-launch';graphButton.textContent='MAÇ KARTLARIM / FORM GRAFİĞİ';graphButton.setAttribute('aria-pressed','false');graphButton.onclick=()=>setPlayerPage('form_graph');var statsButton=nav.querySelector('[data-player-page=stats]');if(statsButton)statsButton.after(graphButton);else nav.appendChild(graphButton);}await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='form_graph');};
 var beforeLastFiveFormPage=setPlayerPage;setPlayerPage=function(page){beforeLastFiveFormPage(page);window.MKSK_SHOW_PLAYER_FORM?.(page==='form_graph');};
-import './player-form.js?v=20261026-position-score-2';
+import './player-form.js?v=20261031-match-status-1';
 
 
 // Season overview and automatic player ratings: pending grades are excluded.
