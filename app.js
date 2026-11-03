@@ -733,3 +733,79 @@ setInterval(()=>{if(!document.hidden&&ownLeavePlayer&&!el('player-view')?.classL
 var rosterChromeFrame=0;new MutationObserver(()=>{if(rosterChromeFrame)return;rosterChromeFrame=requestAnimationFrame(()=>{rosterChromeFrame=0;syncRosterChrome();});}).observe(document.body,{childList:true,subtree:true});
 (function(){var s=document.createElement('style');s.textContent='body:not([data-admin-context="hub_home"]) #birthday-notice{display:none!important}body:not([data-admin-context="roster"]) #add-player-area{display:none!important}body:not([data-admin-context="roster"]):not([data-admin-context="statistics"]) #roster-filters{display:none!important}body[data-admin-context="entry"] #club-search-launch,body[data-admin-context="tools"] #club-search-launch{display:none!important}#player-info-panel .birthday-list{display:none!important}#club-search-launch>button:not(.roster-search-launch),#club-search-launch>p{display:none!important}.roster-search-label{display:block;padding:12px;font-weight:700}.roster-search-label input{display:block;width:100%;font-size:16px!important;margin-top:8px}#player-view .leave-nav,#player-view .leave-alert,#player-view .leave-panel{display:none!important}body:not([data-player-context="hub_profile"]) #player-own-leave{display:none!important}.player-own-leave{border-left:5px solid #397588;background:#e5f2f5;color:#193f51;padding:18px;margin:14px 0}.player-own-leave h3,.player-own-leave p,.player-own-leave strong{color:inherit!important;-webkit-text-fill-color:currentColor!important}.player-own-leave p{line-height:1.6;overflow-wrap:break-word}.mobile-roster-preview{width:min(94vw,1200px);max-height:90dvh;overflow:auto;border:0;border-radius:16px;padding:18px}.mobile-roster-preview img{display:block;width:100%;height:auto;margin:16px 0}.mobile-roster-actions{display:flex;gap:10px;flex-wrap:wrap}.mobile-roster-actions a,.mobile-roster-actions button,.full-roster-image{min-height:44px;padding:12px;box-sizing:border-box}html[data-theme=dark] .player-own-leave{background:#173a46;color:#effaff;border-color:#77afbf}html[data-theme=dark] .mobile-roster-preview{background:#192a40;color:#eff5ff}html[data-theme=dark] .mobile-roster-preview p,html[data-theme=dark] .mobile-roster-preview [role=status]{color:#eff5ff}';document.head.appendChild(s);})();
 syncRosterChrome();
+
+
+/* Manual e-mail notification center. Delivery is server-side; no key is exposed to the browser. */
+(() => {
+  let emailPanelBusy = false;
+  const emailSafe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const emailAllowed = () => typeof staffCan === 'function' && staffCan('notifications');
+
+  async function drawEmailHistory(holder) {
+    const history = holder.querySelector('.club-email-history');
+    if (!history) return;
+    history.innerHTML = '<p>GEÇMİŞ YÜKLENİYOR…</p>';
+    try {
+      const result = await supabase.rpc('club_notification_history', { p_limit: 20 });
+      if (result.error) throw result.error;
+      const rows = Array.isArray(result.data) ? result.data : [];
+      history.innerHTML = rows.length
+        ? rows.map(row => '<article class="club-email-row"><strong>'+emailSafe(row.subject)+'</strong><span>'+emailSafe(row.status === 'sent' ? 'GÖNDERİLDİ' : row.status === 'failed' ? 'GÖNDERİLEMEDİ' : 'HAZIRLANIYOR')+' · '+Number(row.recipient_count || 0)+' KİŞİ</span><small>'+emailSafe(new Date(row.created_at).toLocaleString('tr-TR'))+' · '+emailSafe(row.sender_name)+'</small>'+(row.error_message ? '<em>'+emailSafe(row.error_message)+'</em>' : '')+'</article>').join('')
+        : '<p>HENÜZ E-POSTA BİLDİRİMİ YOK.</p>';
+    } catch (err) {
+      history.innerHTML = '<p role="alert">GEÇMİŞ AÇILAMADI: '+emailSafe(err.message)+'</p>';
+    }
+  }
+
+  async function installEmailPanel() {
+    if (emailPanelBusy || !emailAllowed()) return;
+    const host = el('admin-inbox');
+    if (!host || host.querySelector('.club-email-notifications')) return;
+    emailPanelBusy = true;
+    try {
+      const box = document.createElement('details');
+      box.className = 'club-email-notifications';
+      box.innerHTML = '<summary>✉️ E-POSTA BİLDİRİMİ GÖNDER</summary><div class="club-email-inner"><p><strong>SADECE SEN GÖNDER DEDİĞİNDE GİDER.</strong> Aktif ve uygulamaya e-posta ile bağlı oyunculara kulüp duyurusu yollanır. E-posta adresleri ekranda görünmez.</p><form><label>BAŞLIK<input name="subject" maxlength="160" required placeholder="ÖRN. 5. HAFTA MAÇ BİLGİSİ"></label><label>MESAJ<textarea name="body" maxlength="4000" rows="5" required placeholder="Oyunculara gönderilecek açıklama"></textarea></label><button type="submit">✉️ BİLDİRİMİ GÖNDER</button><p role="status"></p></form><div class="club-email-history"></div></div>';
+      host.querySelector('.broadcast-box')?.after(box) || host.appendChild(box);
+      const form = box.querySelector('form');
+      const button = form.querySelector('button');
+      const status = form.querySelector('[role=status]');
+      let requestId = crypto.randomUUID();
+      box.addEventListener('toggle', () => { if (box.open) drawEmailHistory(box); });
+      form.onsubmit = async event => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const subject = form.elements.subject.value.trim();
+        const body = form.elements.body.value.trim();
+        if (!confirm('Bu duyuru, e-posta bağlı aktif oyunculara gönderilecek. Başlık: '+subject+' — Göndermek istiyor musun?')) return;
+        button.disabled = true;
+        status.textContent = 'GÖNDERİLİYOR…';
+        try {
+          const sent = await supabase.functions.invoke('send-club-notification', { body: { subject, body, requestId } });
+          if (sent.error) throw sent.error;
+          if (!sent.data?.ok) throw new Error(sent.data?.error || 'E-posta gönderilemedi.');
+          status.textContent = Number(sent.data.count || 0)+' OYUNCUYA E-POSTA GÖNDERİLDİ.';
+          form.reset();
+          requestId = crypto.randomUUID();
+          await drawEmailHistory(box);
+        } catch (err) {
+          status.textContent = 'GÖNDERİLEMEDİ: '+(err?.message || 'Bilinmeyen hata');
+        } finally {
+          button.disabled = false;
+        }
+      };
+    } finally {
+      emailPanelBusy = false;
+    }
+  }
+
+  const previousMessages = cmMessages;
+  cmMessages = async function(admin) {
+    await previousMessages(admin);
+    if (admin) await installEmailPanel();
+  };
+
+  const css = document.createElement('style');
+  css.textContent = '.club-email-notifications{margin:14px 0;border:2px solid #508caf;border-radius:16px;background:linear-gradient(135deg,#e9f4ff,#e6ecff);color:#173250;overflow:hidden}.club-email-notifications summary{cursor:pointer;padding:16px;font-weight:900;color:#173250;background:linear-gradient(110deg,#2d6f91,#3b629e);color:#fff}.club-email-inner{padding:16px}.club-email-inner p{line-height:1.55}.club-email-inner label{display:block;margin:14px 0;font-size:12px;font-weight:800}.club-email-inner input,.club-email-inner textarea{display:block;box-sizing:border-box;width:100%;margin-top:7px;padding:12px;border:1px solid #6d98bd;border-radius:10px;background:#fff;color:#173250;font:inherit}.club-email-inner textarea{resize:vertical;min-height:110px}.club-email-inner button{width:100%;padding:14px;border:0;border-radius:11px;background:linear-gradient(120deg,#1b6f85,#415ba8);color:#fff;font-weight:900;cursor:pointer}.club-email-history{margin-top:18px;border-top:1px solid #92b4cc;padding-top:12px}.club-email-row{display:grid;gap:5px;padding:12px;margin:8px 0;border:1px solid #aac2d4;border-radius:10px;background:#f8fcff}.club-email-row strong{font-size:14px}.club-email-row span{font-weight:800;color:#245e7a;font-size:12px}.club-email-row small{color:#466477;font-size:11px}.club-email-row em{font-size:11px;color:#8d3854;font-style:normal}html[data-theme=dark] .club-email-notifications{background:linear-gradient(135deg,#172c42,#222646);border-color:#548faf;color:#edf6ff}html[data-theme=dark] .club-email-notifications summary{background:linear-gradient(110deg,#17657e,#414f9a);color:#fff}html[data-theme=dark] .club-email-inner input,html[data-theme=dark] .club-email-inner textarea{background:#0f2238;color:#f3f7ff;border-color:#729bbb}html[data-theme=dark] .club-email-history{border-color:#54718f}html[data-theme=dark] .club-email-row{background:#132940;border-color:#4b7491;color:#f4f8ff}html[data-theme=dark] .club-email-row span{color:#9edaf2}html[data-theme=dark] .club-email-row small{color:#c3d4e0}html[data-theme=dark] .club-email-row em{color:#ffb8c5}';
+  document.head.appendChild(css);
+})();
