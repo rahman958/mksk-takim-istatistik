@@ -769,3 +769,48 @@ syncRosterChrome();
   css.textContent = '.club-email-notifications{margin:14px 0;border:2px solid #508caf;border-radius:16px;background:linear-gradient(135deg,#e9f4ff,#e6ecff);color:#173250;overflow:hidden}.club-email-notifications summary{cursor:pointer;padding:16px;font-weight:900;background:linear-gradient(110deg,#2d6f91,#3b629e);color:#fff}.club-email-inner{padding:16px}.club-email-inner p{line-height:1.55}.club-email-inner label{display:block;margin:14px 0;font-size:12px;font-weight:800}.club-email-inner input,.club-email-inner textarea{display:block;box-sizing:border-box;width:100%;margin-top:7px;padding:12px;border:1px solid #6d98bd;border-radius:10px;background:#fff;color:#173250;font:inherit}.club-email-inner textarea{resize:vertical;min-height:110px}.club-email-inner button{width:100%;padding:14px;border:0;border-radius:11px;background:linear-gradient(120deg,#1b6f85,#415ba8);color:#fff;font-weight:900;cursor:pointer}.club-email-history{margin-top:18px;border-top:1px solid #92b4cc;padding-top:12px}.club-email-row{display:grid;gap:5px;padding:12px;margin:8px 0;border:1px solid #aac2d4;border-radius:10px;background:#f8fcff}.club-email-row strong{font-size:14px}.club-email-row span{font-weight:800;color:#245e7a;font-size:12px}.club-email-row small{color:#466477;font-size:11px}.club-email-row em{font-size:11px;color:#8d3854;font-style:normal}html[data-theme=dark] .club-email-notifications{background:linear-gradient(135deg,#172c42,#222646);border-color:#548faf;color:#edf6ff}html[data-theme=dark] .club-email-notifications summary{background:linear-gradient(110deg,#17657e,#414f9a);color:#fff}html[data-theme=dark] .club-email-inner input,html[data-theme=dark] .club-email-inner textarea{background:#0f2238;color:#f3f7ff;border-color:#729bbb}html[data-theme=dark] .club-email-history{border-color:#54718f}html[data-theme=dark] .club-email-row{background:#132940;border-color:#4b7491;color:#f4f8ff}html[data-theme=dark] .club-email-row span{color:#9edaf2}html[data-theme=dark] .club-email-row small{color:#c3d4e0}html[data-theme=dark] .club-email-row em{color:#ffb8c5}';
   document.head.appendChild(css);
 })();
+
+
+/* Direct menu shortcut for manual club e-mail notifications. */
+(() => {
+  let emailMenuInstalled = false;
+  async function openEmailSenderFromMenu() {
+    if (typeof staffCan !== 'function' || !staffCan('notifications')) {
+      el('admin-message').textContent = 'E-posta gönderme yetkin yok.';
+      return;
+    }
+    setDashboardPage('messages');
+    try {
+      await cmMessages(true);
+      const panel = el('admin-inbox')?.querySelector('.club-email-notifications');
+      if (!panel) throw new Error('E-posta bölümü hazırlanamadı. Sayfayı yenileyip tekrar dene.');
+      panel.open = true;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      panel.querySelector('input[name=subject]')?.focus();
+    } catch (error) {
+      el('admin-message').textContent = 'E-posta bölümü açılamadı: ' + (error?.message || 'Bilinmeyen hata');
+    }
+  }
+  function installEmailMenuShortcut() {
+    const grid = el('simple-admin-menu')?.querySelector('.simple-fast-grid');
+    if (!grid || grid.querySelector('[data-list-action=email-notifications]')) return;
+    if (typeof staffCan !== 'function' || !staffCan('notifications')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.listAction = 'email-notifications';
+    button.className = 'club-email-menu-shortcut';
+    button.innerHTML = '<span><strong>✉️ E-POSTA GÖNDER</strong><small>Oyunculara kulüp duyurusu yolla</small></span><b aria-hidden="true">›</b>';
+    button.onclick = () => { void openEmailSenderFromMenu(); };
+    const messages = grid.querySelector('[data-list-action=messages]');
+    if (messages) messages.after(button); else grid.appendChild(button);
+    emailMenuInstalled = true;
+  }
+  const earlierAdminLoad = loadAdmin;
+  loadAdmin = async function() {
+    await earlierAdminLoad();
+    installEmailMenuShortcut();
+  };
+  const style = document.createElement('style');
+  style.textContent = '.club-email-menu-shortcut{border-color:#3f86a8!important;background:linear-gradient(120deg,#155e78,#39659a)!important;color:#fff!important}.club-email-menu-shortcut strong,.club-email-menu-shortcut small,.club-email-menu-shortcut b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] .club-email-menu-shortcut{border-color:#6baece!important;background:linear-gradient(120deg,#123f56,#30376b)!important}';
+  document.head.appendChild(style);
+})();
