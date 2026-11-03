@@ -344,7 +344,7 @@ var missingAdminBase=loadAdmin;loadAdmin=async function(){await missingAdminBase
 
 // Owner-managed staff permissions and task approval.
 var staffState=null,staffPoll=null,staffBusy=false;
-var staffLabels={roster:'OYUNCU BİLGİLERİ / EKLE-SİL',statistics:'MAÇ İSTATİSTİKLERİ / OYUNCU PUANI',training:'ANTRENMAN VERİLERİ',matches:'MAÇI TOPLU İŞLE / MAÇ KAYITLARI',lineup:'KADRO OLUŞTUR / YAYINLA',penalties:'CEZA / DİSİPLİN',reports:'GELİŞİM HEDEFİ / RAPOR',messages:'OYUNCU MESAJLARI',history:'DEĞİŞİKLİK GEÇMİŞİ',archives:'SEZON ARŞİVİ / ÖDÜLLER',settings:'SEZON / AYARLAR',backup:'YEDEK AL',leaves:'İZİN DÖNEMLERİ',contacts:'YÖNETİM İLETİŞİMİ',visits:'GİRİŞ / SON GÖRÜLME GEÇMİŞİ',preview:'OYUNCU GÖRÜNÜMÜ ÖNİZLEME',links:'KİŞİSEL DAVET BAĞLANTISI OLUŞTURMA'};
+var staffLabels={roster:'OYUNCU BİLGİLERİ / EKLE-SİL',statistics:'MAÇ İSTATİSTİKLERİ / OYUNCU PUANI',training:'ANTRENMAN VERİLERİ',matches:'MAÇI TOPLU İŞLE / MAÇ KAYITLARI',lineup:'KADRO OLUŞTUR / YAYINLA',penalties:'CEZA / DİSİPLİN',reports:'GELİŞİM HEDEFİ / RAPOR',messages:'OYUNCU MESAJLARI',notifications:'E-POSTA BİLDİRİMLERİ GÖNDERME',history:'DEĞİŞİKLİK GEÇMİŞİ',archives:'SEZON ARŞİVİ / ÖDÜLLER',settings:'SEZON / AYARLAR',backup:'YEDEK AL',leaves:'İZİN DÖNEMLERİ',contacts:'YÖNETİM İLETİŞİMİ',visits:'GİRİŞ / SON GÖRÜLME GEÇMİŞİ',preview:'OYUNCU GÖRÜNÜMÜ ÖNİZLEME',links:'KİŞİSEL DAVET BAĞLANTISI OLUŞTURMA'};
 function staffCan(area){return !!staffState&&(staffState.owner||staffState.enabled&&staffState.areas?.[area]);}
 function staffPageAllowed(page){if(!staffState)return false;if(staffState.owner)return true;var ownerOnly=['access','roles','deleted','accounts','invites'];if(ownerOnly.includes(page))return false;var map={bulk_statistics:'statistics',visits:'visits',links:'links',application_links:'links',player_preview:'preview',messages:'messages',matches:'matches',bulk:'matches',bulk_match:'matches',bulk_matches:'matches',match_processing:'matches',lineups:'lineup',penalties:'penalties',history:'history',backup:'backup',season_archive:'archives',season_awards:'archives',team_history:'archives',settings:'settings',leaves:'leaves',contacts:'contacts',contact:'contacts',player_info:'roster',jerseys:'roster',birthdays:'roster',corrections:'statistics',missing_ratings:'statistics'};if(['roster','statistics','staff','comparison','season_cards','global_search'].includes(page))return true;return !!map[page]&&staffCan(map[page]);}
 async function staffRefresh(){var result=await supabase.rpc('club_staff',{p_action:'context'});if(result.error)throw result.error;staffState=result.data;staffApply();return staffState;}
@@ -740,72 +740,32 @@ syncRosterChrome();
   let emailPanelBusy = false;
   const emailSafe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const emailAllowed = () => typeof staffCan === 'function' && staffCan('notifications');
-
   async function drawEmailHistory(holder) {
-    const history = holder.querySelector('.club-email-history');
-    if (!history) return;
+    const history = holder.querySelector('.club-email-history'); if (!history) return;
     history.innerHTML = '<p>GEÇMİŞ YÜKLENİYOR…</p>';
-    try {
-      const result = await supabase.rpc('club_notification_history', { p_limit: 20 });
-      if (result.error) throw result.error;
-      const rows = Array.isArray(result.data) ? result.data : [];
-      history.innerHTML = rows.length
-        ? rows.map(row => '<article class="club-email-row"><strong>'+emailSafe(row.subject)+'</strong><span>'+emailSafe(row.status === 'sent' ? 'GÖNDERİLDİ' : row.status === 'failed' ? 'GÖNDERİLEMEDİ' : 'HAZIRLANIYOR')+' · '+Number(row.recipient_count || 0)+' KİŞİ</span><small>'+emailSafe(new Date(row.created_at).toLocaleString('tr-TR'))+' · '+emailSafe(row.sender_name)+'</small>'+(row.error_message ? '<em>'+emailSafe(row.error_message)+'</em>' : '')+'</article>').join('')
-        : '<p>HENÜZ E-POSTA BİLDİRİMİ YOK.</p>';
-    } catch (err) {
-      history.innerHTML = '<p role="alert">GEÇMİŞ AÇILAMADI: '+emailSafe(err.message)+'</p>';
-    }
+    try { const result = await supabase.rpc('club_notification_history', { p_limit: 20 }); if (result.error) throw result.error; const rows = Array.isArray(result.data) ? result.data : [];
+      history.innerHTML = rows.length ? rows.map(row => '<article class="club-email-row"><strong>'+emailSafe(row.subject)+'</strong><span>'+emailSafe(row.status === 'sent' ? 'GÖNDERİLDİ' : row.status === 'failed' ? 'GÖNDERİLEMEDİ' : 'HAZIRLANIYOR')+' · '+Number(row.recipient_count || 0)+' KİŞİ</span><small>'+emailSafe(new Date(row.created_at).toLocaleString('tr-TR'))+' · '+emailSafe(row.sender_name)+'</small>'+(row.error_message ? '<em>'+emailSafe(row.error_message)+'</em>' : '')+'</article>').join('') : '<p>HENÜZ E-POSTA BİLDİRİMİ YOK.</p>';
+    } catch (err) { history.innerHTML = '<p role="alert">GEÇMİŞ AÇILAMADI: '+emailSafe(err.message)+'</p>'; }
   }
-
   async function installEmailPanel() {
-    if (emailPanelBusy || !emailAllowed()) return;
-    const host = el('admin-inbox');
-    if (!host || host.querySelector('.club-email-notifications')) return;
-    emailPanelBusy = true;
+    if (emailPanelBusy || !emailAllowed()) return; const host = el('admin-inbox'); if (!host || host.querySelector('.club-email-notifications')) return; emailPanelBusy = true;
     try {
-      const box = document.createElement('details');
-      box.className = 'club-email-notifications';
+      const box = document.createElement('details'); box.className = 'club-email-notifications';
       box.innerHTML = '<summary>✉️ E-POSTA BİLDİRİMİ GÖNDER</summary><div class="club-email-inner"><p><strong>SADECE SEN GÖNDER DEDİĞİNDE GİDER.</strong> Aktif ve uygulamaya e-posta ile bağlı oyunculara kulüp duyurusu yollanır. E-posta adresleri ekranda görünmez.</p><form><label>BAŞLIK<input name="subject" maxlength="160" required placeholder="ÖRN. 5. HAFTA MAÇ BİLGİSİ"></label><label>MESAJ<textarea name="body" maxlength="4000" rows="5" required placeholder="Oyunculara gönderilecek açıklama"></textarea></label><button type="submit">✉️ BİLDİRİMİ GÖNDER</button><p role="status"></p></form><div class="club-email-history"></div></div>';
       host.querySelector('.broadcast-box')?.after(box) || host.appendChild(box);
-      const form = box.querySelector('form');
-      const button = form.querySelector('button');
-      const status = form.querySelector('[role=status]');
-      let requestId = crypto.randomUUID();
+      const form = box.querySelector('form'), button = form.querySelector('button'), status = form.querySelector('[role=status]'); let requestId = crypto.randomUUID();
       box.addEventListener('toggle', () => { if (box.open) drawEmailHistory(box); });
-      form.onsubmit = async event => {
-        event.preventDefault();
-        if (!form.reportValidity()) return;
-        const subject = form.elements.subject.value.trim();
-        const body = form.elements.body.value.trim();
+      form.onsubmit = async event => { event.preventDefault(); if (!form.reportValidity()) return; const subject = form.elements.subject.value.trim(), body = form.elements.body.value.trim();
         if (!confirm('Bu duyuru, e-posta bağlı aktif oyunculara gönderilecek. Başlık: '+subject+' — Göndermek istiyor musun?')) return;
-        button.disabled = true;
-        status.textContent = 'GÖNDERİLİYOR…';
-        try {
-          const sent = await supabase.functions.invoke('send-club-notification', { body: { subject, body, requestId } });
-          if (sent.error) throw sent.error;
-          if (!sent.data?.ok) throw new Error(sent.data?.error || 'E-posta gönderilemedi.');
-          status.textContent = Number(sent.data.count || 0)+' OYUNCUYA E-POSTA GÖNDERİLDİ.';
-          form.reset();
-          requestId = crypto.randomUUID();
-          await drawEmailHistory(box);
-        } catch (err) {
-          status.textContent = 'GÖNDERİLEMEDİ: '+(err?.message || 'Bilinmeyen hata');
-        } finally {
-          button.disabled = false;
-        }
+        button.disabled = true; status.textContent = 'GÖNDERİLİYOR…';
+        try { const sent = await supabase.functions.invoke('send-club-notification', { body: { subject, body, requestId } }); if (sent.error) throw sent.error; if (!sent.data?.ok) throw new Error(sent.data?.error || 'E-posta gönderilemedi.');
+          status.textContent = Number(sent.data.count || 0)+' OYUNCUYA E-POSTA GÖNDERİLDİ.'; form.reset(); requestId = crypto.randomUUID(); await drawEmailHistory(box);
+        } catch (err) { status.textContent = 'GÖNDERİLEMEDİ: '+(err?.message || 'Bilinmeyen hata'); } finally { button.disabled = false; }
       };
-    } finally {
-      emailPanelBusy = false;
-    }
+    } finally { emailPanelBusy = false; }
   }
-
-  const previousMessages = cmMessages;
-  cmMessages = async function(admin) {
-    await previousMessages(admin);
-    if (admin) await installEmailPanel();
-  };
-
+  const previousMessages = cmMessages; cmMessages = async function(admin) { await previousMessages(admin); if (admin) await installEmailPanel(); };
   const css = document.createElement('style');
-  css.textContent = '.club-email-notifications{margin:14px 0;border:2px solid #508caf;border-radius:16px;background:linear-gradient(135deg,#e9f4ff,#e6ecff);color:#173250;overflow:hidden}.club-email-notifications summary{cursor:pointer;padding:16px;font-weight:900;color:#173250;background:linear-gradient(110deg,#2d6f91,#3b629e);color:#fff}.club-email-inner{padding:16px}.club-email-inner p{line-height:1.55}.club-email-inner label{display:block;margin:14px 0;font-size:12px;font-weight:800}.club-email-inner input,.club-email-inner textarea{display:block;box-sizing:border-box;width:100%;margin-top:7px;padding:12px;border:1px solid #6d98bd;border-radius:10px;background:#fff;color:#173250;font:inherit}.club-email-inner textarea{resize:vertical;min-height:110px}.club-email-inner button{width:100%;padding:14px;border:0;border-radius:11px;background:linear-gradient(120deg,#1b6f85,#415ba8);color:#fff;font-weight:900;cursor:pointer}.club-email-history{margin-top:18px;border-top:1px solid #92b4cc;padding-top:12px}.club-email-row{display:grid;gap:5px;padding:12px;margin:8px 0;border:1px solid #aac2d4;border-radius:10px;background:#f8fcff}.club-email-row strong{font-size:14px}.club-email-row span{font-weight:800;color:#245e7a;font-size:12px}.club-email-row small{color:#466477;font-size:11px}.club-email-row em{font-size:11px;color:#8d3854;font-style:normal}html[data-theme=dark] .club-email-notifications{background:linear-gradient(135deg,#172c42,#222646);border-color:#548faf;color:#edf6ff}html[data-theme=dark] .club-email-notifications summary{background:linear-gradient(110deg,#17657e,#414f9a);color:#fff}html[data-theme=dark] .club-email-inner input,html[data-theme=dark] .club-email-inner textarea{background:#0f2238;color:#f3f7ff;border-color:#729bbb}html[data-theme=dark] .club-email-history{border-color:#54718f}html[data-theme=dark] .club-email-row{background:#132940;border-color:#4b7491;color:#f4f8ff}html[data-theme=dark] .club-email-row span{color:#9edaf2}html[data-theme=dark] .club-email-row small{color:#c3d4e0}html[data-theme=dark] .club-email-row em{color:#ffb8c5}';
+  css.textContent = '.club-email-notifications{margin:14px 0;border:2px solid #508caf;border-radius:16px;background:linear-gradient(135deg,#e9f4ff,#e6ecff);color:#173250;overflow:hidden}.club-email-notifications summary{cursor:pointer;padding:16px;font-weight:900;background:linear-gradient(110deg,#2d6f91,#3b629e);color:#fff}.club-email-inner{padding:16px}.club-email-inner p{line-height:1.55}.club-email-inner label{display:block;margin:14px 0;font-size:12px;font-weight:800}.club-email-inner input,.club-email-inner textarea{display:block;box-sizing:border-box;width:100%;margin-top:7px;padding:12px;border:1px solid #6d98bd;border-radius:10px;background:#fff;color:#173250;font:inherit}.club-email-inner textarea{resize:vertical;min-height:110px}.club-email-inner button{width:100%;padding:14px;border:0;border-radius:11px;background:linear-gradient(120deg,#1b6f85,#415ba8);color:#fff;font-weight:900;cursor:pointer}.club-email-history{margin-top:18px;border-top:1px solid #92b4cc;padding-top:12px}.club-email-row{display:grid;gap:5px;padding:12px;margin:8px 0;border:1px solid #aac2d4;border-radius:10px;background:#f8fcff}.club-email-row strong{font-size:14px}.club-email-row span{font-weight:800;color:#245e7a;font-size:12px}.club-email-row small{color:#466477;font-size:11px}.club-email-row em{font-size:11px;color:#8d3854;font-style:normal}html[data-theme=dark] .club-email-notifications{background:linear-gradient(135deg,#172c42,#222646);border-color:#548faf;color:#edf6ff}html[data-theme=dark] .club-email-notifications summary{background:linear-gradient(110deg,#17657e,#414f9a);color:#fff}html[data-theme=dark] .club-email-inner input,html[data-theme=dark] .club-email-inner textarea{background:#0f2238;color:#f3f7ff;border-color:#729bbb}html[data-theme=dark] .club-email-history{border-color:#54718f}html[data-theme=dark] .club-email-row{background:#132940;border-color:#4b7491;color:#f4f8ff}html[data-theme=dark] .club-email-row span{color:#9edaf2}html[data-theme=dark] .club-email-row small{color:#c3d4e0}html[data-theme=dark] .club-email-row em{color:#ffb8c5}';
   document.head.appendChild(css);
 })();
