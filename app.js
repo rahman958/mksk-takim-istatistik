@@ -994,35 +994,3 @@ syncRosterChrome();
 })();
 
 
-/* Never leave blank cards behind while asynchronous home-menu data is redrawn. */
-(function(){
-  function repairHomeMenu(){
-    var grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid');
-    if(!grid)return;
-    grid.querySelectorAll('button').forEach(function(button){
-      var text=(button.innerText||button.textContent||'').replace(/\s+/g,' ').trim();
-      var hasLabel=!!button.querySelector('strong,small');
-      if((!text||text.length<3)&&!hasLabel)button.remove();
-      else {
-        button.style.removeProperty('visibility');
-        button.style.removeProperty('opacity');
-        button.querySelectorAll('strong,small,span,b').forEach(function(node){
-          node.style.removeProperty('visibility');
-          node.style.removeProperty('opacity');
-        });
-      }
-    });
-  }
-  var lastMarkup='';
-  var repairTimer=setInterval(function(){
-    repairHomeMenu();
-    var grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid');
-    if(!grid)return;
-    var markup=grid.innerHTML;
-    if(markup!==lastMarkup){lastMarkup=markup;setTimeout(repairHomeMenu,60);}
-  },350);
-  setTimeout(repairHomeMenu,100);
-  var style=document.createElement('style');
-  style.textContent='.simple-fast-grid button>span{display:grid!important;gap:4px!important;min-width:0!important}.simple-fast-grid button>span>strong{display:block!important;visibility:visible!important;opacity:1!important;color:#1b3150!important;-webkit-text-fill-color:#1b3150!important}.simple-fast-grid button>span>small{display:block!important;visibility:visible!important;opacity:1!important;color:#425a78!important;-webkit-text-fill-color:#425a78!important}html[data-theme=dark] .simple-fast-grid button>span>strong{color:#f4f7ff!important;-webkit-text-fill-color:#f4f7ff!important}html[data-theme=dark] .simple-fast-grid button>span>small{color:#cbd8ed!important;-webkit-text-fill-color:#cbd8ed!important}.simple-fast-grid button:has(>span:empty){display:none!important}';
-  document.head.appendChild(style);
-})();
