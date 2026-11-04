@@ -816,7 +816,8 @@ syncRosterChrome();
   function removeRetiredYellowControls() {
     document.querySelectorAll('#simple-admin-menu button,#simple-admin-menu a,#dashboard-nav button,#dashboard-nav a').forEach(node => {
       const label = (node.textContent || '').trim().replace(/\s+/g,' ');
-      if (hiddenLegacy.has(label)) node.remove();
+      const retired = [...hiddenLegacy].some(title => label.startsWith(title));
+      if (retired && !node.classList.contains('stable-menu-card') && !node.dataset.listAction) node.remove();
     });
     document.querySelectorAll('.list-admin-access,.primary-shortcut,.legacy-utility-strip,.admin-utility-strip').forEach(node => node.remove());
   }
