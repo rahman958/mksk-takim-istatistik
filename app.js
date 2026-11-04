@@ -963,11 +963,12 @@ syncRosterChrome();
     var d=el('club-email-menu-dialog');
     if(!d){d=document.createElement('dialog');d.id='club-email-menu-dialog';d.className='club-email-menu-dialog';document.body.appendChild(d);}
     d.innerHTML='<header><h2>✉️ E-POSTA BİLDİRİMİ</h2><button type="button">KAPAT ×</button></header><p>Bu bildirim yalnız sen gönder dediğinde gider.</p>';
+    panel.hidden=false;
     d.appendChild(panel);
     panel.open=true;
     panel.querySelector('summary').hidden=true;
     d.querySelector('header button').onclick=()=>d.close();
-    d.onclose=()=>{panel.querySelector('summary').hidden=false;el('admin-inbox')?.appendChild(panel);};
+    d.onclose=()=>{panel.querySelector('summary').hidden=false;panel.hidden=true;el('admin-inbox')?.appendChild(panel);};
     d.showModal();
   }
   var menuCatalogBase=simpleCatalog;
@@ -983,7 +984,7 @@ syncRosterChrome();
   var onlyMenuMessages=cmMessages;
   cmMessages=async function(admin){
     await onlyMenuMessages(admin);
-    if(admin)el('admin-inbox')?.querySelector('.club-email-notifications')?.remove();
+    if(admin){var emailBox=el('admin-inbox')?.querySelector('.club-email-notifications');if(emailBox)emailBox.hidden=true;}
   };
   var onlyMenuShell=simpleAdminShell;
   simpleAdminShell=function(){onlyMenuShell();document.querySelectorAll('[data-list-action=club-email]').forEach(function(b){b.remove();});};
