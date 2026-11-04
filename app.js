@@ -855,7 +855,7 @@ syncRosterChrome();
     const grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid');if(!grid)return;
     removeWrongUtilities();
     if(canSearchPlayers()&&!grid.querySelector('[data-list-action=player-search]')){
-      grid.prepend(menuButton('player-search','OYUNCU ARA / FİLTRELE','İsim, forma no veya mevkiye göre bul',openPlayerSearch));
+      grid.prepend(menuButton('player-search','🔎 OYUNCU ARA / FİLTRELE','İsim, forma no veya mevkiye göre bul',openPlayerSearch));
     }
     if(canMatchCards()&&!grid.querySelector('[data-list-action=match-cards]')){
       const card=menuButton('match-cards','🏟️ MAÇ KARTLARI','Maç ekle, oyuncu işle, kartı gör veya sil',()=>matchCards.open());
