@@ -923,3 +923,30 @@ syncRosterChrome();
   style.textContent='html[data-theme=dark] #staff-panel,html[data-theme=dark] .player-hub-dialog{background:#17243a!important;color:#f4f7ff!important}html[data-theme=dark] #staff-panel :is(h1,h2,h3,h4,h5,p,label,strong,small,span,li,legend),html[data-theme=dark] .player-hub-dialog :is(h1,h2,h3,h4,h5,p,label,strong,small,span,li,legend){color:#f4f7ff!important;-webkit-text-fill-color:#f4f7ff!important;opacity:1!important}html[data-theme=dark] #staff-panel :is(input,select,textarea),html[data-theme=dark] .player-hub-dialog :is(input,select,textarea){background:#0e1b2f!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#91a9cd!important}html[data-theme=dark] #staff-panel option,html[data-theme=dark] .player-hub-dialog option{background:#17243a!important;color:#fff!important}html[data-theme=dark] #staff-panel .card,html[data-theme=dark] #staff-panel article,html[data-theme=dark] .player-hub-dialog section{background:#202e47!important;border-color:#718cb3!important}';
   document.head.appendChild(style);
 })();
+
+
+/* Keep the opened screen in view and re-apply dark manager contrast after async redraws. */
+(function(){
+  function keepOpenedScreenVisible(){
+    requestAnimationFrame(function(){requestAnimationFrame(function(){window.scrollTo({top:0,left:0,behavior:'auto'});});});
+  }
+  document.addEventListener('click',function(event){
+    var target=event.target.closest('#easy-bottom button,.simple-fast-grid button,.simple-menu-card,[data-list-action],#dashboard-nav button,.simple-catalog button,.player-match-cards,.easy-add-player');
+    if(target)setTimeout(keepOpenedScreenVisible,80);
+  },true);
+  function forceDarkManagerReadability(){
+    if(document.documentElement.dataset.theme!=='dark')return;
+    document.querySelectorAll('#staff-panel,.player-hub-dialog').forEach(function(panel){
+      panel.classList.add('dark-readable-manager');
+      panel.querySelectorAll('h1,h2,h3,h4,h5,p,label,strong,small,span,li,legend,option').forEach(function(node){
+        node.style.setProperty('color','#f4f7ff','important');
+        node.style.setProperty('-webkit-text-fill-color','#f4f7ff','important');
+        node.style.setProperty('opacity','1','important');
+      });
+    });
+  }
+  var observer=new MutationObserver(function(){forceDarkManagerReadability();});
+  observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['data-theme','class']});
+  setInterval(forceDarkManagerReadability,800);
+  forceDarkManagerReadability();
+})();
