@@ -921,3 +921,18 @@ document.addEventListener('click', event => {
   if (!event.target.closest('#simple-admin-menu button,#dashboard-nav button,#easy-bottom button,#player-nav button')) return;
   requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({top:0,left:0,behavior:'auto'})));
 }, true);
+
+
+/* Keep the opened section on screen after navigation and late rendering. */
+(() => {
+  function focusOpenSection() {
+    const active = ['admin-view','player-view'].map(el).find(node => node && !node.classList.contains('hidden'));
+    if (!active) return;
+    const anchor = active.querySelector('h1,h2,.section-title,.admin-title,.player-title') || active;
+    anchor.scrollIntoView({block:'start',inline:'nearest',behavior:'auto'});
+  }
+  document.addEventListener('click', event => {
+    if (!event.target.closest('#simple-admin-menu button,#dashboard-nav button,#easy-bottom button,#player-nav button,.stable-menu-card')) return;
+    [0,80,260].forEach(delay => setTimeout(focusOpenSection,delay));
+  }, true);
+})();
