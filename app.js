@@ -790,7 +790,6 @@ syncRosterChrome();
     });
   }
   async function openEmailSender() {
-    el('personal-dialog')?.remove();
     const popup = dialog('E-POSTA BİLDİRİMİ GÖNDER', '<p>Bu duyuru yalnızca <strong>GÖNDER</strong> dediğinde, e-posta bağlı aktif oyunculara gider.</p><form class="direct-email-form"><label>BAŞLIK<input name="subject" maxlength="160" required placeholder="ÖRN. 5. HAFTA MAÇ BİLGİSİ"></label><label>MESAJ<textarea name="body" maxlength="4000" rows="6" required placeholder="Oyunculara gönderilecek açıklama"></textarea></label><button type="submit">✉️ BİLDİRİMİ GÖNDER</button><p role="status"></p></form>');
     if (!popup) return;
     const form = popup.querySelector('form'), button = form.querySelector('button'), status = form.querySelector('[role=status]');
@@ -808,36 +807,6 @@ syncRosterChrome();
       } catch (error) { status.textContent = 'GÖNDERİLEMEDİ: '+(error?.message || 'Bilinmeyen hata'); }
       finally { button.disabled = false; }
     };
-  }
-  async function openHistory() {
-    el('personal-dialog')?.remove();
-    const popup = dialog('DEĞİŞİKLİK GEÇMİŞİ', '<p>Eski ve yeni tüm kayıtlar burada görünür.</p><button type="button" class="history-refresh">YENİLE</button><div class="history-rows" aria-live="polite">YÜKLENİYOR…</div>');
-    if (!popup) return;
-    const rows = popup.querySelector('.history-rows');
-    async function load() {
-      rows.textContent='YÜKLENİYOR…';
-      const result = await supabase.rpc('club_read_change_history',{p_limit:200});
-      if (result.error) { rows.textContent='GEÇMİŞ YÜKLENEMEDİ: '+result.error.message; return; }
-      const list=Array.isArray(result.data)?result.data:[];
-      rows.innerHTML=list.map(item => '<article class="stable-history-row"><strong>'+safe(item.player_name||'KULÜP KAYDI')+'</strong><small>'+safe(new Date(item.created_at).toLocaleString('tr-TR'))+' · '+safe(item.actor_name||'YÖNETİCİ')+'</small><p>'+safe((item.table_name||'KAYIT')+' · '+(item.operation||'GÜNCELLEME'))+(item.changed_fields?.length?' · '+safe(item.changed_fields.join(', ')): '')+'</p></article>').join('') || '<p>HENÜZ KAYIT YOK.</p>';
-    }
-    popup.querySelector('.history-refresh').onclick=()=>void load();
-    await load();
-  }
-  async function openBackup() {
-    el('personal-dialog')?.remove();
-    const popup = dialog('YEDEK AL', '<p>Kaydedilmiş sezon arşivleri ve mevcut sezon özeti.</p><button type="button" class="backup-refresh">YENİLE</button><div class="backup-rows" aria-live="polite">YÜKLENİYOR…</div>');
-    if (!popup) return;
-    const rows=popup.querySelector('.backup-rows');
-    async function load() {
-      rows.textContent='YÜKLENİYOR…';
-      const result=await supabase.rpc('club_read_season_archive');
-      if (result.error) { rows.textContent='YEDEKLER YÜKLENEMEDİ: '+result.error.message; return; }
-      const list=result.data?.seasons||[];
-      rows.innerHTML=list.map(item=>'<article class="stable-history-row"><strong>'+safe(item.season)+' · '+(item.archived?'ARŞİV YEDEĞİ':'MEVCUT SEZON')+'</strong><small>'+safe(item.source_note||'KULÜP KAYDI')+'</small></article>').join('')||'<p>KAYITLI YEDEK YOK.</p>';
-    }
-    popup.querySelector('.backup-refresh').onclick=()=>void load();
-    await load();
   }
   function card(key, icon, title, note, action) {
     const b = document.createElement('button');
@@ -882,10 +851,10 @@ syncRosterChrome();
       if (messages) messages.after(c); else grid.appendChild(c);
     }
     if (historyAllowed() && !grid.querySelector('[data-list-action=history]')) {
-      grid.appendChild(card('history','🕘','DEĞİŞİKLİK GEÇMİŞİ','KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?', openHistory));
+      grid.appendChild(card('history','🕘','DEĞİŞİKLİK GEÇMİŞİ','KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?', () => simpleActivate(simplePick('history'))));
     }
     if (backupAllowed() && !grid.querySelector('[data-list-action=backup]')) {
-      grid.appendChild(card('backup','💾','YEDEK AL','KULÜP VERİLERİNİ DIŞA AKTAR', openBackup));
+      grid.appendChild(card('backup','💾','YEDEK AL','KULÜP VERİLERİNİ DIŞA AKTAR', () => simpleActivate(simplePick('backup'))));
     }
     addAccountButton(shell);
   }
@@ -942,8 +911,6 @@ syncRosterChrome();
     html:not([data-theme=dark]) .stable-menu-card{background:#23436b!important;border-color:#365b88!important}
     html:not([data-theme=dark]) .stable-menu-card strong,html:not([data-theme=dark]) .stable-menu-card small,html:not([data-theme=dark]) .stable-menu-card b{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.22)}
     html:not([data-theme=dark]) .stable-menu-card::before{background:#162e4d!important;color:#fff!important}
-    #simple-admin-menu .stable-menu-card{background:#23436b!important;border-color:#365b88!important}
-    #simple-admin-menu .stable-menu-card strong,#simple-admin-menu .stable-menu-card small,#simple-admin-menu .stable-menu-card b{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.28)!important}
   `;
   document.head.appendChild(contrastStyle);
 })();
