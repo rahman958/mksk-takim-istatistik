@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261026-player-home-3';
 import { initPlayerHub } from './player-hub.js?v=20261026-card-fit-7';
 import { initQuickEntry } from './quick-entry.js?v=20261103-login-fix-1';
+import { matchCards } from './match-cards.js?v=20261104-match-cards-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261027-grouped-sections-1';
 var config=window.MKSK_CONFIG;
@@ -739,7 +740,7 @@ syncRosterChrome();
 (() => {
   let emailPanelBusy = false;
   const emailSafe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const emailAllowed = () => typeof staffCan === 'function' && staffCan('notifications');
+  const emailAllowed = () => typeof staffCan === 'function' && (staffState?.owner || staffCan('notifications'));
   async function drawEmailHistory(holder) {
     const history = holder.querySelector('.club-email-history'); if (!history) return;
     history.innerHTML = '<p>GEÇMİŞ YÜKLENİYOR…</p>';
@@ -775,7 +776,7 @@ syncRosterChrome();
 (() => {
   let emailMenuInstalled = false;
   async function openEmailSenderFromMenu() {
-    if (typeof staffCan !== 'function' || !staffCan('notifications')) {
+    if (typeof staffCan !== 'function' || !(staffState?.owner || staffCan('notifications'))) {
       el('admin-message').textContent = 'E-posta gönderme yetkin yok.';
       return;
     }
@@ -812,5 +813,59 @@ syncRosterChrome();
   };
   const style = document.createElement('style');
   style.textContent = '.club-email-menu-shortcut{border-color:#3f86a8!important;background:linear-gradient(120deg,#155e78,#39659a)!important;color:#fff!important}.club-email-menu-shortcut strong,.club-email-menu-shortcut small,.club-email-menu-shortcut b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] .club-email-menu-shortcut{border-color:#6baece!important;background:linear-gradient(120deg,#123f56,#30376b)!important}';
+  document.head.appendChild(style);
+})();
+
+
+/* Final clean navigation: match cards, player search, separate account access. */
+(() => {
+  const utilityLabels = new Set(['MAÇ KARTLARI','DEĞİŞİKLİK GEÇMİŞİ','YEDEK AL','UYGULAMA LİNKLERİ']);
+  const canMatchCards = () => !!staffState && (staffState.owner || staffCan('matches') || staffCan('statistics'));
+  const canSearchPlayers = () => !!staffState;
+  function openPlayerSearch(){
+    simpleActivate(simplePick('roster'));
+    requestAnimationFrame(() => {
+      const filterBox = el('roster-filters');
+      const details = filterBox?.querySelector('details'); if(details) details.open = true;
+      const input = el('search'); if(input){input.hidden=false; input.scrollIntoView({behavior:'smooth',block:'center'}); input.focus({preventScroll:true});}
+    });
+  }
+  function menuButton(key, title, note, action){
+    const b=document.createElement('button');b.type='button';b.dataset.listAction=key;b.className='clean-nav-'+key;
+    b.innerHTML='<span><strong>'+title+'</strong><small>'+note+'</small></span><b aria-hidden="true">›</b>';
+    b.onclick=()=>{void action();};return b;
+  }
+  function removeWrongUtilities(){
+    document.querySelectorAll('#simple-admin-menu button,#simple-admin-menu a,#dashboard-nav button,#dashboard-nav a').forEach(node=>{
+      const text=(node.textContent||'').trim().replace(/\s+/g,' ');
+      if(utilityLabels.has(text)){node.classList.add('hidden-legacy-utility');}
+    });
+    document.querySelectorAll('.list-admin-access,.primary-shortcut').forEach(node=>node.remove());
+  }
+  function installSeparateAccountAccess(){
+    if(!staffState?.owner)return;
+    let button=el('account-access-shortcut');
+    if(button)return;
+    button=document.createElement('button');button.id='account-access-shortcut';button.type='button';
+    button.innerHTML='<strong>⚙️ HESAP VE YETKİ YÖNETİMİ</strong><small>Yönetici yap, ana yönetici seç ve işlem alanlarını aç/kapat</small>';
+    button.onclick=()=>openManagerAccess();
+    const menu=el('simple-admin-menu'); if(menu)menu.before(button);
+  }
+  function installCleanAdminNavigation(){
+    const grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid');if(!grid)return;
+    removeWrongUtilities();
+    if(canSearchPlayers()&&!grid.querySelector('[data-list-action=player-search]')){
+      grid.prepend(menuButton('player-search','🔎 OYUNCU ARA / FİLTRELE','İsim, forma no veya mevkiye göre bul',openPlayerSearch));
+    }
+    if(canMatchCards()&&!grid.querySelector('[data-list-action=match-cards]')){
+      const card=menuButton('match-cards','🏟️ MAÇ KARTLARI','Maç ekle, oyuncu işle, kartı gör veya sil',()=>matchCards.open());
+      const entry=grid.querySelector('[data-list-action=entry]');if(entry)entry.after(card);else grid.appendChild(card);
+    }
+    installSeparateAccountAccess();
+  }
+  const priorLoadAdmin = loadAdmin;
+  loadAdmin = async function(){await priorLoadAdmin();installCleanAdminNavigation();};
+  const style=document.createElement('style');
+  style.textContent='.hidden-legacy-utility{display:none!important}#account-access-shortcut{display:grid;gap:5px;width:100%;margin:12px 0;padding:15px 16px;text-align:left;border:2px solid #477e9e;border-radius:15px;background:linear-gradient(115deg,#174e67,#34558b);color:#fff;cursor:pointer}#account-access-shortcut strong,#account-access-shortcut small{color:#fff!important;-webkit-text-fill-color:#fff!important}#account-access-shortcut strong{font-size:16px}#account-access-shortcut small{font-size:12px;opacity:.92}.clean-nav-player-search{border-color:#5476ad!important;background:linear-gradient(120deg,#244c7f,#564589)!important;color:#fff!important}.clean-nav-match-cards{border-color:#3f8193!important;background:linear-gradient(120deg,#135c73,#4c518f)!important;color:#fff!important}.clean-nav-player-search strong,.clean-nav-player-search small,.clean-nav-player-search b,.clean-nav-match-cards strong,.clean-nav-match-cards small,.clean-nav-match-cards b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] #account-access-shortcut{background:linear-gradient(115deg,#123b51,#252f63);border-color:#6399ba}';
   document.head.appendChild(style);
 })();
