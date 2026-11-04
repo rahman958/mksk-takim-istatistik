@@ -992,3 +992,37 @@ syncRosterChrome();
   style.textContent='.club-email-menu-dialog{width:min(680px,calc(100vw - 24px));max-height:90dvh;box-sizing:border-box;overflow:auto;border:2px solid #6384ac;border-radius:18px;padding:18px;background:#eef4ff;color:#193452}.club-email-menu-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}.club-email-menu-dialog header button,.menu-email-notification{border:0;border-radius:11px;padding:12px 15px;background:linear-gradient(120deg,#235a76,#57468a);color:#fff;font-weight:900;cursor:pointer}.club-email-menu-dialog .club-email-notifications{margin:12px 0}.menu-email-notification{display:grid;gap:5px;width:100%;text-align:left;margin:12px 0;border:2px solid #6384ac}.menu-email-notification strong,.menu-email-notification small{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] .club-email-menu-dialog{background:#16263e;color:#f4f7ff;border-color:#7998bf}html[data-theme=dark] .club-email-menu-dialog :is(h2,p){color:#f4f7ff!important;-webkit-text-fill-color:#f4f7ff!important}';
   document.head.appendChild(style);
 })();
+
+
+/* Never leave blank cards behind while asynchronous home-menu data is redrawn. */
+(function(){
+  function repairHomeMenu(){
+    var grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid');
+    if(!grid)return;
+    grid.querySelectorAll('button').forEach(function(button){
+      var text=(button.innerText||button.textContent||'').replace(/\s+/g,' ').trim();
+      var hasLabel=!!button.querySelector('strong,small');
+      if((!text||text.length<3)&&!hasLabel)button.remove();
+      else {
+        button.style.removeProperty('visibility');
+        button.style.removeProperty('opacity');
+        button.querySelectorAll('strong,small,span,b').forEach(function(node){
+          node.style.removeProperty('visibility');
+          node.style.removeProperty('opacity');
+        });
+      }
+    });
+  }
+  var lastMarkup='';
+  var repairTimer=setInterval(function(){
+    repairHomeMenu();
+    var grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid');
+    if(!grid)return;
+    var markup=grid.innerHTML;
+    if(markup!==lastMarkup){lastMarkup=markup;setTimeout(repairHomeMenu,60);}
+  },350);
+  setTimeout(repairHomeMenu,100);
+  var style=document.createElement('style');
+  style.textContent='.simple-fast-grid button>span{display:grid!important;gap:4px!important;min-width:0!important}.simple-fast-grid button>span>strong{display:block!important;visibility:visible!important;opacity:1!important;color:#1b3150!important;-webkit-text-fill-color:#1b3150!important}.simple-fast-grid button>span>small{display:block!important;visibility:visible!important;opacity:1!important;color:#425a78!important;-webkit-text-fill-color:#425a78!important}html[data-theme=dark] .simple-fast-grid button>span>strong{color:#f4f7ff!important;-webkit-text-fill-color:#f4f7ff!important}html[data-theme=dark] .simple-fast-grid button>span>small{color:#cbd8ed!important;-webkit-text-fill-color:#cbd8ed!important}.simple-fast-grid button:has(>span:empty){display:none!important}';
+  document.head.appendChild(style);
+})();
