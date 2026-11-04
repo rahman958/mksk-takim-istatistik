@@ -778,6 +778,8 @@ syncRosterChrome();
   const allowed = () => typeof staffCan === 'function' && !!staffState;
   const matchAllowed = () => allowed() && (staffState.owner || staffCan('matches') || staffCan('statistics'));
   const emailAllowed = () => allowed() && (staffState.owner || staffCan('notifications'));
+  const historyAllowed = () => allowed() && (staffState.owner || staffCan('history'));
+  const backupAllowed = () => allowed() && (staffState.owner || staffCan('backup'));
 
   function openPlayerSearch() {
     simpleActivate(simplePick('roster'));
@@ -847,6 +849,12 @@ syncRosterChrome();
       const c = card('email-notifications','✉️','E-POSTA GÖNDER','OYUNCULARA KULÜP DUYURUSU YOLLA', openEmailSender);
       const messages = grid.querySelector('[data-list-action=messages]');
       if (messages) messages.after(c); else grid.appendChild(c);
+    }
+    if (historyAllowed() && !grid.querySelector('[data-list-action=history]')) {
+      grid.appendChild(card('history','🕘','DEĞİŞİKLİK GEÇMİŞİ','KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?', () => simpleActivate(simplePick('history'))));
+    }
+    if (backupAllowed() && !grid.querySelector('[data-list-action=backup]')) {
+      grid.appendChild(card('backup','💾','YEDEK AL','KULÜP VERİLERİNİ DIŞA AKTAR', () => simpleActivate(simplePick('backup'))));
     }
     addAccountButton(shell);
   }
