@@ -950,3 +950,44 @@ syncRosterChrome();
   setInterval(forceDarkManagerReadability,800);
   forceDarkManagerReadability();
 })();
+
+
+/* E-mail notifications live only in the Menu, not inside Messages. */
+(function(){
+  async function openEmailFromMenu(){
+    if(typeof staffCan==='function'&&!(staffState?.owner||staffCan('notifications'))){el('admin-message').textContent='E-posta gönderme yetkin açık değil.';return;}
+    setDashboardPage('messages');
+    await cmMessages(true);
+    var panel=el('admin-inbox')?.querySelector('.club-email-notifications');
+    if(!panel){el('admin-message').textContent='E-posta bölümü hazırlanıyor. Birkaç saniye sonra tekrar dene.';return;}
+    var d=el('club-email-menu-dialog');
+    if(!d){d=document.createElement('dialog');d.id='club-email-menu-dialog';d.className='club-email-menu-dialog';document.body.appendChild(d);}
+    d.innerHTML='<header><h2>✉️ E-POSTA BİLDİRİMİ</h2><button type="button">KAPAT ×</button></header><p>Bu bildirim yalnız sen gönder dediğinde gider.</p>';
+    d.appendChild(panel);
+    panel.open=true;
+    panel.querySelector('summary').hidden=true;
+    d.querySelector('header button').onclick=()=>d.close();
+    d.onclose=()=>{panel.querySelector('summary').hidden=false;el('admin-inbox')?.appendChild(panel);};
+    d.showModal();
+  }
+  var menuCatalogBase=simpleCatalog;
+  simpleCatalog=function(admin,opener){
+    menuCatalogBase(admin,opener);
+    if(!admin||typeof staffCan!=='function'||!(staffState?.owner||staffCan('notifications')))return;
+    var d=el('simple-catalog');if(!d||d.querySelector('.menu-email-notification'))return;
+    var b=document.createElement('button');b.type='button';b.className='menu-email-notification';
+    b.innerHTML='<strong>✉️ E-POSTA BİLDİRİMİ</strong><small>Oyunculara duyuru e-postası gönder</small>';
+    b.onclick=()=>{d.close();void openEmailFromMenu();};
+    d.querySelector('.simple-catalog-count')?.before(b);
+  };
+  var onlyMenuMessages=cmMessages;
+  cmMessages=async function(admin){
+    await onlyMenuMessages(admin);
+    if(admin)el('admin-inbox')?.querySelector('.club-email-notifications')?.remove();
+  };
+  var onlyMenuShell=simpleAdminShell;
+  simpleAdminShell=function(){onlyMenuShell();document.querySelectorAll('[data-list-action=club-email]').forEach(function(b){b.remove();});};
+  var style=document.createElement('style');
+  style.textContent='.club-email-menu-dialog{width:min(680px,calc(100vw - 24px));max-height:90dvh;box-sizing:border-box;overflow:auto;border:2px solid #6384ac;border-radius:18px;padding:18px;background:#eef4ff;color:#193452}.club-email-menu-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}.club-email-menu-dialog header button,.menu-email-notification{border:0;border-radius:11px;padding:12px 15px;background:linear-gradient(120deg,#235a76,#57468a);color:#fff;font-weight:900;cursor:pointer}.club-email-menu-dialog .club-email-notifications{margin:12px 0}.menu-email-notification{display:grid;gap:5px;width:100%;text-align:left;margin:12px 0;border:2px solid #6384ac}.menu-email-notification strong,.menu-email-notification small{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] .club-email-menu-dialog{background:#16263e;color:#f4f7ff;border-color:#7998bf}html[data-theme=dark] .club-email-menu-dialog :is(h2,p){color:#f4f7ff!important;-webkit-text-fill-color:#f4f7ff!important}';
+  document.head.appendChild(style);
+})();
