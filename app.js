@@ -906,6 +906,13 @@ syncRosterChrome();
   const style = document.createElement('style');
   style.textContent = 'html{scroll-behavior:auto!important}';
   document.head.appendChild(style);
+  const contrastStyle = document.createElement('style');
+  contrastStyle.textContent = `
+    html:not([data-theme=dark]) .stable-menu-card{background:#23436b!important;border-color:#365b88!important}
+    html:not([data-theme=dark]) .stable-menu-card strong,html:not([data-theme=dark]) .stable-menu-card small,html:not([data-theme=dark]) .stable-menu-card b{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.22)}
+    html:not([data-theme=dark]) .stable-menu-card::before{background:#162e4d!important;color:#fff!important}
+  `;
+  document.head.appendChild(contrastStyle);
 })();
 
 
