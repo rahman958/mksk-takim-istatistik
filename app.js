@@ -869,3 +869,32 @@ syncRosterChrome();
   style.textContent='.hidden-legacy-utility{display:none!important}#account-access-shortcut{display:grid;gap:5px;width:100%;margin:12px 0;padding:15px 16px;text-align:left;border:2px solid #477e9e;border-radius:15px;background:linear-gradient(115deg,#174e67,#34558b);color:#fff;cursor:pointer}#account-access-shortcut strong,#account-access-shortcut small{color:#fff!important;-webkit-text-fill-color:#fff!important}#account-access-shortcut strong{font-size:16px}#account-access-shortcut small{font-size:12px;opacity:.92}.clean-nav-player-search{border-color:#5476ad!important;background:linear-gradient(120deg,#244c7f,#564589)!important;color:#fff!important}.clean-nav-match-cards{border-color:#3f8193!important;background:linear-gradient(120deg,#135c73,#4c518f)!important;color:#fff!important}.clean-nav-player-search strong,.clean-nav-player-search small,.clean-nav-player-search b,.clean-nav-match-cards strong,.clean-nav-match-cards small,.clean-nav-match-cards b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] #account-access-shortcut{background:linear-gradient(115deg,#123b51,#252f63);border-color:#6399ba}';
   document.head.appendChild(style);
 })();
+
+
+/* Consistent shortcut cards in the main menu. */
+(() => {
+  const can = key => !!staffState && (staffState.owner || staffCan(key));
+  const card = (key,icon,title,note,action) => {
+    const b=document.createElement('button'); b.type='button'; b.className='club-menu-shortcut'; b.dataset.clubShortcut=key;
+    b.innerHTML='<i aria-hidden="true">'+icon+'</i><span><strong>'+title+'</strong><small>'+note+'</small></span><b aria-hidden="true">›</b>';
+    b.onclick=()=>void action(); return b;
+  };
+  const openNative = key => simpleActivate(simplePick(key));
+  const openEmail = () => {
+    openNative('messages');
+    setTimeout(()=>{ const panel=el('admin-inbox')?.querySelector('.club-email-notifications'); if(panel){panel.open=true;panel.scrollIntoView({block:'start',behavior:'auto'});} },160);
+  };
+  const apply = () => {
+    const grid=el('simple-admin-menu')?.querySelector('.simple-fast-grid'); if(!grid) return;
+    const add=(key,icon,title,note,action,afterKey)=>{ if(grid.querySelector('[data-club-shortcut="'+key+'"]'))return; const item=card(key,icon,title,note,action); const after=afterKey&&grid.querySelector('[data-club-shortcut="'+afterKey+'"]'); if(after)after.after(item);else grid.appendChild(item); };
+    if(staffState) add('player-search','⌕','OYUNCU ARA / FİLTRELE','İSİM, FORMA NO VEYA MEVKİYE GÖRE BUL',()=>{openNative('roster');setTimeout(()=>{const input=el('search');if(input){input.hidden=false;input.focus({preventScroll:true});}},80);});
+    if(can('matches')||can('statistics')) add('match-cards','▣','MAÇ KARTLARI','MAÇ EKLE, OYUNCU İŞLE, KARTI GÖR VEYA SİL',()=>matchCards.open(),'player-search');
+    if(can('notifications')) add('email','✉','E-POSTA GÖNDER','OYUNCULARA KULÜP DUYURUSU YOLLA',openEmail,'match-cards');
+    if(can('history')) add('history','◷','DEĞİŞİKLİK GEÇMİŞİ','KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?',()=>openNative('history'),'email');
+    if(can('backup')) add('backup','▣','YEDEK AL','KULÜP VERİLERİNİ DIŞA AKTAR',()=>openNative('backup'),'history');
+  };
+  const prior=loadAdmin;
+  loadAdmin=async function(){await prior.apply(this,arguments);apply();};
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));
+  const s=document.createElement('style'); s.textContent='\n#simple-admin-menu .club-menu-shortcut{display:grid!important;grid-template-columns:34px 1fr auto;align-items:center;gap:11px;width:100%;min-height:68px;padding:13px 15px!important;border:1px solid #54769c!important;border-radius:14px!important;background:linear-gradient(120deg,#25476f,#414f7d)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;text-align:left!important}\n#simple-admin-menu .club-menu-shortcut i{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.14);font-style:normal;font-size:18px;color:#fff!important}\n#simple-admin-menu .club-menu-shortcut span{display:grid;gap:3px}#simple-admin-menu .club-menu-shortcut strong,#simple-admin-menu .club-menu-shortcut small,#simple-admin-menu .club-menu-shortcut b{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 1px #0005}#simple-admin-menu .club-menu-shortcut strong{font-size:15px}#simple-admin-menu .club-menu-shortcut small{font-size:11px;opacity:.94}#simple-admin-menu .club-menu-shortcut b{font-size:25px;font-weight:400}\n';document.head.appendChild(s);
+})();
