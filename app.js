@@ -915,3 +915,11 @@ syncRosterChrome();
   style.textContent='.hidden-legacy-utility{display:none!important}.clean-email-shortcut{border:2px solid #4a7d9b!important;background:linear-gradient(120deg,#1f5871,#534884)!important;color:#fff!important}.clean-email-shortcut strong,.clean-email-shortcut small,.clean-email-shortcut b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] .clean-email-shortcut{border-color:#76a7c0!important;background:linear-gradient(120deg,#123c52,#392d68)!important}';
   document.head.appendChild(style);
 })();
+
+
+/* Ensure manager names and permission text stay legible in dark mode. */
+(function(){
+  var style=document.createElement('style');
+  style.textContent='html[data-theme=dark] #staff-panel,html[data-theme=dark] .player-hub-dialog{background:#17243a!important;color:#f4f7ff!important}html[data-theme=dark] #staff-panel :is(h1,h2,h3,h4,h5,p,label,strong,small,span,li,legend),html[data-theme=dark] .player-hub-dialog :is(h1,h2,h3,h4,h5,p,label,strong,small,span,li,legend){color:#f4f7ff!important;-webkit-text-fill-color:#f4f7ff!important;opacity:1!important}html[data-theme=dark] #staff-panel :is(input,select,textarea),html[data-theme=dark] .player-hub-dialog :is(input,select,textarea){background:#0e1b2f!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#91a9cd!important}html[data-theme=dark] #staff-panel option,html[data-theme=dark] .player-hub-dialog option{background:#17243a!important;color:#fff!important}html[data-theme=dark] #staff-panel .card,html[data-theme=dark] #staff-panel article,html[data-theme=dark] .player-hub-dialog section{background:#202e47!important;border-color:#718cb3!important}';
+  document.head.appendChild(style);
+})();
