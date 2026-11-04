@@ -885,3 +885,16 @@ syncRosterChrome();
   `;
   document.head.appendChild(style);
 })();
+
+
+/* Keep the selected screen in view instead of leaving the user at the bottom. */
+(() => {
+  const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+  const adminPageBase = setDashboardPage;
+  setDashboardPage = function() { const result = adminPageBase.apply(this, arguments); scrollTop(); return result; };
+  const playerPageBase = setPlayerPage;
+  setPlayerPage = function() { const result = playerPageBase.apply(this, arguments); scrollTop(); return result; };
+  const style = document.createElement('style');
+  style.textContent = 'html{scroll-behavior:auto!important}';
+  document.head.appendChild(style);
+})();
