@@ -832,6 +832,9 @@ syncRosterChrome();
     const grid = shell?.querySelector('.simple-fast-grid');
     if (!grid) return;
     removeRetiredYellowControls();
+    Array.from(shell.children).forEach(node => {
+      if (node.matches?.('button') && !node.classList.contains('simple-all-sections')) node.remove();
+    });
     if (allowed() && !grid.querySelector('[data-list-action=player-search]')) {
       grid.prepend(card('player-search','🔎','OYUNCU ARA / FİLTRELE','İSİM, FORMA NO VEYA MEVKİYE GÖRE BUL', openPlayerSearch));
     }
@@ -857,6 +860,12 @@ syncRosterChrome();
   loadAdmin = async function() {
     await stableLoadAdmin();
     ensureStableMenu();
+  };
+  const stableSetDashboardPage = setDashboardPage;
+  setDashboardPage = function(page) {
+    const result = stableSetDashboardPage.apply(this, arguments);
+    queueMicrotask(ensureStableMenu);
+    return result;
   };
   queueMicrotask(ensureStableMenu);
   const style = document.createElement('style');
