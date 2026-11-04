@@ -852,6 +852,20 @@ syncRosterChrome();
     queueMicrotask(ensureStableMenu);
     return result;
   };
+  let menuSyncQueued = false;
+  function scheduleMenuSync() {
+    if (menuSyncQueued) return;
+    menuSyncQueued = true;
+    queueMicrotask(() => { menuSyncQueued = false; ensureStableMenu(); });
+  }
+  function watchStableMenu() {
+    const shell = el('simple-admin-menu');
+    if (!shell || shell.dataset.stableMenuWatch === '1') return;
+    shell.dataset.stableMenuWatch = '1';
+    new MutationObserver(scheduleMenuSync).observe(shell, { childList:true, subtree:true });
+  }
+  const initialEnsureStableMenu = ensureStableMenu;
+  ensureStableMenu = function() { initialEnsureStableMenu(); watchStableMenu(); };
   queueMicrotask(ensureStableMenu);
   const style = document.createElement('style');
   style.textContent = `
