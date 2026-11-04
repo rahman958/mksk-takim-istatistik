@@ -788,12 +788,23 @@ syncRosterChrome();
     });
   }
   async function openEmailSender() {
-    setDashboardPage('messages');
-    await cmMessages(true);
-    const panel = el('admin-inbox')?.querySelector('.club-email-notifications');
-    if (!panel) { el('admin-message').textContent = 'E-POSTA BÖLÜMÜ HAZIRLANAMADI. SAYFAYI YENİLEYİP TEKRAR DENE.'; return; }
-    panel.open = true;
-    panel.scrollIntoView({ behavior:'smooth', block:'start' });
+    const popup = dialog('E-POSTA BİLDİRİMİ GÖNDER', '<p>Bu duyuru yalnızca <strong>GÖNDER</strong> dediğinde, e-posta bağlı aktif oyunculara gider.</p><form class="direct-email-form"><label>BAŞLIK<input name="subject" maxlength="160" required placeholder="ÖRN. 5. HAFTA MAÇ BİLGİSİ"></label><label>MESAJ<textarea name="body" maxlength="4000" rows="6" required placeholder="Oyunculara gönderilecek açıklama"></textarea></label><button type="submit">✉️ BİLDİRİMİ GÖNDER</button><p role="status"></p></form>');
+    if (!popup) return;
+    const form = popup.querySelector('form'), button = form.querySelector('button'), status = form.querySelector('[role=status]');
+    form.onsubmit = async event => {
+      event.preventDefault(); if (!form.reportValidity()) return;
+      const subject = form.elements.subject.value.trim(), body = form.elements.body.value.trim();
+      if (!confirm('Bu e-posta aktif ve e-posta bağlı oyunculara gönderilecek. Göndermek istiyor musun?')) return;
+      button.disabled = true; status.textContent = 'GÖNDERİLİYOR…';
+      try {
+        const sent = await supabase.functions.invoke('send-club-notification', { body:{subject,body,requestId:crypto.randomUUID()} });
+        if (sent.error) throw sent.error;
+        if (!sent.data?.ok) throw new Error(sent.data?.error || 'E-posta gönderilemedi.');
+        status.textContent = Number(sent.data.count || 0)+' OYUNCUYA E-POSTA GÖNDERİLDİ.';
+        form.reset();
+      } catch (error) { status.textContent = 'GÖNDERİLEMEDİ: '+(error?.message || 'Bilinmeyen hata'); }
+      finally { button.disabled = false; }
+    };
   }
   function card(key, icon, title, note, action) {
     const b = document.createElement('button');
@@ -844,7 +855,8 @@ syncRosterChrome();
   queueMicrotask(ensureStableMenu);
   const style = document.createElement('style');
   style.textContent = `
-    .legacy-utility-strip,.admin-utility-strip{display:none!important}
+    .legacy-utility-strip,.admin-utility-strip,#admin-inbox .club-email-notifications{display:none!important}
+    .direct-email-form{display:grid;gap:12px}.direct-email-form label{display:grid;gap:6px;font-size:12px;font-weight:800}.direct-email-form input,.direct-email-form textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #6f94bb;border-radius:10px;background:#fff;color:#152d49;font:inherit}.direct-email-form button{padding:14px;border:0;border-radius:11px;background:linear-gradient(118deg,#155e78,#39659a);color:#fff;font-weight:900;cursor:pointer}html[data-theme=dark] .direct-email-form input,html[data-theme=dark] .direct-email-form textarea{background:#10243c;color:#f4f8ff;border-color:#7498bd}
     #account-access-shortcut,.stable-menu-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;width:100%;box-sizing:border-box;padding:14px 16px;border:2px solid #557aa5;border-radius:15px;background:linear-gradient(118deg,#174e67,#3c4f88);color:#fff;cursor:pointer;text-align:left}
     #account-access-shortcut{margin:12px 0;background:linear-gradient(118deg,#174e67,#34558b)}
     .stable-menu-card{margin:0}
