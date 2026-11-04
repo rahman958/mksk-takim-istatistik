@@ -808,8 +808,8 @@ syncRosterChrome();
   }
   function card(key, icon, title, note, action) {
     const b = document.createElement('button');
-    b.type = 'button'; b.dataset.listAction = key; b.className = 'stable-menu-card stable-menu-'+key;
-    b.innerHTML = '<i aria-hidden="true">'+icon+'</i><span><strong>'+title+'</strong><small>'+note+'</small></span><b aria-hidden="true">›</b>';
+    b.type = 'button'; b.dataset.listAction = key; b.dataset.icon = icon; b.className = 'stable-menu-card stable-menu-'+key;
+    b.innerHTML = '<span><strong>'+title+'</strong><small>'+note+'</small></span><b aria-hidden="true">›</b>';
     b.onclick = () => { void action(); };
     return b;
   }
@@ -871,11 +871,12 @@ syncRosterChrome();
   const style = document.createElement('style');
   style.textContent = `
     .legacy-utility-strip,.admin-utility-strip,#admin-inbox .club-email-notifications{display:none!important}
+    #simple-admin-menu > button:not(.simple-all-sections){display:none!important}
     .direct-email-form{display:grid;gap:12px}.direct-email-form label{display:grid;gap:6px;font-size:12px;font-weight:800}.direct-email-form input,.direct-email-form textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #6f94bb;border-radius:10px;background:#fff;color:#152d49;font:inherit}.direct-email-form button{padding:14px;border:0;border-radius:11px;background:linear-gradient(118deg,#155e78,#39659a);color:#fff;font-weight:900;cursor:pointer}html[data-theme=dark] .direct-email-form input,html[data-theme=dark] .direct-email-form textarea{background:#10243c;color:#f4f8ff;border-color:#7498bd}
     #account-access-shortcut,.stable-menu-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;width:100%;box-sizing:border-box;padding:14px 16px;border:2px solid #557aa5;border-radius:15px;background:linear-gradient(118deg,#174e67,#3c4f88);color:#fff;cursor:pointer;text-align:left}
     #account-access-shortcut{margin:12px 0;background:linear-gradient(118deg,#174e67,#34558b)}
     .stable-menu-card{margin:0}
-    .stable-menu-card i{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.16);font-style:normal;font-size:16px}
+    .stable-menu-card::before{content:attr(data-icon)!important;display:grid!important;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.16);font-style:normal;font-size:16px;color:#fff}
     .stable-menu-card span,#account-access-shortcut span{display:grid;gap:3px}
     .stable-menu-card strong,#account-access-shortcut strong,.stable-menu-card small,#account-access-shortcut small,.stable-menu-card b{color:#fff!important;-webkit-text-fill-color:#fff!important}
     .stable-menu-card strong,#account-access-shortcut strong{font-size:15px}.stable-menu-card small,#account-access-shortcut small{font-size:11px;opacity:.92}.stable-menu-card b{font-size:24px;font-weight:400}
@@ -898,3 +899,10 @@ syncRosterChrome();
   style.textContent = 'html{scroll-behavior:auto!important}';
   document.head.appendChild(style);
 })();
+
+
+/* Navigation always opens where the user can see it. */
+document.addEventListener('click', event => {
+  if (!event.target.closest('#simple-admin-menu button,#dashboard-nav button,#easy-bottom button,#player-nav button')) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({top:0,left:0,behavior:'auto'})));
+}, true);
