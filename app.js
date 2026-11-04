@@ -869,3 +869,49 @@ syncRosterChrome();
   style.textContent='.hidden-legacy-utility{display:none!important}#account-access-shortcut{display:grid;gap:5px;width:100%;margin:12px 0;padding:15px 16px;text-align:left;border:2px solid #477e9e;border-radius:15px;background:linear-gradient(115deg,#174e67,#34558b);color:#fff;cursor:pointer}#account-access-shortcut strong,#account-access-shortcut small{color:#fff!important;-webkit-text-fill-color:#fff!important}#account-access-shortcut strong{font-size:16px}#account-access-shortcut small{font-size:12px;opacity:.92}.clean-nav-player-search{border-color:#5476ad!important;background:linear-gradient(120deg,#244c7f,#564589)!important;color:#fff!important}.clean-nav-match-cards{border-color:#3f8193!important;background:linear-gradient(120deg,#135c73,#4c518f)!important;color:#fff!important}.clean-nav-player-search strong,.clean-nav-player-search small,.clean-nav-player-search b,.clean-nav-match-cards strong,.clean-nav-match-cards small,.clean-nav-match-cards b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] #account-access-shortcut{background:linear-gradient(115deg,#123b51,#252f63);border-color:#6399ba}';
   document.head.appendChild(style);
 })();
+
+
+/* Visible e-mail shortcut and cleanup of old yellow legacy utilities. */
+(function(){
+  function openClubEmail(){
+    if(typeof staffCan==='function' && !(staffState?.owner || staffCan('notifications'))){
+      el('admin-message').textContent='E-posta gönderme yetkin açık değil.';
+      return;
+    }
+    setDashboardPage('messages');
+    Promise.resolve(cmMessages(true)).then(function(){
+      var panel=el('admin-inbox')?.querySelector('.club-email-notifications');
+      if(!panel){el('admin-message').textContent='E-posta bölümü hazırlanıyor. Birkaç saniye sonra tekrar dene.';return;}
+      panel.open=true;
+      panel.scrollIntoView({block:'start',behavior:'smooth'});
+    });
+  }
+  function installEmailShortcut(){
+    if(typeof staffCan!=='function'||!(staffState?.owner||staffCan('notifications')))return;
+    var box=el('simple-admin-menu'),grid=box?.querySelector('.simple-fast-grid');
+    if(!grid||grid.querySelector('[data-list-action=club-email]'))return;
+    var b=document.createElement('button');
+    b.type='button';b.dataset.listAction='club-email';b.className='simple-menu-card clean-email-shortcut';
+    b.innerHTML='<span aria-hidden="true">✉️</span><strong>E-POSTA GÖNDER</strong><small>Oyunculara duyuru e-postası gönder</small><b aria-hidden="true">→</b>';
+    b.onclick=openClubEmail;
+    var message=grid.querySelector('[data-list-action=messages]');
+    if(message)message.after(b);else grid.appendChild(b);
+  }
+  function removeOldYellowUtilities(){
+    var names=['DEĞİŞİKLİK GEÇMİŞİ','YEDEK AL','UYGULAMA LİNKLERİ'];
+    document.querySelectorAll('button,a,summary').forEach(function(node){
+      var label=(node.textContent||'').replace(/\s+/g,' ').trim().toLocaleUpperCase('tr-TR');
+      if(names.includes(label)){node.classList.add('hidden-legacy-utility');node.setAttribute('aria-hidden','true');}
+      if(label==='MAÇ KARTLARI'&&!node.matches('[data-list-action=match-cards]')&&!node.closest('.match-cards-modal')){node.classList.add('hidden-legacy-utility');node.setAttribute('aria-hidden','true');}
+    });
+  }
+  var earlierShell=simpleAdminShell;
+  simpleAdminShell=function(){earlierShell();installEmailShortcut();removeOldYellowUtilities();};
+  var earlierLoad=loadAdmin;
+  loadAdmin=async function(){await earlierLoad();installEmailShortcut();removeOldYellowUtilities();};
+  document.addEventListener('click',function(){setTimeout(removeOldYellowUtilities,0);},true);
+  setTimeout(function(){installEmailShortcut();removeOldYellowUtilities();},700);
+  var style=document.createElement('style');
+  style.textContent='.hidden-legacy-utility{display:none!important}.clean-email-shortcut{border:2px solid #4a7d9b!important;background:linear-gradient(120deg,#1f5871,#534884)!important;color:#fff!important}.clean-email-shortcut strong,.clean-email-shortcut small,.clean-email-shortcut b{color:#fff!important;-webkit-text-fill-color:#fff!important}html[data-theme=dark] .clean-email-shortcut{border-color:#76a7c0!important;background:linear-gradient(120deg,#123c52,#392d68)!important}';
+  document.head.appendChild(style);
+})();
