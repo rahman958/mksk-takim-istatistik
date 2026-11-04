@@ -790,7 +790,7 @@ syncRosterChrome();
       {key:'history',label:'DEĞİŞİKLİK GEÇMİŞİ',description:'KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?',group:3,action:function(){return window.clubToolOpen?.('history');}},
       {key:'backup',label:'YEDEK AL',description:'KULÜP VERİLERİNİ DIŞA AKTAR',group:3,action:function(){return window.clubToolOpen?.('backup');}}
     ];
-    function nativeGroup(key){return ['data_entry','lineups'].includes(key)?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
+    function nativeGroup(key){return (key==='match_cards'||['data_entry','lineups'].includes(key))?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
     function draw(){
       var seen=new Set(),q=d.querySelector('input').value.toLocaleLowerCase('tr-TR');
       var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){var k=easyMenuKey(b);return !['match','bulk_statistics'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':target.textContent.trim(),description:easyMenuDescription(key),group:nativeGroup(key),target:target};});
