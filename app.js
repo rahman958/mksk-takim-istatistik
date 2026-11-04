@@ -770,3 +770,35 @@ syncRosterChrome();
   css.textContent = '.club-email-notifications{margin:14px 0;border:2px solid #508caf;border-radius:16px;background:linear-gradient(135deg,#e9f4ff,#e6ecff);color:#173250;overflow:hidden}.club-email-notifications summary{cursor:pointer;padding:16px;font-weight:900;background:linear-gradient(110deg,#2d6f91,#3b629e);color:#fff}.club-email-inner{padding:16px}.club-email-inner p{line-height:1.55}.club-email-inner label{display:block;margin:14px 0;font-size:12px;font-weight:800}.club-email-inner input,.club-email-inner textarea{display:block;box-sizing:border-box;width:100%;margin-top:7px;padding:12px;border:1px solid #6d98bd;border-radius:10px;background:#fff;color:#173250;font:inherit}.club-email-inner textarea{resize:vertical;min-height:110px}.club-email-inner button{width:100%;padding:14px;border:0;border-radius:11px;background:linear-gradient(120deg,#1b6f85,#415ba8);color:#fff;font-weight:900;cursor:pointer}.club-email-history{margin-top:18px;border-top:1px solid #92b4cc;padding-top:12px}.club-email-row{display:grid;gap:5px;padding:12px;margin:8px 0;border:1px solid #aac2d4;border-radius:10px;background:#f8fcff}.club-email-row strong{font-size:14px}.club-email-row span{font-weight:800;color:#245e7a;font-size:12px}.club-email-row small{color:#466477;font-size:11px}.club-email-row em{font-size:11px;color:#8d3854;font-style:normal}html[data-theme=dark] .club-email-notifications{background:linear-gradient(135deg,#172c42,#222646);border-color:#548faf;color:#edf6ff}html[data-theme=dark] .club-email-notifications summary{background:linear-gradient(110deg,#17657e,#414f9a);color:#fff}html[data-theme=dark] .club-email-inner input,html[data-theme=dark] .club-email-inner textarea{background:#0f2238;color:#f3f7ff;border-color:#729bbb}html[data-theme=dark] .club-email-history{border-color:#54718f}html[data-theme=dark] .club-email-row{background:#132940;border-color:#4b7491;color:#f4f8ff}html[data-theme=dark] .club-email-row span{color:#9edaf2}html[data-theme=dark] .club-email-row small{color:#c3d4e0}html[data-theme=dark] .club-email-row em{color:#ffb8c5}';
   document.head.appendChild(css);
 })();
+
+// Menu-only shortcuts: tools live in the menu dialog, never as temporary home-page buttons.
+(function(){
+  var catalogBase=simpleCatalog;
+  simpleCatalog=function(admin,opener){
+    if(!admin)return catalogBase(admin,opener);
+    var d=el('simple-catalog');
+    if(!d){d=document.createElement('dialog');d.id='simple-catalog';d.className='simple-catalog';document.body.appendChild(d);}
+    d.innerHTML='<div class="simple-catalog-head"><h2>MENÜ</h2><button type="button" class="easy-close-menu">KAPAT ×</button></div><details class="easy-menu-search"><summary>BÖLÜM ARA</summary><input type="search" placeholder="Bölüm adı" aria-label="Menüde ara"></details><p class="simple-catalog-count" role="status"></p><div class="easy-catalog-groups"></div>';
+    var openEmail=async function(){
+      var target=simplePick('messages');if(target)simpleActivate(target);
+      try{if(typeof cmMessages==='function')await cmMessages(true);}catch(_){}
+      requestAnimationFrame(function(){var box=document.querySelector('.club-email-notifications');if(box){box.open=true;box.scrollIntoView({block:'start',behavior:'auto'});}});
+    };
+    var tools=[
+      {key:'match_cards',label:'MAÇ KARTLARI',description:'MAÇ EKLE, OYUNCU İŞLE, KARTI GÖR VEYA SİL',group:1,action:function(){return window.clubToolOpen?.('match');}},
+      {key:'email',label:'E-POSTA GÖNDER',description:'OYUNCULARA KULÜP DUYURUSU YOLLA',group:2,action:openEmail},
+      {key:'history',label:'DEĞİŞİKLİK GEÇMİŞİ',description:'KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?',group:3,action:function(){return window.clubToolOpen?.('history');}},
+      {key:'backup',label:'YEDEK AL',description:'KULÜP VERİLERİNİ DIŞA AKTAR',group:3,action:function(){return window.clubToolOpen?.('backup');}}
+    ];
+    function nativeGroup(key){return ['data_entry','lineups'].includes(key)?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
+    function draw(){
+      var seen=new Set(),q=d.querySelector('input').value.toLocaleLowerCase('tr-TR');
+      var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){var k=easyMenuKey(b);return !['match','bulk_statistics'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':target.textContent.trim(),description:easyMenuDescription(key),group:nativeGroup(key),target:target};});
+      rows=rows.concat(tools).filter(function(row){if(seen.has(row.key))return false;seen.add(row.key);return (row.label+' '+row.description).toLocaleLowerCase('tr-TR').includes(q);});
+      var groups=['OYUNCULAR','MAÇ VE KADRO','YÖNETİM','ARŞİV VE ARAÇLAR'],area=d.querySelector('.easy-catalog-groups');area.innerHTML='';
+      groups.forEach(function(title,index){var items=rows.filter(function(row){return row.group===index;});if(!items.length)return;var section=document.createElement('section'),h=document.createElement('h3');h.textContent=title;section.appendChild(h);items.forEach(function(row){var b=document.createElement('button'),s=document.createElement('strong'),p=document.createElement('small');b.type='button';s.textContent=row.label;p.textContent=row.description;b.append(s,p);b.onclick=function(){d.close();setTimeout(function(){if(row.action)row.action();else if(row.target?.isConnected&&!row.target.hidden)row.target.click();else draw();},0);};section.appendChild(b);});area.appendChild(section);});
+      d.querySelector('.simple-catalog-count').textContent=rows.length+' BÖLÜM';
+    }
+    d._refresh=draw;d.dataset.admin='true';d.querySelector('input').oninput=draw;d.querySelector('.easy-close-menu').onclick=function(){d.close();};draw();if(!d.open)d.showModal();d.querySelector('.easy-close-menu').focus({preventScroll:true});d.onclose=function(){if(opener?.isConnected)opener.focus({preventScroll:true});};
+  };
+})();
