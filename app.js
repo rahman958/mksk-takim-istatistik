@@ -762,7 +762,22 @@ syncRosterChrome();
       form.onsubmit = async event => { event.preventDefault(); if (!form.reportValidity()) return; const subject = form.elements.subject.value.trim(), body = form.elements.body.value.trim();
         if (!confirm('Bu duyuru, e-posta bağlı aktif oyunculara gönderilecek. Başlık: '+subject+' — Göndermek istiyor musun?')) return;
         button.disabled = true; status.textContent = 'GÖNDERİLİYOR…';
-        try { const sent = await supabase.functions.invoke('send-club-notification', { body: { subject, body, requestId } }); if (sent.error) throw sent.error; if (!sent.data?.ok) throw new Error(sent.data?.error || 'E-posta gönderilemedi.');
+        try {
+          const sessionResult = await supabase.auth.getSession();
+          if (sessionResult.error) throw sessionResult.error;
+          const accessToken = sessionResult.data?.session?.access_token;
+          if (!accessToken) throw new Error('Oturumun sona ermiş. Çıkış yapıp yeniden giriş yap ve tekrar dene.');
+          supabase.functions.setAuth(accessToken);
+          let sent;
+          for (let attempt = 0; attempt < 2; attempt += 1) {
+            sent = await supabase.functions.invoke('send-club-notification', {
+              body: { subject, body, requestId },
+              headers: { Authorization: 'Bearer ' + accessToken }
+            });
+            if (!sent.error || attempt === 1) break;
+            await new Promise(resolve => setTimeout(resolve, 600));
+          }
+          if (sent.error) throw sent.error; if (!sent.data?.ok) throw new Error(sent.data?.error || 'E-posta gönderilemedi.');
           status.textContent = Number(sent.data.count || 0)+' OYUNCUYA E-POSTA GÖNDERİLDİ.'; form.reset(); requestId = crypto.randomUUID(); await drawEmailHistory(box);
         } catch (err) { status.textContent = 'GÖNDERİLEMEDİ: '+(err?.message || 'Bilinmeyen hata'); } finally { button.disabled = false; }
       };
