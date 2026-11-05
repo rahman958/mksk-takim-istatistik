@@ -806,7 +806,15 @@ syncRosterChrome();
       {key:'match_cards',label:'MAÇ İŞLE',description:'MAÇ BİLGİSİ, OYUNCU VE KARTLAR',group:1,action:function(){return matchCards.open();}},
       {key:'email',label:'E-POSTA GÖNDER',description:'OYUNCULARA KULÜP DUYURUSU YOLLA',group:2,action:openEmail},
       {key:'history',label:'DEĞİŞİKLİK GEÇMİŞİ',description:'KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?',group:3,action:function(){return window.clubToolOpen?.('history');}},
-      {key:'backup',label:'YEDEK AL',description:'KULÜP VERİLERİNİ DIŞA AKTAR',group:3,action:function(){return window.clubToolOpen?.('backup');}}
+      {key:'backup',label:'YEDEK AL',description:'KULÜP VERİLERİNİ DIŞA AKTAR',group:3,action:function(){return window.clubToolOpen?.('backup');}},
+      {key:'transfer_entry',label:'TRANSFER GİRİŞİ',description:'YENİ OYUNCU EKLE',group:0,action:function(){
+        simpleActivate(simplePick('roster'));setDashboardPage('hub_home');
+        requestAnimationFrame(function(){var area=el('add-player-area');if(area){area.hidden=false;area.open=true;area.scrollIntoView({block:'start',behavior:'smooth'});}});
+      }},
+      {key:'free_jerseys',label:'BOŞ FORMA NUMARALARI',description:'KULLANILABİLİR NUMARALARI GÖR',group:0,action:function(){
+        var target=simpleNative(true).find(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')>-1;});
+        if(target)target.click();
+      }}
     ];
     function nativeGroup(key){return (key==='match_cards'||['data_entry','lineups'].includes(key))?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
     function draw(){
