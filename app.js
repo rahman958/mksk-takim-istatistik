@@ -1086,3 +1086,26 @@ syncRosterChrome();
  document.head.appendChild(css);
  setTimeout(repair,0);
 })();
+
+/* mksk-admin-quick-overview-20261105: compact management summary with club logo */
+(function(){
+ if(window.__mkskAdminQuickOverview)return;
+ window.__mkskAdminQuickOverview=true;
+ function statOf(p){return (p.player_season_stats||[]).find(function(s){return s.season===selectedSeason;})||{};}
+ function renderAdminQuickOverview(players){
+   try{
+    var o=autoSuccessOverview||{}, list=(players||[]).filter(function(p){return !p.archived_at;});
+    var pending=0;list.forEach(function(p){pending+=Number(o.players?.[p.id]?.pending_matches||0);});
+    var lead=list.map(function(p){var s=statOf(p),rate=Number(o.players?.[p.id]?.manager_rating);return {p:p,s:s,score:Number.isFinite(rate)?rate:Number(s.goals||0)/10};}).sort(function(a,b){return b.score-a.score||Number(b.s.goals||0)-Number(a.s.goals||0);})[0];
+    var box=el('admin-quick-overview');if(!box){box=document.createElement('section');box.id='admin-quick-overview';box.className='admin-quick-overview';var roster=el('roster');if(roster)roster.before(box);else el('admin-view')?.prepend(box);}
+    var leadName=lead?.p?.full_name||'HENÜZ VERİ YOK',leadInfo=lead?('GOL: '+numberValue(lead.s.goals)+' · PUAN: '+(lead.s.manager_rating??'—')):'MAÇ VERİSİ GİRİLDİKÇE GÖRÜNÜR';
+    box.innerHTML='<div class="admin-quick-head"><img src="güncel logo.jfif" alt="MKSK logosu"><div><strong>YÖNETİCİ ÖZETİ</strong><small>'+safe(selectedSeason)+' · MECİDİYE KARAHİSAR SK</small></div></div><div class="admin-quick-grid"><button type="button" data-go="team"><b>'+numberValue(o.matches)+'</b><span>MAÇ</span></button><button type="button" data-go="team"><b>'+numberValue(o.wins)+'</b><span>GALİBİYET</span></button><button type="button" data-go="scores"><b>'+pending+'</b><span>EKSİK PUAN</span></button><button type="button" data-go="leaders"><b>🏆</b><span>SEZONUN ÖNE ÇIKANI</span></button></div><button type="button" class="admin-quick-leader" data-go="leaders"><span>⭐</span><div><b>'+safe(leadName)+'</b><small>'+safe(leadInfo)+'</small></div><em>›</em></button>';
+    box.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){var dest=b.dataset.go;if(dest==='scores'){document.querySelector('[data-section="missing-scores"],#missing-scores')?.scrollIntoView({behavior:'smooth',block:'start'});}else if(dest==='leaders'){document.querySelector('#season-leaders,.season-leaders,.season-overview')?.scrollIntoView({behavior:'smooth',block:'start'});}else{el('team-summary')?.scrollIntoView({behavior:'smooth',block:'start'});}};});
+   }catch(e){console.warn('Yönetici özeti hazırlanamadı:',e);}
+ }
+ var formerTeamSummary=teamSummary;
+ teamSummary=async function(players){var result=await formerTeamSummary(players);renderAdminQuickOverview(players);return result;};
+ var css=document.createElement('style');css.id='mksk-admin-quick-overview-style-20261105';
+ css.textContent='.admin-quick-overview{margin:14px 0;padding:14px;border:1px solid #b9cadf;border-radius:18px;background:#f4f8fd;color:#173957}.admin-quick-head{display:flex;align-items:center;gap:11px;padding:11px;border-radius:13px;background:linear-gradient(120deg,#173e6d,#376fa6 60%,#694892);color:#fff}.admin-quick-head img{width:45px;height:45px;object-fit:contain;border-radius:12px;background:#fff;border:2px solid #f1cf54}.admin-quick-head strong,.admin-quick-head small{display:block}.admin-quick-head strong{font-size:16px}.admin-quick-head small{margin-top:3px;color:#fff;font-size:10px;font-weight:800}.admin-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}.admin-quick-grid button{min-height:67px;padding:7px 4px;border:1px solid #cbd8e7;border-radius:12px;background:#fff;color:#173957;font:inherit}.admin-quick-grid button:nth-child(1){background:#e6eff9}.admin-quick-grid button:nth-child(2){background:#def0e7}.admin-quick-grid button:nth-child(3){background:#fff0c3}.admin-quick-grid button:nth-child(4){background:#ece0fa}.admin-quick-grid b,.admin-quick-grid span{display:block}.admin-quick-grid b{font-size:18px;font-weight:900}.admin-quick-grid span{margin-top:5px;font-size:9px;line-height:1.1;font-weight:900}.admin-quick-leader{display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:10px;border:1px solid #c7d6e6;border-radius:12px;background:#fff;color:#173957;text-align:left;font:inherit}.admin-quick-leader>span{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#e8f1fc}.admin-quick-leader div{min-width:0;flex:1}.admin-quick-leader b,.admin-quick-leader small{display:block}.admin-quick-leader b{font-size:12px;font-weight:900}.admin-quick-leader small{margin-top:2px;color:#617a94;font-size:10px;font-weight:800}.admin-quick-leader em{font-size:22px;font-style:normal;color:#2c659e}@media(max-width:460px){.admin-quick-overview{padding:10px}.admin-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-quick-grid button{min-height:62px}.admin-quick-head{padding:10px}.admin-quick-head strong{font-size:15px}}';
+ document.head.appendChild(css);
+})();
