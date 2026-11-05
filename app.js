@@ -1785,3 +1785,31 @@ syncRosterChrome();
     document.head.appendChild(style);
   }
 })();
+
+
+/* mksk-transfer-menu-observer-20261106 */
+(function(){
+ function openTransferEntry(){
+   var dialog=el('simple-catalog');if(dialog&&dialog.open)dialog.close();
+   var roster=document.querySelector('#admin-view');if(roster){roster.scrollIntoView({block:'start'});}
+   setTimeout(function(){var area=el('add-player-area');if(area){area.hidden=false;area.open=true;area.scrollIntoView({block:'start',behavior:'smooth'});}},120);
+ }
+ function openJerseyEntry(){
+   var dialog=el('simple-catalog');if(dialog&&dialog.open)dialog.close();
+   var candidate=[].slice.call(document.querySelectorAll('button')).find(function(b){return !b.closest('.mksk-menu-shortcuts')&&b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')>-1;});
+   if(candidate)candidate.click();
+ }
+ function addShortcuts(){
+   var dialog=el('simple-catalog');if(!dialog||dialog.querySelector('.mksk-menu-shortcuts'))return;
+   var anchor=dialog.querySelector('.simple-catalog-count')||dialog.querySelector('.simple-catalog-list');if(!anchor)return;
+   var section=document.createElement('section');section.className='mksk-menu-shortcuts';
+   section.innerHTML='<h3>HIZLI OYUNCU İŞLEMLERİ</h3><button type="button" class="mksk-transfer-shortcut"><span>TRANSFER GİRİŞİ</span><small>YENİ OYUNCU EKLE</small></button><button type="button" class="mksk-jersey-shortcut"><span>BOŞ FORMA NUMARALARI</span><small>KULLANILABİLİR NUMARALARI GÖR</small></button>';
+   anchor.after(section);
+   section.querySelector('.mksk-transfer-shortcut').onclick=openTransferEntry;
+   section.querySelector('.mksk-jersey-shortcut').onclick=openJerseyEntry;
+ }
+ new MutationObserver(function(){addShortcuts();}).observe(document.body,{childList:true,subtree:true});
+ document.addEventListener('click',function(){setTimeout(addShortcuts,30);},true);
+ setTimeout(addShortcuts,1000);
+ if(!document.getElementById('mksk-menu-shortcuts-style')){var style=document.createElement('style');style.id='mksk-menu-shortcuts-style';style.textContent='.mksk-menu-shortcuts{margin:12px 0 16px;padding:13px;border-radius:16px;background:#e8f0fa;border:1px solid #a6bdd5}.mksk-menu-shortcuts h3{margin:0 0 9px;color:#14385f;font-size:14px}.mksk-menu-shortcuts button{width:100%;margin-top:7px;padding:13px 15px;border-radius:13px;border:1px solid #7799bd;background:#fff;color:#17395f;text-align:left;display:block}.mksk-menu-shortcuts button span{display:block;font-weight:800;font-size:16px}.mksk-menu-shortcuts button small{display:block;margin-top:3px;color:#5b7490;font-weight:700}.mksk-menu-shortcuts .mksk-transfer-shortcut{background:#1f4e80;border-color:#1f4e80;color:#fff}.mksk-menu-shortcuts .mksk-transfer-shortcut small{color:#e6f1ff}';document.head.appendChild(style);}
+})();
