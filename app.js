@@ -1109,3 +1109,155 @@ syncRosterChrome();
  css.textContent='.admin-quick-overview{margin:14px 0;padding:14px;border:1px solid #b9cadf;border-radius:18px;background:#f4f8fd;color:#173957}.admin-quick-head{display:flex;align-items:center;gap:11px;padding:11px;border-radius:13px;background:linear-gradient(120deg,#173e6d,#376fa6 60%,#694892);color:#fff}.admin-quick-head img{width:45px;height:45px;object-fit:contain;border-radius:12px;background:#fff;border:2px solid #f1cf54}.admin-quick-head strong,.admin-quick-head small{display:block}.admin-quick-head strong{font-size:16px}.admin-quick-head small{margin-top:3px;color:#fff;font-size:10px;font-weight:800}.admin-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}.admin-quick-grid button{min-height:67px;padding:7px 4px;border:1px solid #cbd8e7;border-radius:12px;background:#fff;color:#173957;font:inherit}.admin-quick-grid button:nth-child(1){background:#e6eff9}.admin-quick-grid button:nth-child(2){background:#def0e7}.admin-quick-grid button:nth-child(3){background:#fff0c3}.admin-quick-grid button:nth-child(4){background:#ece0fa}.admin-quick-grid b,.admin-quick-grid span{display:block}.admin-quick-grid b{font-size:18px;font-weight:900}.admin-quick-grid span{margin-top:5px;font-size:9px;line-height:1.1;font-weight:900}.admin-quick-leader{display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:10px;border:1px solid #c7d6e6;border-radius:12px;background:#fff;color:#173957;text-align:left;font:inherit}.admin-quick-leader>span{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#e8f1fc}.admin-quick-leader div{min-width:0;flex:1}.admin-quick-leader b,.admin-quick-leader small{display:block}.admin-quick-leader b{font-size:12px;font-weight:900}.admin-quick-leader small{margin-top:2px;color:#617a94;font-size:10px;font-weight:800}.admin-quick-leader em{font-size:22px;font-style:normal;color:#2c659e}@media(max-width:460px){.admin-quick-overview{padding:10px}.admin-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-quick-grid button{min-height:62px}.admin-quick-head{padding:10px}.admin-quick-head strong{font-size:15px}}';
  document.head.appendChild(css);
 })();
+
+/* mksk-critical-ui-repair-20261105: mobile profile/menu and manager tools */
+(function(){
+  function node(id){return document.getElementById(id);}
+  function text(v){return String(v==null?'':v);}
+  function playerMenuRepair(){
+    var box=node('simple-player-menu');
+    if(!box)return;
+    box.querySelectorAll('.player-home-form').forEach(function(card){card.remove();});
+    var symbols={
+      'PERFORMANSIM':'📊','FORM GRAFİĞİM':'📈','MAÇ KARTLARIM':'🗓️',
+      'MESAJLARIM':'✉️','TAKIMIM':'⚽','GÖREVLERİM':'✅','BAŞARILARIM':'🏆'
+    };
+    box.querySelectorAll('.profile-center-link').forEach(function(button){
+      button.querySelectorAll('i').forEach(function(icon){icon.remove();});
+      var strong=button.querySelector('strong');
+      var label=strong?text(strong.textContent).trim():'';
+      if(label&&symbols[label]&&!button.querySelector('.profile-center-symbol')){
+        var mark=document.createElement('span');
+        mark.className='profile-center-symbol';
+        mark.setAttribute('aria-hidden','true');
+        mark.textContent=symbols[label];
+        button.insertBefore(mark,button.firstChild);
+      }
+    });
+  }
+  var oldShell=window.simplePlayerShell;
+  if(typeof oldShell==='function'){
+    window.simplePlayerShell=function(){
+      var r=oldShell.apply(this,arguments);
+      playerMenuRepair();
+      return r;
+    };
+  }
+  var viewCss=document.createElement('style');
+  viewCss.id='mksk-critical-ui-repair-style-20261105';
+  viewCss.textContent=[
+    '.player-home-form{display:none!important}',
+    '#simple-player-menu .profile-center-main{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%!important}',
+    '#simple-player-menu .profile-center-link{display:grid!important;grid-template-columns:34px minmax(0,1fr) 18px!important;align-items:center!important;column-gap:9px!important;min-width:0!important;min-height:78px!important;padding:12px!important;overflow:hidden!important}',
+    '#simple-player-menu .profile-center-link .profile-center-symbol{display:grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:10px!important;background:#e6eff9!important;font-size:18px!important;line-height:1!important}',
+    '#simple-player-menu .profile-center-link>span:not(.profile-center-symbol){min-width:0!important;width:auto!important;display:block!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important}',
+    '#simple-player-menu .profile-center-link strong{display:block!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important;font-size:14px!important;line-height:1.18!important;color:#193b61!important}',
+    '#simple-player-menu .profile-center-link small{display:block!important;margin-top:3px!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important;font-size:10px!important;line-height:1.25!important;color:#60758d!important}',
+    '#simple-player-menu .profile-center-link>em{display:block!important;font-size:24px!important;line-height:1!important;color:#23639e!important;font-style:normal!important}',
+    '@media(max-width:430px){#simple-player-menu .profile-center-main{grid-template-columns:1fr!important}#simple-player-menu .profile-center-link{min-height:66px!important}}',
+    '.player-hub-dialog .manager-title-mobile,.player-hub-dialog .manager-role-slot{display:none!important}',
+    '.direct-manager-title{margin:12px 0;padding:12px;border:1px solid #b6c9df;border-radius:14px;background:#f5f9fe;color:#173957}',
+    '.direct-manager-title strong{display:block;font-size:14px}.direct-manager-title small{display:block;margin-top:4px;color:#526d89;font-size:11px;line-height:1.35}',
+    '.direct-manager-title input{width:100%;box-sizing:border-box;margin-top:9px;padding:11px 12px;border:1px solid #90abc9;border-radius:10px;background:#fff;color:#173957;font:inherit;font-weight:800}',
+    '.direct-manager-title button{width:100%;margin-top:8px;padding:11px;border:0;border-radius:10px;background:#1e5d95;color:#fff;font:inherit;font-weight:900}',
+    '.admin-profile-launch{margin-left:auto;padding:8px 10px;border:1px solid #d6e5f4;border-radius:9px;background:#fff;color:#173957;font:inherit;font-size:10px;font-weight:900;white-space:nowrap}',
+    '@media(max-width:460px){.admin-quick-head{align-items:flex-start!important}.admin-profile-launch{padding:7px 8px;font-size:9px}}'
+  ].join('');
+  document.head.appendChild(viewCss);
+
+  function addManagerTitleEditor(){
+    var dialog=document.querySelector('.player-hub-dialog');
+    if(!dialog||dialog.querySelector('.direct-manager-title'))return;
+    var select=dialog.querySelector('select');
+    if(!select)return;
+    var card=document.createElement('section');
+    card.className='direct-manager-title';
+    card.innerHTML='<strong>YÖNETİCİ GÖREV ÜNVANI</strong><small>Seçtiğin kişinin ünvanını buraya yaz: örn. MKSK BAŞKAN YARDIMCISI. Kaydedince takım listesine de düşer.</small><input type="text" maxlength="90" placeholder="Ünvanı yaz"><button type="button">ÜNVANI KAYDET</button><small class="direct-manager-title-note"></small>';
+    select.parentElement.insertAdjacentElement('afterend',card);
+    var input=card.querySelector('input'),save=card.querySelector('button'),note=card.querySelector('.direct-manager-title-note');
+    function currentPlayer(){
+      var val=select.value;
+      return (window.players||[]).find(function(p){return String(p.id)===String(val);});
+    }
+    function refresh(){
+      var p=currentPlayer();
+      input.value=(p&&(p.management_title||p.role||p.title))||'';
+    }
+    select.addEventListener('change',refresh);refresh();
+    save.onclick=async function(){
+      var id=select.value,title=input.value.trim();
+      if(!id){note.textContent='Önce oyuncu seç.';return;}
+      if(!title){note.textContent='Ünvan boş olamaz.';return;}
+      save.disabled=true;note.textContent='Kaydediliyor...';
+      try{
+        var res=await supabase.rpc('club_set_management_role',{p_player_id:id,p_role:title});
+        if(res.error)throw res.error;
+        var p=currentPlayer();
+        if(p){p.management_title=title;p.role=title;p.title=title;}
+        note.textContent='Kaydedildi. Takım listesinde de görünecek.';
+        if(typeof toast==='function')toast('Ünvan kaydedildi.');
+      }catch(e){note.textContent='Kaydedilemedi: '+(e&&e.message?e.message:'bağlantıyı yenileyip tekrar dene.');}
+      finally{save.disabled=false;}
+    };
+  }
+  var oldManager=window.openManagerAccess;
+  if(typeof oldManager==='function'){
+    window.openManagerAccess=function(){
+      var r=oldManager.apply(this,arguments);
+      setTimeout(addManagerTitleEditor,60);
+      return r;
+    };
+  }
+
+  function installProfileLaunch(){
+    var quick=node('admin-quick-overview');
+    if(!quick||quick.querySelector('.admin-profile-launch'))return;
+    var head=quick.querySelector('.admin-quick-head');
+    if(!head)return;
+    var b=document.createElement('button');
+    b.type='button';b.className='admin-profile-launch';b.textContent='OYUNCU PROFİLİM';
+    b.onclick=async function(){
+      try{
+        if(typeof openOwnPlayerProfile!=='function')throw new Error('Profil geçişi hazır değil.');
+        await openOwnPlayerProfile();
+      }catch(e){
+        if(window.playerHubInstance&&typeof window.playerHubInstance.openDirectory==='function'){
+          window.playerHubInstance.openDirectory();
+          if(typeof toast==='function')toast('Kendi hesabın bağlı değil; oyuncu dosyaları açıldı.');
+        }else if(typeof toast==='function')toast(e&&e.message?e.message:'Oyuncu profili açılamadı.');
+      }
+    };
+    head.appendChild(b);
+  }
+  function repairAdminSummary(){
+    var quick=node('admin-quick-overview');
+    if(!quick)return;
+    var grid=quick.querySelector('.admin-quick-grid');
+    if(!grid||grid.querySelector('[data-loss-total]')){installProfileLaunch();return;}
+    var overview=window.autoSuccessOverview||{};
+    var losses=Number(overview.losses??overview.defeats??overview.loss??0)||0;
+    var b=document.createElement('button');
+    b.type='button';b.setAttribute('data-loss-total','1');b.innerHTML='<b>'+losses+'</b><span>MAĞLUBİYET</span>';
+    grid.insertBefore(b,grid.children[2]||null);
+    installProfileLaunch();
+  }
+  var oldLoadAdmin=window.loadAdmin;
+  if(typeof oldLoadAdmin==='function'){
+    window.loadAdmin=async function(){
+      var r=await oldLoadAdmin.apply(this,arguments);
+      setTimeout(function(){playerMenuRepair();repairAdminSummary();},80);
+      return r;
+    };
+  }
+  function tidyBirthMenu(){
+    var seen=false;
+    document.querySelectorAll('button,a').forEach(function(item){
+      var t=text(item.textContent).replace(/\s+/g,' ').trim().toUpperCase();
+      if(t.indexOf('DOĞUM TARİHLERİ')>-1||t.indexOf('TAKIM SÜRESİ')>-1){
+        if(seen&&item.closest('#simple-player-menu,.home-menu,.menu'))item.remove();
+        else seen=true;
+      }
+    });
+  }
+  setTimeout(function(){playerMenuRepair();repairAdminSummary();tidyBirthMenu();},0);
+})();
