@@ -1746,3 +1746,42 @@ syncRosterChrome();
   style.textContent='body:has(#player-view:not(.hidden)) #season-controls{display:none!important}.mksk-force-admin-return{display:flex!important}';
   document.head.appendChild(style);
 })();
+
+/* mksk-transfer-and-jersey-menu-20261106 */
+(function(){
+  var originalCatalog=simpleCatalog;
+  function closeCatalog(){var d=el('simple-catalog');if(d&&d.open)d.close();}
+  function openTransfer(){
+    closeCatalog();
+    simpleActivate(simplePick('roster'));
+    setDashboardPage('hub_home');
+    setTimeout(function(){
+      var area=el('add-player-area');
+      if(area){area.hidden=false;area.open=true;area.scrollIntoView({block:'start',behavior:'smooth'});}
+    },80);
+  }
+  function openFreeJerseys(admin){
+    closeCatalog();
+    var target=simpleNative(admin).find(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')>-1;});
+    if(target){target.click();return;}
+    var msg=el('admin-message');if(msg)msg.textContent='Boş forma numaraları yükleniyor; yeniden dene.';
+  }
+  simpleCatalog=function(admin,opener){
+    originalCatalog(admin,opener);
+    if(!admin)return;
+    var d=el('simple-catalog');
+    if(!d||d.querySelector('.mksk-transfer-menu'))return;
+    var group=document.createElement('section');
+    group.className='mksk-transfer-menu';
+    group.innerHTML='<h3>HIZLI OYUNCU İŞLEMLERİ</h3><button type="button" class="mksk-transfer-entry"><strong>TRANSFER GİRİŞİ</strong><small>YENİ OYUNCU EKLE</small></button><button type="button" class="mksk-jersey-entry"><strong>BOŞ FORMA NUMARALARI</strong><small>KULLANILABİLİR NUMARALARI GÖR</small></button>';
+    var first=d.querySelector('.simple-catalog-list');
+    if(first)first.before(group);
+    group.querySelector('.mksk-transfer-entry').onclick=openTransfer;
+    group.querySelector('.mksk-jersey-entry').onclick=function(){openFreeJerseys(admin);};
+  };
+  if(!document.getElementById('mksk-transfer-menu-style')){
+    var style=document.createElement('style');style.id='mksk-transfer-menu-style';
+    style.textContent='.mksk-transfer-menu{margin:14px 0 18px;padding:14px;border:1px solid #adc3dc;border-radius:18px;background:#edf4fb}.mksk-transfer-menu h3{margin:0 0 10px;color:#153a65;font-size:15px;letter-spacing:.04em}.mksk-transfer-menu button{display:flex;width:100%;align-items:flex-start;flex-direction:column;gap:3px;text-align:left;margin:8px 0 0;padding:14px 16px;border:1px solid #7b9cbd;border-radius:14px;background:#fff;color:#16365d}.mksk-transfer-menu button strong{font-size:16px}.mksk-transfer-menu button small{font-size:12px;color:#52708f}.mksk-transfer-menu .mksk-transfer-entry{background:linear-gradient(135deg,#1f4c7d,#366ba1);color:#fff;border-color:#1f4c7d}.mksk-transfer-menu .mksk-transfer-entry small{color:#eaf3ff}';
+    document.head.appendChild(style);
+  }
+})();
