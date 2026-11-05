@@ -811,18 +811,26 @@ syncRosterChrome();
         simpleActivate(simplePick('roster'));setDashboardPage('hub_home');
         requestAnimationFrame(function(){var area=el('add-player-area');if(area){area.hidden=false;area.open=true;area.scrollIntoView({block:'start',behavior:'smooth'});}});
       }},
-      {key:'free_jerseys',label:'BOŞ FORMA NUMARALARI',description:'KULLANILABİLİR NUMARALARI GÖR',group:0,action:function(){
+      {key:'free_jerseys',label:'BOŞTA OLAN FORMA NUMARALARI',description:'KULLANILABİLİR NUMARALARI GÖR',group:0,action:function(){
         var target=simpleNative(true).find(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')>-1;});
         if(target)target.click();
+      }},
+      {key:'player_preview',label:'OYUNCU GÖRÜNÜMÜ ÖNİZLE',description:'OYUNCUNUN GÖRDÜĞÜ EKRANI AÇ',group:0,action:function(){
+        var target=simpleNative(true).find(function(b){return easyMenuKey(b)==='player_preview';});
+        if(target)target.click();
+      }},
+      {key:'comparison',label:'OYUNCU KARŞILAŞTIRMA',description:'İKİ OYUNCUNUN İSTATİSTİKLERİNİ KIYASLA',group:0,action:function(){
+        var target=simpleNative(true).find(function(b){return easyMenuKey(b)==='comparison';});
+        if(target)target.click(); else if(typeof setDashboardPage==='function')setDashboardPage('comparison');
       }}
     ];
     function nativeGroup(key){return (key==='match_cards'||['data_entry','lineups'].includes(key))?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
     function draw(){
       var seen=new Set(),q=d.querySelector('input').value.toLocaleLowerCase('tr-TR');
-      var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')===-1;}).filter(function(b){var k=easyMenuKey(b);return !['match','bulk_statistics'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ İŞLE':target.textContent.trim(),description:key==='match_cards'?'MAÇ BİLGİSİ, OYUNCU VE KARTLAR':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
+      var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')===-1;}).filter(function(b){var k=easyMenuKey(b);return !['match','bulk_statistics','player_preview','comparison'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ İŞLE':target.textContent.trim(),description:key==='match_cards'?'MAÇ BİLGİSİ, OYUNCU VE KARTLAR':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
       rows=rows.concat(tools).filter(function(row){if(seen.has(row.key))return false;seen.add(row.key);return (row.label+' '+row.description).toLocaleLowerCase('tr-TR').includes(q);});
-      var groups=['OYUNCULAR','MAÇ VE KADRO','YÖNETİM','ARŞİV VE ARAÇLAR'],area=d.querySelector('.easy-catalog-groups');area.innerHTML='';
-      groups.forEach(function(title,index){var items=rows.filter(function(row){return row.group===index;});if(!items.length)return;var section=document.createElement('section'),h=document.createElement('h3');h.textContent=title;section.appendChild(h);items.forEach(function(row){var b=document.createElement('button'),s=document.createElement('strong'),p=document.createElement('small');b.type='button';s.textContent=row.label;p.textContent=row.description;b.append(s,p);b.onclick=function(){d.close();setTimeout(function(){if(row.action)row.action();else if(row.target?.isConnected&&!row.target.hidden)row.target.click();else draw();},0);};section.appendChild(b);});area.appendChild(section);});
+      var groups=['OYUNCULAR VE İSTATİSTİKLER','MAÇ VE KADRO','YÖNETİM VE İLETİŞİM','ARŞİV VE ARAÇLAR'],area=d.querySelector('.easy-catalog-groups');area.innerHTML='';
+      groups.forEach(function(title,index){var items=rows.filter(function(row){return row.group===index;});if(!items.length)return;var section=document.createElement('section'),h=document.createElement('h3');h.textContent=title;section.appendChild(h);if(index===0){var priority={roster:0,transfer_entry:1,free_jerseys:2,player_preview:3,comparison:4};items.sort(function(a,b){var pa=Object.prototype.hasOwnProperty.call(priority,a.key)?priority[a.key]:50,pb=Object.prototype.hasOwnProperty.call(priority,b.key)?priority[b.key]:50;return pa-pb||String(a.label).localeCompare(String(b.label),'tr');});}items.forEach(function(row){var b=document.createElement('button'),s=document.createElement('strong'),p=document.createElement('small');b.type='button';s.textContent=row.label;p.textContent=row.description;b.append(s,p);b.onclick=function(){d.close();setTimeout(function(){if(row.action)row.action();else if(row.target?.isConnected&&!row.target.hidden)row.target.click();else draw();},0);};section.appendChild(b);});area.appendChild(section);});
       d.querySelector('.simple-catalog-count').textContent=rows.length+' BÖLÜM';
     }
     d._refresh=draw;d.dataset.admin='true';d.querySelector('input').oninput=draw;d.querySelector('.easy-close-menu').onclick=function(){d.close();};draw();if(!d.open)d.showModal();d.querySelector('.easy-close-menu').focus({preventScroll:true});d.onclose=function(){if(opener?.isConnected)opener.focus({preventScroll:true});};
