@@ -878,3 +878,44 @@ syncRosterChrome();
    dialog.addEventListener('close',function(){roleBox.remove();activeBox.remove();});
  };
 })();
+
+
+/* mksk-sectioned-menu-light-only-20261105: separated manager/player menus */
+(function(){
+ if(window.__mkskSectionedMenu)return;window.__mkskSectionedMenu=true;
+ function addMenuButton(parent,label,sub,icon,action){var b=document.createElement('button');b.type='button';b.className='sectioned-menu-item';b.innerHTML='<i data-lucide="'+icon+'"></i><span><strong>'+label+'</strong>'+(sub?'<small>'+sub+'</small>':'')+'</span><b aria-hidden="true">›</b>';b.onclick=action;parent.appendChild(b);return b;}
+ function section(parent,title,icon){var d=document.createElement('details');d.className='sectioned-menu-group';d.open=true;d.innerHTML='<summary><i data-lucide="'+icon+'"></i><span>'+title+'</span><b aria-hidden="true">⌄</b></summary><div></div>';parent.appendChild(d);return d.querySelector('div');}
+ function logoHeader(label,sub){return '<div class="sectioned-menu-brand"><img src="güncel logo.jfif" alt="MKSK logosu"><span><strong>'+label+'</strong><small>'+sub+'</small><em>TAKIM KURULUŞ: 11.06.2008</em></span></div>';}
+ var sectionedAdminBase=simpleAdminShell;
+ simpleAdminShell=function(){sectionedAdminBase();var box=el('simple-admin-menu');if(!box)return;box.classList.add('sectioned-admin-menu');box.replaceChildren();box.insertAdjacentHTML('beforeend',logoHeader('YÖNETİCİ PANELİ','KULÜP YÖNETİM MERKEZİ'));
+  var quick=section(box,'HIZLI İŞLEMLER','zap');
+  if(staffCan('matches')||staffCan('statistics'))addMenuButton(quick,'MAÇ İŞLE','MAÇ KARTI, SKOR VE OYUNCU PERFORMANSI','trophy',function(){void matchCards.open();});
+  if(staffCan('lineup'))addMenuButton(quick,'KADRO OLUŞTUR','İLK KADRO VE YEDEKLER','users-round',function(){simpleActivate(simplePick('lineup'));});
+  var players=section(box,'OYUNCULAR','folder-user');
+  addMenuButton(players,'OYUNCU DOSYALARI','OYUNCU SEÇ, İŞLEMLERİNİ AÇ','contact-round',function(){playerHubInstance?.openDirectory();});
+  addMenuButton(players,'OYUNCU İSTATİSTİK ÖZETİ','KOMPAKT KARTLAR VE SEZON LİDERLERİ','chart-column',function(){ensureSeasonOverview().open();});
+  var manage=section(box,'YÖNETİM VE İLETİŞİM','shield-check');
+  if(staffCan('penalties'))addMenuButton(manage,'CEZA YÖNETİMİ','CEZA, UYARI VE DİSİPLİN SEVKİ','shield-alert',function(){simpleActivate(simplePick('penalties'));});
+  if(staffCan('messages'))addMenuButton(manage,'MESAJLAR','GELEN, GÖNDERİLEN VE TOPLU MESAJLAR','mail',function(){simpleActivate(simplePick('messages'));});
+  if(staffState?.owner)addMenuButton(manage,'YÖNETİCİ YETKİLERİ','YÖNETİCİ, ANA YÖNETİCİ VE GÖREVLER','key-round',openManagerAccess);
+  var all=section(box,'DİĞER BÖLÜMLER','layout-grid');
+  addMenuButton(all,'TÜM BÖLÜMLER','E-POSTA, GEÇMİŞ, YEDEK, RAPOR VE DİĞERLERİ','menu',function(){simpleCatalog(true,this);});
+  if(window.lucide)window.lucide.createIcons({attrs:{width:22,height:22}});
+ };
+ var sectionedPlayerBase=simplePlayerShell;
+ simplePlayerShell=function(){sectionedPlayerBase();var box=el('simple-player-menu');if(!box)return;var task=!!profileStaffData&&(profileStaffData.enabled||(profileStaffData.tasks||[]).length>0);box.classList.add('sectioned-player-menu');box.replaceChildren();box.insertAdjacentHTML('beforeend',logoHeader('OYUNCU PANELİ','BANA AİT BİLGİLER'));
+  var main=section(box,'BANA AİT','user-round');
+  addMenuButton(main,'İSTATİSTİKLERİM','MAÇ, GOL, ASİST, PUAN VE GRAFİK','chart-column',function(){setPlayerPage('stats');});
+  addMenuButton(main,'MAÇ KARTLARIM','TARİH, SAAT VE MAÇ PERFORMANSLARIM','calendar-days',function(){setPlayerPage('stats');document.getElementById('player-match-cards')?.scrollIntoView({block:'start'});});
+  addMenuButton(main,'MESAJLARIM','YÖNETİMDEN GELEN MESAJLAR','message-circle',function(){setPlayerPage('manager_messages');});
+  var team=section(box,'TAKIMIM','users-round');
+  addMenuButton(team,'TAKIM VE SEZON LİDERLERİ','KADRO, LİDERLER VE TAKIM DURUMU','medal',function(){setPlayerPage('hub_team');});
+  if(task){var duties=section(box,'GÖREVLERİM','clipboard-check');addMenuButton(duties,'BEKLEYEN İŞLERİM','YÖNETİMİN VERDİĞİ GÖREVLER','list-checks',function(){setPlayerPage('staff_tasks');});}
+  var nav=el('player-nav');if(nav)nav.hidden=true;if(window.lucide)window.lucide.createIcons({attrs:{width:22,height:22}});
+ };
+ var sectionedPlayerPage=setPlayerPage;
+ setPlayerPage=function(page){sectionedPlayerPage(page);queueMicrotask(function(){if(el('simple-player-menu'))simplePlayerShell();});};
+ var sectionedAdminLoad=loadAdmin;loadAdmin=async function(){await sectionedAdminLoad();simpleAdminShell();};
+ var sectionedPlayerLoad=loadPlayer;loadPlayer=async function(id){await sectionedPlayerLoad(id);simplePlayerShell();};
+ var css=document.createElement('style');css.id='sectioned-menu-light-style-20261105';css.textContent='body{background:#f2f6fc!important;color:#17324e!important}.sectioned-admin-menu,.sectioned-player-menu{margin:16px 0;padding:14px;border:1px solid #b7c7db;border-radius:18px;background:#edf3fb;color:#17324e}.sectioned-menu-brand{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#1d4676,#60438b);color:#fff}.sectioned-menu-brand img{width:54px;height:54px;object-fit:contain;border-radius:12px;background:#fff;border:2px solid #f1cb55}.sectioned-menu-brand span{min-width:0}.sectioned-menu-brand strong,.sectioned-menu-brand small,.sectioned-menu-brand em{display:block}.sectioned-menu-brand strong{font-size:17px}.sectioned-menu-brand small{margin-top:3px;font-size:12px;opacity:.92}.sectioned-menu-brand em{margin-top:6px;font-size:11px;color:#ffe993;font-style:normal;font-weight:800}.sectioned-menu-group{margin-top:10px;border:1px solid #c3cfdf;border-radius:14px;background:#fff;overflow:hidden}.sectioned-menu-group>summary{display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;font-weight:900;list-style:none;color:#214770}.sectioned-menu-group>summary::-webkit-details-marker{display:none}.sectioned-menu-group>summary span{flex:1}.sectioned-menu-group>summary>b{font-size:18px}.sectioned-menu-group[open]>summary{border-bottom:1px solid #d8e1ed;background:#f6f9fd}.sectioned-menu-group[open]>summary>b{transform:rotate(180deg)}.sectioned-menu-item{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid #e0e7f0;background:#fff;color:#193854;text-align:left;padding:14px;font:inherit}.sectioned-menu-item:last-child{border-bottom:0}.sectioned-menu-item:hover{background:#f0f5fc}.sectioned-menu-item>span{flex:1;min-width:0}.sectioned-menu-item strong,.sectioned-menu-item small{display:block}.sectioned-menu-item strong{font-size:15px}.sectioned-menu-item small{margin-top:4px;color:#59708a;font-size:12px;line-height:1.35}.sectioned-menu-item>b{font-size:24px;color:#375f96}.sectioned-menu-item:focus-visible,.sectioned-menu-group>summary:focus-visible{outline:3px solid #7d5cac;outline-offset:-3px}@media(max-width:600px){.sectioned-admin-menu,.sectioned-player-menu{padding:10px;border-radius:14px}.sectioned-menu-item{padding:13px 12px}.sectioned-menu-item strong{font-size:14px}.sectioned-menu-brand{padding:12px}.sectioned-menu-brand strong{font-size:16px}}';document.head.appendChild(css);
+})();
