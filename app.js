@@ -785,7 +785,7 @@ syncRosterChrome();
       requestAnimationFrame(function(){var box=document.querySelector('.club-email-notifications');if(box){box.open=true;box.scrollIntoView({block:'start',behavior:'auto'});}});
     };
     var tools=[
-      {key:'match_cards',label:'MAÇ KARTLARI',description:'MAÇ EKLE, OYUNCU İŞLE, KARTI GÖR VEYA SİL',group:1,action:function(){return matchCards.open();}},
+      {key:'match_cards',label:'MAÇ İŞLE',description:'MAÇ BİLGİSİ, OYUNCU VE KARTLAR',group:1,action:function(){return matchCards.open();}},
       {key:'email',label:'E-POSTA GÖNDER',description:'OYUNCULARA KULÜP DUYURUSU YOLLA',group:2,action:openEmail},
       {key:'history',label:'DEĞİŞİKLİK GEÇMİŞİ',description:'KİM, NE ZAMAN, NEYİ DEĞİŞTİRDİ?',group:3,action:function(){return window.clubToolOpen?.('history');}},
       {key:'backup',label:'YEDEK AL',description:'KULÜP VERİLERİNİ DIŞA AKTAR',group:3,action:function(){return window.clubToolOpen?.('backup');}}
@@ -793,12 +793,28 @@ syncRosterChrome();
     function nativeGroup(key){return (key==='match_cards'||['data_entry','lineups'].includes(key))?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
     function draw(){
       var seen=new Set(),q=d.querySelector('input').value.toLocaleLowerCase('tr-TR');
-      var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){var k=easyMenuKey(b);return !['match','bulk_statistics'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ KARTLARI':target.textContent.trim(),description:key==='match_cards'?'MAÇ EKLE, OYUNCU İŞLE, KARTI GÖR VEYA SİL':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
+      var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){var k=easyMenuKey(b);return !['match','bulk_statistics'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ İŞLE':target.textContent.trim(),description:key==='match_cards'?'MAÇ BİLGİSİ, OYUNCU VE KARTLAR':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
       rows=rows.concat(tools).filter(function(row){if(seen.has(row.key))return false;seen.add(row.key);return (row.label+' '+row.description).toLocaleLowerCase('tr-TR').includes(q);});
       var groups=['OYUNCULAR','MAÇ VE KADRO','YÖNETİM','ARŞİV VE ARAÇLAR'],area=d.querySelector('.easy-catalog-groups');area.innerHTML='';
       groups.forEach(function(title,index){var items=rows.filter(function(row){return row.group===index;});if(!items.length)return;var section=document.createElement('section'),h=document.createElement('h3');h.textContent=title;section.appendChild(h);items.forEach(function(row){var b=document.createElement('button'),s=document.createElement('strong'),p=document.createElement('small');b.type='button';s.textContent=row.label;p.textContent=row.description;b.append(s,p);b.onclick=function(){d.close();setTimeout(function(){if(row.action)row.action();else if(row.target?.isConnected&&!row.target.hidden)row.target.click();else draw();},0);};section.appendChild(b);});area.appendChild(section);});
       d.querySelector('.simple-catalog-count').textContent=rows.length+' BÖLÜM';
     }
     d._refresh=draw;d.dataset.admin='true';d.querySelector('input').oninput=draw;d.querySelector('.easy-close-menu').onclick=function(){d.close();};draw();if(!d.open)d.showModal();d.querySelector('.easy-close-menu').focus({preventScroll:true});d.onclose=function(){if(opener?.isConnected)opener.focus({preventScroll:true});};
+  };
+})();
+
+
+// One match workflow: every “Maç İşle” shortcut opens the same match-card centre.
+(function(){
+  var originalEntryOpen=entryOpen;
+  entryOpen=function(mode){
+    if(mode===undefined||mode==='match') return matchCards.open();
+    return originalEntryOpen.apply(this,arguments);
+  };
+  var originalSimplePick=simplePick;
+  simplePick=function(kind){
+    var target=originalSimplePick(kind);
+    if(kind==='data_entry'&&target) return Object.assign({},target,{click:function(){return matchCards.open();}});
+    return target;
   };
 })();
