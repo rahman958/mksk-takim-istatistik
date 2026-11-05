@@ -839,3 +839,42 @@ syncRosterChrome();
   style.textContent='html[data-theme=dark] .easy-person-context{background:#173451!important;color:#ffffff!important;border-color:#719ac4!important;box-shadow:0 8px 24px #0008}html[data-theme=dark] .easy-person-context small{color:#bcd9ff!important}html[data-theme=dark] .easy-person-context strong{color:#ffffff!important}html[data-theme=dark] .easy-person-context span{color:#dcecff!important}html[data-theme=dark] .player-hub-dialog,html[data-theme=dark] #staff-panel,html[data-theme=dark] .staff-card{background:#132b46!important;color:#f5f9ff!important;border-color:#719ac4!important}html[data-theme=dark] .player-hub-dialog h1,html[data-theme=dark] .player-hub-dialog h2,html[data-theme=dark] .player-hub-dialog h3,html[data-theme=dark] .player-hub-dialog label,html[data-theme=dark] #staff-panel h1,html[data-theme=dark] #staff-panel h2,html[data-theme=dark] #staff-panel h3,html[data-theme=dark] #staff-panel p,html[data-theme=dark] .staff-card h1,html[data-theme=dark] .staff-card h2,html[data-theme=dark] .staff-card h3,html[data-theme=dark] .staff-card p{color:#f5f9ff!important;-webkit-text-fill-color:#f5f9ff!important}html[data-theme=dark] .player-hub-dialog select,html[data-theme=dark] .player-hub-dialog input,html[data-theme=dark] #staff-panel select,html[data-theme=dark] #staff-panel input{background:#0d2239!important;color:#ffffff!important;border-color:#7a9ec6!important}html[data-theme=dark] .player-hub-dialog button:not(.close),html[data-theme=dark] #staff-panel button,html[data-theme=dark] .staff-card button{background:#244d76!important;color:#ffffff!important;border-color:#82a8d0!important;text-shadow:none!important}html[data-theme=dark] .player-hub-dialog button.close{background:#315c8e!important;color:#ffffff!important;border-color:#9bbce0!important}';
   document.head.appendChild(style);
 })();
+
+
+/* mksk-manager-role-editor-20261105: title + clear task controls in one manager dialog */
+(function(){
+ if(window.__mkskManagerRoleEditor)return;window.__mkskManagerRoleEditor=true;
+ var openManagerAccessBasic=openManagerAccess;
+ function managerPerson(id){return (clubMetadataRows||[]).find(function(p){return p.id===id;})||null;}
+ function titleOf(id){var person=managerPerson(id);if(person)return person.management_role||'';var form=document.querySelector('.player-edit[data-id="'+CSS.escape(id)+'"]');return form?.querySelector('[name=management_role]')?.value||'';}
+ function renderActiveManagers(host){
+   host.replaceChildren();
+   var title=document.createElement('h3');title.textContent='AKTİF YÖNETİCİLER';host.appendChild(title);
+   var rows=document.createElement('div');rows.className='manager-active-rows';
+   var people=Array.from(document.querySelectorAll('.player-edit')).map(function(form){return {id:form.dataset.id,name:form.querySelector('[name=full_name]')?.value||'OYUNCU'};}).filter(function(p){return accountRoles[p.id]==='admin';});
+   if(!people.length){var empty=document.createElement('p');empty.textContent='HENÜZ AKTİF YÖNETİCİ YOK.';rows.appendChild(empty);}
+   people.forEach(function(person){var row=document.createElement('p'),name=document.createElement('strong'),role=document.createElement('span');name.textContent=person.name;role.textContent=titleOf(person.id)||'UNVAN YAZILMADI';row.append(name,role);rows.appendChild(row);});
+   host.appendChild(rows);
+ }
+ openManagerAccess=function(){
+   openManagerAccessBasic();
+   var dialogs=Array.from(document.querySelectorAll('dialog.player-hub-dialog'));
+   var dialog=dialogs[dialogs.length-1];if(!dialog||dialog.dataset.managerRoleEditor)return;
+   dialog.dataset.managerRoleEditor='1';
+   var select=dialog.querySelector('select'),taskSlot=dialog.querySelector('.manager-task-slot');if(!select)return;
+   var roleBox=document.createElement('section');roleBox.className='manager-role-slot';roleBox.hidden=true;
+   var roleTitle=document.createElement('h3');roleTitle.textContent='YÖNETİCİ UNVANI';
+   var help=document.createElement('p');help.textContent='ÖRN. MKSK BAŞKAN YARDIMCISI. KAYDEDİNCE LİSTEDE OTOMATİK GÖRÜNÜR.';
+   var label=document.createElement('label');label.textContent='UNVAN';
+   var input=document.createElement('input');input.type='text';input.maxLength=200;input.placeholder='ÖRN. MKSK BAŞKAN YARDIMCISI';label.appendChild(input);
+   var save=document.createElement('button');save.type='button';save.textContent='UNVANI KAYDET';
+   var feedback=document.createElement('p');feedback.className='manager-role-feedback';feedback.setAttribute('role','status');
+   roleBox.append(roleTitle,help,label,save,feedback);
+   var activeBox=document.createElement('section');activeBox.className='manager-active-list';
+   (taskSlot||dialog.querySelector('.hub-person-list')).before(roleBox);(taskSlot||dialog.querySelector('.hub-person-list')).after(activeBox);
+   function syncRole(){var id=select.value;roleBox.hidden=!id;if(!id){input.value='';feedback.textContent='';renderActiveManagers(activeBox);return;}input.value=titleOf(id);feedback.textContent='';renderActiveManagers(activeBox);}
+   select.addEventListener('change',syncRole);syncRole();
+   save.onclick=async function(){var id=select.value;if(!id)return;save.disabled=true;feedback.textContent='KAYDEDİLİYOR…';try{var result=await supabase.rpc('club_set_management_role',{p_player_id:id,p_role:input.value.trim()});if(result.error)throw result.error;var person=managerPerson(id);if(person)person.management_role=input.value.trim()||null;var form=document.querySelector('.player-edit[data-id="'+CSS.escape(id)+'"]');var old=form?.querySelector('[name=management_role]');if(old)old.value=input.value.trim();feedback.textContent='UNVAN KAYDEDİLDİ. LİSTEDE GÖRÜNÜR.';renderActiveManagers(activeBox);}catch(error){feedback.textContent='UNVAN KAYDEDİLEMEDİ: '+error.message;}finally{save.disabled=false;}};
+   dialog.addEventListener('close',function(){roleBox.remove();activeBox.remove();});
+ };
+})();
