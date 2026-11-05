@@ -1462,3 +1462,38 @@ syncRosterChrome();
     return result;
   };
 })();
+
+
+/* mksk-manager-own-player-menu-20261105 */
+(function(){
+  if(window.__mkskManagerOwnPlayerMenu)return;
+  window.__mkskManagerOwnPlayerMenu=true;
+  function addOwnPlayerMenu(){
+    var box=el('simple-admin-menu');
+    if(!box||box.querySelector('.manager-own-player-menu'))return;
+    var group=Array.from(box.querySelectorAll('details.sectioned-menu-group')).find(function(item){
+      return String(item.querySelector('summary span')?.textContent||'').trim()==='OYUNCULAR';
+    });
+    var host=group?.querySelector(':scope > div');
+    if(!host)return;
+    var button=document.createElement('button');
+    button.type='button';
+    button.className='sectioned-menu-item manager-own-player-menu';
+    button.innerHTML='<i data-lucide="circle-user-round"></i><span><strong>OYUNCU MENÜM</strong><small>İSTATİSTİKLERİM, MESAJLARIM VE GÖREVLERİM</small></span><b aria-hidden="true">›</b>';
+    button.onclick=async function(){
+      button.disabled=true;
+      try{await openOwnPlayerProfile();}
+      catch(error){if(typeof toast==='function')toast(error?.message||'Oyuncu menüsü açılamadı.');else el('admin-message').textContent=error?.message||'Oyuncu menüsü açılamadı.';}
+      finally{button.disabled=false;}
+    };
+    host.prepend(button);
+    window.lucide?.createIcons({attrs:{width:22,height:22}});
+  }
+  var priorAdminMenu=simpleAdminShell;
+  simpleAdminShell=function(){
+    var result=priorAdminMenu.apply(this,arguments);
+    addOwnPlayerMenu();
+    return result;
+  };
+  setTimeout(addOwnPlayerMenu,0);
+})();
