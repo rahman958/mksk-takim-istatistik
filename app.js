@@ -1617,7 +1617,7 @@ syncRosterChrome();
       var miss=host.querySelector('[data-mksk-missed]');if(miss)miss.textContent=String(missed);
     }).catch(function(){});
     host.innerHTML='<section class="mksk-player-stats-compact">'+
-      '<header><span>2026–2027 · KİŞİSEL İSTATİSTİKLERİM</span><h3>SEZON PERFORMANSIM</h3></header>'+
+      '<header><span>'+esc(selectedSeason)+' · KİŞİSEL İSTATİSTİKLERİM</span><h3>SEZON PERFORMANSIM</h3></header>'+
       '<div class="mksk-ps-core">'+
         '<div class="mksk-ps-section-title">MAÇ VE HÜCUM</div>'+
         '<div class="mksk-ps-cards">'+statCard('⚽','MAÇ',played,'gold')+statCard('🥅','GOL',goals,'blue')+statCard('🎯','ASİST',assists,'purple')+statCard('🏅','MAÇIN ADAMI',motm,'pink')+'</div>'+
