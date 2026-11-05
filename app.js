@@ -1016,3 +1016,47 @@ syncRosterChrome();
  css.textContent='.player-hub-dialog .manager-title-mobile{display:block!important;margin:14px 0!important;padding:15px!important;border:2px solid #2d659c!important;border-radius:14px!important;background:#edf6ff!important;color:#173858!important}.player-hub-dialog .manager-title-mobile h3{margin:0 0 6px!important;color:#153f70!important;font-size:17px!important}.player-hub-dialog .manager-title-mobile p{margin:0 0 12px!important;color:#365d7f!important;font-size:12px!important;font-weight:800!important}.player-hub-dialog .manager-title-mobile label{display:block!important;color:#173858!important;font-weight:900!important;font-size:12px!important}.player-hub-dialog .manager-title-mobile input{display:block!important;box-sizing:border-box!important;width:100%!important;min-height:48px!important;margin:7px 0 11px!important;padding:11px!important;border:2px solid #769ac0!important;border-radius:10px!important;background:#fff!important;color:#142f50!important;font-size:16px!important;font-weight:800!important}.player-hub-dialog .manager-title-mobile button{display:block!important;width:100%!important;min-height:48px!important;border:0!important;border-radius:10px!important;background:#1e5d96!important;color:#fff!important;font-weight:900!important;font-size:15px!important}.player-hub-dialog .manager-title-mobile button:disabled,.player-hub-dialog .manager-title-mobile input:disabled{opacity:.55!important}.player-hub-dialog .manager-title-mobile .manager-title-mobile-status{margin:10px 0 0!important;color:#254f74!important}@media(max-width:600px){.player-hub-dialog .manager-title-mobile{padding:13px!important}.player-hub-dialog .manager-title-mobile input{font-size:16px!important}}';
  document.head.appendChild(css);
 })();
+
+
+/* mksk-player-performance-home-20261105: player home uses personal performance summary without changing admin menu */
+(function(){
+ if(window.__mkskPlayerPerformanceHome)return;
+ window.__mkskPlayerPerformanceHome=true;
+ function n(v){var x=Number(v);return Number.isFinite(x)?x:0;}
+ function getSeasonStat(p){return (p?.player_season_stats||[]).find(function(s){return s.season===selectedSeason;})||{};}
+ function playerSummaryMarkup(p){
+   var s=getSeasonStat(p), played=n(s.matches), total=n(window.teamMatchCount), missed=Math.max(0,total-played);
+   var success=s.success_rate==null?'—':Math.round(n(s.success_rate))+'%';
+   var score=s.points==null?'—':n(s.points);
+   return '<section class="player-home-performance" aria-label="Sezon katkım">'+
+    '<div class="player-home-performance-head"><span>SEZON KATKIM</span><small>'+safe(selectedSeason)+' · KİŞİSEL DOSYAM</small></div>'+
+    '<div class="player-home-stat-grid">'+
+      '<div><b>'+played+'</b><span>MAÇ</span></div><div><b>'+n(s.goals)+'</b><span>GOL</span></div><div><b>'+n(s.assists)+'</b><span>ASİST</span></div>'+
+      '<div><b>'+score+'</b><span>PUAN</span></div><div><b>'+missed+'</b><span>KAÇIRDIĞI MAÇ</span></div><div><b>'+n(s.attendance_matches)+'</b><span>ANTRENMAN</span></div>'+
+    '</div>'+
+    '<button type="button" class="player-home-form"><span>📈</span><b>FORM GRAFİĞİM</b><small>SON MAÇ PERFORMANSIMI GÖR</small><em>›</em></button>'+
+   '</section>';
+ }
+ function injectPlayerPerformance(p){
+   var box=el('simple-player-menu');if(!box)return;
+   box.querySelector('.player-home-performance')?.remove();
+   var brand=box.querySelector('.profile-center-brand');
+   if(!brand)return;
+   brand.insertAdjacentHTML('afterend',playerSummaryMarkup(p));
+   box.querySelector('.player-home-form').onclick=function(){setPlayerPage('form_graph');};
+ }
+ var inheritedLoadPlayer=loadPlayer;
+ loadPlayer=async function(id){
+   await inheritedLoadPlayer(id);
+   var r=await supabase.from('players').select('*,player_season_stats(*)').eq('id',id).single();
+   if(!r.error&&r.data){window.__mkskPlayerHomeRecord=r.data;simplePlayerShell();injectPlayerPerformance(r.data);}
+ };
+ var inheritedSimplePlayerShell=simplePlayerShell;
+ simplePlayerShell=function(){
+   inheritedSimplePlayerShell();
+   if(window.__mkskPlayerHomeRecord)injectPlayerPerformance(window.__mkskPlayerHomeRecord);
+ };
+ var css=document.createElement('style');css.id='mksk-player-performance-home-style-20261105';
+ css.textContent='.profile-center-player-menu .player-home-performance{margin:12px 0 2px;padding:13px;border:1px solid #c6d5e5;border-radius:15px;background:#fff;color:#163858}.player-home-performance-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:10px}.player-home-performance-head span{font-weight:900;font-size:15px}.player-home-performance-head small{font-weight:800;font-size:10px;color:#617993;text-align:right}.player-home-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.player-home-stat-grid>div{min-height:63px;padding:8px 5px;border-radius:11px;text-align:center;background:#edf4fc}.player-home-stat-grid>div:nth-child(1){background:#fff2bf}.player-home-stat-grid>div:nth-child(2){background:#dcf1e7}.player-home-stat-grid>div:nth-child(3){background:#dceefa}.player-home-stat-grid>div:nth-child(4){background:#eee2fa}.player-home-stat-grid>div:nth-child(5){background:#f9e2e5}.player-home-stat-grid>div:nth-child(6){background:#e1ebf8}.player-home-stat-grid b,.player-home-stat-grid span{display:block}.player-home-stat-grid b{font-size:19px;line-height:1.05;color:#173c68;font-weight:900}.player-home-stat-grid span{margin-top:5px;font-size:9px;line-height:1.1;color:#35516d;font-weight:900}.player-home-form{display:grid;grid-template-columns:26px 1fr 16px;align-items:center;column-gap:8px;width:100%;margin-top:9px;padding:10px;border:1px solid #bdd0e5;border-radius:11px;background:#f7fbff;color:#173d69;text-align:left;font:inherit}.player-home-form span{grid-row:span 2;font-size:18px}.player-home-form b{font-size:12px;font-weight:900}.player-home-form small{font-size:9px;color:#5d7590;font-weight:800}.player-home-form em{grid-column:3;grid-row:span 2;font-size:22px;font-style:normal;color:#2864a0}@media(max-width:420px){.player-home-performance{padding:11px!important}.player-home-performance-head span{font-size:14px}.player-home-stat-grid{gap:6px}.player-home-stat-grid>div{min-height:60px}.player-home-stat-grid b{font-size:18px}}';
+ document.head.appendChild(css);
+})();
