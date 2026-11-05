@@ -974,3 +974,45 @@ syncRosterChrome();
  css.textContent='.profile-center-player-menu{margin:16px 0;padding:14px;border:1px solid #b8c9dc;border-radius:18px;background:#edf3fb!important;color:#17324e!important}.profile-center-brand{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#1d4676,#60438b);color:#fff}.profile-center-brand img{width:54px;height:54px;object-fit:contain;border-radius:12px;background:#fff;border:2px solid #f1cb55}.profile-center-brand span{min-width:0}.profile-center-brand strong,.profile-center-brand small,.profile-center-brand em{display:block}.profile-center-brand strong{font-size:17px}.profile-center-brand small{margin-top:3px;font-size:12px;color:#fff}.profile-center-brand em{margin-top:6px;font-size:11px;color:#ffe993;font-style:normal;font-weight:800}.profile-center-caption{margin:14px 2px 9px;color:#516d89;font-size:12px;font-weight:900;letter-spacing:.08em}.profile-center-main{display:grid;gap:9px}.profile-center-link{display:flex;align-items:center;gap:11px;width:100%;border:1px solid #c5d5e5;border-radius:13px;background:#fff;color:#173858;text-align:left;padding:12px;font:inherit}.profile-center-link>i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#e8f1fb;color:#225991;flex:0 0 auto}.profile-center-link>span{flex:1;min-width:0}.profile-center-link strong,.profile-center-link small{display:block}.profile-center-link strong{font-size:14px;font-weight:900}.profile-center-link small{margin-top:3px;color:#5b7590;font-size:11px;line-height:1.35}.profile-center-link>b{font-size:23px;line-height:1;color:#28609a}.profile-center-primary{background:#fff;border-left:5px solid #2866a0;padding-left:10px}.profile-center-primary>i{background:#183f70;color:#fff}.profile-center-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px}.profile-center-mini .profile-center-link{display:block;min-height:96px}.profile-center-mini .profile-center-link>i{margin-bottom:8px}.profile-center-mini .profile-center-link>b{display:none}.profile-center-mini .profile-center-link strong{font-size:13px}.profile-center-mini .profile-center-link small{font-size:10px}@media(max-width:420px){.profile-center-player-menu{padding:10px;border-radius:14px}.profile-center-brand{padding:12px}.profile-center-brand strong{font-size:16px}.profile-center-link{padding:11px}.profile-center-mini{grid-template-columns:1fr 1fr;gap:8px}}';
  document.head.appendChild(css);
 })();
+
+
+/* mksk-manager-title-mobile-20261105: direct visible manager title field on phone */
+(function(){
+ if(window.__mkskManagerTitleMobile)return;
+ window.__mkskManagerTitleMobile=true;
+ var beforeMobileManagerAccess=openManagerAccess;
+ openManagerAccess=function(){
+   beforeMobileManagerAccess();
+   var dialog=Array.from(document.querySelectorAll('dialog.player-hub-dialog')).reverse().find(function(d){return d.open&&!d.dataset.managerTitleMobile;});
+   if(!dialog)return;
+   dialog.dataset.managerTitleMobile='1';
+   var select=dialog.querySelector('select'),oldBox=dialog.querySelector('.manager-role-slot');
+   if(!select||!oldBox)return;
+   var oldInput=oldBox.querySelector('input'),oldSave=oldBox.querySelector('button'),oldFeedback=oldBox.querySelector('.manager-role-feedback');
+   oldBox.hidden=true;
+   var box=document.createElement('section');
+   box.className='manager-title-mobile';
+   box.innerHTML='<h3>YÖNETİCİ UNVANI</h3><p>LİSTEDE GÖRÜNEN GÖREVİ BURAYA YAZ.</p><label>ÜNVAN / GÖREV ADI<input type="text" maxlength="200" placeholder="ÖRN. MKSK BAŞKAN YARDIMCISI"></label><button type="button">ÜNVANI KAYDET</button><p class="manager-title-mobile-status" role="status"></p>';
+   select.after(box);
+   var input=box.querySelector('input'),save=box.querySelector('button'),status=box.querySelector('.manager-title-mobile-status');
+   function refresh(){
+     var id=select.value,person=(clubMetadataRows||[]).find(function(p){return p.id===id;}),isManager=id&&accountRoles[id]==='admin';
+     input.value=oldInput?.value||person?.management_role||'';
+     input.disabled=!isManager;save.disabled=!isManager;
+     status.textContent=!id?'ÖNCE OYUNCU SEÇ.':!isManager?'ÖNCE YÖNETİCİ YAP, SONRA UNVANINI YAZ.':'SEÇİLEN YÖNETİCİNİN LİSTEDE GÖRÜNEN UNVANI.';
+   }
+   select.addEventListener('change',function(){setTimeout(refresh,0);});
+   save.onclick=function(){
+     if(!select.value||save.disabled)return;
+     if(oldInput)oldInput.value=input.value.trim();
+     oldSave?.click();
+     status.textContent='KAYDEDİLİYOR…';
+     setTimeout(function(){status.textContent=oldFeedback?.textContent||'ÜNVAN KAYDEDİLDİ.';},450);
+   };
+   refresh();
+ };
+ var css=document.createElement('style');
+ css.id='mksk-manager-title-mobile-style-20261105';
+ css.textContent='.player-hub-dialog .manager-title-mobile{display:block!important;margin:14px 0!important;padding:15px!important;border:2px solid #2d659c!important;border-radius:14px!important;background:#edf6ff!important;color:#173858!important}.player-hub-dialog .manager-title-mobile h3{margin:0 0 6px!important;color:#153f70!important;font-size:17px!important}.player-hub-dialog .manager-title-mobile p{margin:0 0 12px!important;color:#365d7f!important;font-size:12px!important;font-weight:800!important}.player-hub-dialog .manager-title-mobile label{display:block!important;color:#173858!important;font-weight:900!important;font-size:12px!important}.player-hub-dialog .manager-title-mobile input{display:block!important;box-sizing:border-box!important;width:100%!important;min-height:48px!important;margin:7px 0 11px!important;padding:11px!important;border:2px solid #769ac0!important;border-radius:10px!important;background:#fff!important;color:#142f50!important;font-size:16px!important;font-weight:800!important}.player-hub-dialog .manager-title-mobile button{display:block!important;width:100%!important;min-height:48px!important;border:0!important;border-radius:10px!important;background:#1e5d96!important;color:#fff!important;font-weight:900!important;font-size:15px!important}.player-hub-dialog .manager-title-mobile button:disabled,.player-hub-dialog .manager-title-mobile input:disabled{opacity:.55!important}.player-hub-dialog .manager-title-mobile .manager-title-mobile-status{margin:10px 0 0!important;color:#254f74!important}@media(max-width:600px){.player-hub-dialog .manager-title-mobile{padding:13px!important}.player-hub-dialog .manager-title-mobile input{font-size:16px!important}}';
+ document.head.appendChild(css);
+})();
