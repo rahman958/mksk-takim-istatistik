@@ -1720,3 +1720,29 @@ syncRosterChrome();
     return result;
   };
 })();
+
+/* mksk-admin-player-switch-hardening-20261106 */
+(function(){
+  document.addEventListener('click',function(event){
+    if(event.target.closest('.mksk-visible-mode-switch.admin button'))window.__mkskFromAdmin=true;
+  },true);
+  function ensureReturn(){
+    if(!window.__mkskFromAdmin)return;
+    var root=el('player-view');
+    if(!root||root.querySelector('.mksk-force-admin-return'))return;
+    var bar=document.createElement('section');
+    bar.className='mksk-visible-mode-switch player mksk-force-admin-return';
+    bar.innerHTML='<span><b>OYUNCU GÖRÜNÜMÜ</b><small>YÖNETİCİ ARAÇLARINA DÖN</small></span><button type="button">🛡️ YÖNETİCİ PANELİNE DÖN</button>';
+    bar.querySelector('button').onclick=async function(){
+      this.disabled=true;
+      try{await loadAdmin();show('admin-view');window.scrollTo({top:0,behavior:'smooth'});}
+      finally{this.disabled=false;}
+    };
+    root.prepend(bar);
+  }
+  var prior=loadPlayer;
+  loadPlayer=async function(){var result=await prior.apply(this,arguments);ensureReturn();return result;};
+  var style=document.createElement('style');
+  style.textContent='body:has(#player-view:not(.hidden)) #season-controls{display:none!important}.mksk-force-admin-return{display:flex!important}';
+  document.head.appendChild(style);
+})();
