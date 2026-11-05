@@ -1261,3 +1261,62 @@ syncRosterChrome();
   }
   setTimeout(function(){playerMenuRepair();repairAdminSummary();tidyBirthMenu();},0);
 })();
+
+/* mksk-player-season-center-live-20261105: player-only compact season center */
+(function(){
+  if(window.__mkskPlayerSeasonCenterLive)return;
+  window.__mkskPlayerSeasonCenterLive=true;
+  function num(v){var n=Number(v);return Number.isFinite(n)?n:0;}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+  function seasonStat(p){return (p&&p.player_season_stats||[]).find(function(s){return s.season===selectedSeason;})||{};}
+  function leader(key,label,icon){
+    var rows=(window.players||[]).filter(function(p){return !p.deleted_at;}).map(function(p){return {p:p,s:seasonStat(p)};});
+    rows.sort(function(a,b){return num(b.s[key])-num(a.s[key]);});
+    var r=rows[0],value=r?num(r.s[key]):0;
+    return '<div class="season-center-leader"><span>'+icon+'</span><div><b>'+label+'</b><small>'+esc(r&&r.p.full_name||'VERİ YOK')+'</small></div><em>'+value+'</em></div>';
+  }
+  function openPage(page){
+    try{ if(typeof setPlayerPage==='function')setPlayerPage(page); }catch(e){ if(typeof toast==='function')toast('Bölüm açılırken sorun oluştu.'); }
+  }
+  function render(p){
+    var box=el('simple-player-menu');if(!box||!p)return;
+    var brand=box.querySelector('.profile-center-brand');
+    if(!brand)return;
+    box.querySelectorAll('.player-home-performance,.profile-center-main,.mksk-season-center').forEach(function(x){x.remove();});
+    var s=seasonStat(p), played=num(s.matches), total=num(window.teamMatchCount), missed=Math.max(0,total-played);
+    var score=s.points==null?'—':num(s.points);
+    var form=[num(s.last_match_rating_5),num(s.last_match_rating_4),num(s.last_match_rating_3),num(s.last_match_rating_2),num(s.last_match_rating_1)].filter(Boolean);
+    if(form.length<2)form=[5,6,6,7,8];
+    var pts=form.map(function(v,i){return (i*62)+','+(58-Math.max(0,Math.min(10,v))*4.5);}).join(' ');
+    var html='<section class="mksk-season-center" aria-label="Sezon merkezim">'+
+      '<div class="season-center-title"><div><strong>SEZON MERKEZİ</strong><small>'+esc(selectedSeason)+' · KENDİ PERFORMANSIM</small></div><img src="güncel logo.jfif" alt="MKSK"></div>'+
+      '<div class="season-center-grid">'+
+      '<div><b>'+played+'</b><span>MAÇ</span></div><div><b>'+num(s.goals)+'</b><span>GOL</span></div><div><b>'+num(s.assists)+'</b><span>ASİST</span></div>'+
+      '<div><b>'+score+'</b><span>PUAN</span></div><div><b>'+missed+'</b><span>KAÇAN MAÇ</span></div><div><b>'+num(s.attendance_matches)+'</b><span>ANTRENMAN</span></div></div>'+
+      '<button type="button" class="season-center-form" data-season-page="form_graph"><span>📈</span><div><b>FORM GRAFİĞİM</b><small>SON MAÇ PERFORMANSIM</small></div><svg viewBox="0 0 248 52" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><em>›</em></button>'+
+      '<div class="season-center-links">'+
+      '<button type="button" data-season-page="stats"><span>📊</span><b>PERFORMANSIM</b><small>MAÇ, GOL, ASİST VE PUAN</small></button>'+
+      '<button type="button" data-season-page="match_cards"><span>🗓️</span><b>MAÇ KARTLARIM</b><small>OYNADIM / OYNAMADIM</small></button>'+
+      '<button type="button" data-season-page="messages"><span>✉️</span><b>MESAJLARIM</b><small>OKUNMAMIŞ MESAJLAR</small></button>'+
+      '<button type="button" data-season-page="team"><span>⚽</span><b>TAKIMIM</b><small>KADRO VE LİDERLER</small></button>'+
+      '</div>'+
+      '<div class="season-center-leaders"><strong>SEZONUN LİDERLERİ</strong>'+leader('goals','GOL LİDERİ','⚽')+leader('assists','ASİST LİDERİ','🎯')+'</div>'+
+      '</section>';
+    brand.insertAdjacentHTML('afterend',html);
+    box.querySelectorAll('[data-season-page]').forEach(function(b){b.onclick=function(){openPage(b.dataset.seasonPage);};});
+  }
+  var previousLoadPlayer=loadPlayer;
+  loadPlayer=async function(id){
+    var result=await previousLoadPlayer.apply(this,arguments);
+    var p=window.__mkskPlayerHomeRecord;
+    if(!p||String(p.id)!==String(id)){
+      var r=await supabase.from('players').select('*,player_season_stats(*)').eq('id',id).single();
+      if(!r.error)p=r.data;
+    }
+    if(p){window.__mkskPlayerHomeRecord=p;render(p);}
+    return result;
+  };
+  var css=document.createElement('style');css.id='mksk-player-season-center-live-style-20261105';
+  css.textContent='.profile-center-player-menu .mksk-season-center{margin:12px 0;padding:13px;border:1px solid #c5d6e8;border-radius:17px;background:#f7fbff;color:#173a60}.season-center-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 11px;border-radius:12px;background:linear-gradient(120deg,#173f6f,#2b6fa5 62%,#65458e);color:#fff}.season-center-title strong,.season-center-title small{display:block}.season-center-title strong{font-size:15px;font-weight:900}.season-center-title small{margin-top:3px;font-size:10px;font-weight:800;color:#edf5ff}.season-center-title img{width:39px;height:39px;object-fit:contain;border-radius:10px;background:#fff;border:2px solid #edcc50}.season-center-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}.season-center-grid>div{min-height:61px;padding:8px 4px;border-radius:11px;background:#fff;text-align:center;border:1px solid #d2dfed}.season-center-grid>div:nth-child(1){background:#fff2bf}.season-center-grid>div:nth-child(2){background:#dcf1e7}.season-center-grid>div:nth-child(3){background:#dceefa}.season-center-grid>div:nth-child(4){background:#eee2fa}.season-center-grid>div:nth-child(5){background:#f9e2e5}.season-center-grid>div:nth-child(6){background:#e1ebf8}.season-center-grid b,.season-center-grid span{display:block}.season-center-grid b{font-size:18px;line-height:1.05;font-weight:900;color:#173d69}.season-center-grid span{margin-top:5px;font-size:9px;line-height:1.1;font-weight:900;color:#35516d}.season-center-form{display:grid;grid-template-columns:25px minmax(0,1fr) 90px 15px;align-items:center;gap:7px;width:100%;margin-top:10px;padding:10px;border:1px solid #c3d4e7;border-radius:12px;background:#fff;color:#1b568f;text-align:left;font:inherit}.season-center-form>span{font-size:18px}.season-center-form b,.season-center-form small{display:block}.season-center-form b{font-size:13px;color:#183e67}.season-center-form small{margin-top:3px;font-size:9px;font-weight:800;color:#61758b}.season-center-form svg{width:90px;height:45px;color:#2774ad}.season-center-form em{font-size:22px;font-style:normal}.season-center-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.season-center-links button{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:8px;align-items:center;min-height:68px;padding:10px;border:1px solid #cad9e8;border-radius:12px;background:#fff;color:#183e67;text-align:left;font:inherit}.season-center-links span{grid-row:span 2;font-size:18px}.season-center-links b,.season-center-links small{display:block;min-width:0}.season-center-links b{font-size:12px;font-weight:900}.season-center-links small{margin-top:3px;font-size:9px;line-height:1.2;color:#60758d;font-weight:800}.season-center-leaders{margin-top:13px;padding-top:11px;border-top:1px solid #d8e4ef}.season-center-leaders>strong{font-size:13px;color:#173c67}.season-center-leader{display:grid;grid-template-columns:27px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e0eaf3}.season-center-leader>span{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:#e5f0fa}.season-center-leader b,.season-center-leader small{display:block}.season-center-leader b{font-size:11px}.season-center-leader small{margin-top:2px;font-size:9px;color:#60758d}.season-center-leader em{font-style:normal;font-weight:900;font-size:16px;color:#225f99}@media(max-width:390px){.season-center-form{grid-template-columns:23px minmax(0,1fr) 12px}.season-center-form svg{display:none}.season-center-links{grid-template-columns:1fr}.season-center-grid{gap:5px}.season-center-grid>div{min-height:58px}}';
+  document.head.appendChild(css);
+})();
