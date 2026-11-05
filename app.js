@@ -1767,8 +1767,8 @@ syncRosterChrome();
     var msg=el('admin-message');if(msg)msg.textContent='Boş forma numaraları yükleniyor; yeniden dene.';
   }
   simpleCatalog=function(admin,opener){
-    originalCatalog(admin,opener);
-    if(!admin)return;
+    var activeAdmin=admin||el('admin-view');
+    originalCatalog(activeAdmin,opener);
     var d=el('simple-catalog');
     if(!d||d.querySelector('.mksk-transfer-menu'))return;
     var group=document.createElement('section');
@@ -1777,7 +1777,7 @@ syncRosterChrome();
     var first=d.querySelector('.simple-catalog-list');
     if(first)first.before(group);
     group.querySelector('.mksk-transfer-entry').onclick=openTransfer;
-    group.querySelector('.mksk-jersey-entry').onclick=function(){openFreeJerseys(admin);};
+    group.querySelector('.mksk-jersey-entry').onclick=function(){openFreeJerseys(activeAdmin);};
   };
   if(!document.getElementById('mksk-transfer-menu-style')){
     var style=document.createElement('style');style.id='mksk-transfer-menu-style';
