@@ -1640,3 +1640,32 @@ syncRosterChrome();
   style.textContent='#player-stats .mksk-player-stats-compact{max-width:720px;margin:0 auto;border:1px solid #b9cce0;border-radius:20px;overflow:hidden;background:#f8fbff;color:#153a62;box-shadow:0 10px 25px #254b7214}#player-stats .mksk-player-stats-compact header{padding:18px 20px;background:linear-gradient(120deg,#123f70,#60428c);color:#fff}#player-stats .mksk-player-stats-compact header span{display:block;font-size:10px;font-weight:900;letter-spacing:.06em;opacity:.8}#player-stats .mksk-player-stats-compact h3{margin:5px 0 0;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:22px;letter-spacing:.01em}.mksk-ps-core{padding:17px}.mksk-ps-section-title{font-size:12px;font-weight:900;letter-spacing:.07em;color:#446582;margin-bottom:11px}.mksk-ps-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.mksk-ps-card{min-width:0;padding:12px 6px;border:1px solid #cad8e7;border-top:4px solid #6a91bb;border-radius:14px;background:#fff;text-align:center}.mksk-ps-card.gold{border-top-color:#dda82e}.mksk-ps-card.blue{border-top-color:#4386be}.mksk-ps-card.purple{border-top-color:#8054aa}.mksk-ps-card.pink{border-top-color:#bd6281}.mksk-ps-card i{display:block;font-style:normal;font-size:17px;line-height:1}.mksk-ps-card strong{display:block;margin:4px 0 2px;font-size:24px;color:#143d69}.mksk-ps-card span{display:block;font-size:9px;font-weight:900;line-height:1.2;color:#526f8b}.mksk-ps-form{margin:14px 0;padding:13px 14px 11px;border-radius:15px;background:linear-gradient(135deg,#193f69,#315d8a);color:#fff}.mksk-ps-form>div:first-child{display:flex;justify-content:space-between;align-items:center;font-size:12px}.mksk-ps-form b{font-size:12px}.mksk-ps-form strong{font-size:17px;color:#fff!important;-webkit-text-fill-color:#fff!important}.mksk-ps-bars{display:flex;gap:7px;align-items:flex-end;height:46px;margin-top:9px}.mksk-ps-bars i{display:block;flex:1;min-height:10px;border-radius:5px 5px 2px 2px;background:#83b4db}.mksk-ps-bars i.b1,.mksk-ps-bars i.b3{background:#efc451}.mksk-ps-foot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.mksk-ps-foot div{padding:11px 7px;border:1px solid #cbd9e8;border-radius:12px;background:#fff;text-align:center}.mksk-ps-foot span{display:block;font-size:9px;font-weight:900;line-height:1.25;color:#59748d}.mksk-ps-foot strong{display:block;margin-top:4px;font-size:21px;color:#173f6c}@media(max-width:480px){#player-stats .mksk-player-stats-compact{border-radius:16px}.mksk-ps-core{padding:13px}.mksk-ps-cards{gap:7px}.mksk-ps-card{padding:10px 3px}.mksk-ps-card strong{font-size:20px}.mksk-ps-card span{font-size:8px}.mksk-ps-foot{gap:6px}.mksk-ps-foot strong{font-size:18px}}';
   document.head.appendChild(style);
 })();
+
+
+/* mksk-player-stats-render-guard-20261106 */
+(function(){
+  function readValue(text,label){
+    var m=String(text||'').match(new RegExp(label+'\\s*([0-9]+|—)','i'));
+    return m?(m[1]==='—'?'0':m[1]):'0';
+  }
+  function paint(){
+    var host=document.getElementById('player-stats');
+    if(!host||host.dataset.mkskCompactDone==='1')return;
+    var raw=(host.innerText||host.textContent||'').replace(/\s+/g,' ').trim();
+    if(!raw)return;
+    var matches=readValue(raw,'MAÇ SAYISI|MAÇ');
+    var goals=readValue(raw,'GOL');
+    var assists=readValue(raw,'ASİST');
+    var motm=readValue(raw,'MAÇIN ADAMI');
+    var training=readValue(raw,'ANTRENMAN SAYISI');
+    var percent=readValue(raw,'BAŞARI YÜZDESİ');
+    var summary=(document.getElementById('player-summary')||{}).innerText||'';
+    var missed=readValue(summary,'KAÇIRDIĞI MAÇ');
+    host.dataset.mkskCompactDone='1';
+    host.innerHTML='<section class="mksk-player-stats-compact"><header><span>'+String(selectedSeason||'').replace(/[<>&]/g,'')+' · KİŞİSEL İSTATİSTİKLERİM</span><h3>SEZON PERFORMANSIM</h3></header><div class="mksk-ps-core"><div class="mksk-ps-section-title">MAÇ VE HÜCUM</div><div class="mksk-ps-cards"><article class="mksk-ps-card gold"><i>⚽</i><strong>'+matches+'</strong><span>MAÇ</span></article><article class="mksk-ps-card blue"><i>🥅</i><strong>'+goals+'</strong><span>GOL</span></article><article class="mksk-ps-card purple"><i>🎯</i><strong>'+assists+'</strong><span>ASİST</span></article><article class="mksk-ps-card pink"><i>🏅</i><strong>'+motm+'</strong><span>MAÇIN ADAMI</span></article></div><section class="mksk-ps-form"><div><b>📈 SON 5 MAÇ FORMUM</b><strong>'+percent+'%</strong></div><div class="mksk-ps-bars"><i style="height:45%"></i><i class="b1" style="height:56%"></i><i style="height:64%"></i><i class="b3" style="height:72%"></i><i style="height:82%"></i></div></section><div class="mksk-ps-foot"><div><span>📅 KAÇIRDIĞIM MAÇ</span><strong>'+missed+'</strong></div><div><span>🏃 ANTRENMAN</span><strong>'+training+'</strong></div><div><span>⭐ BAŞARI</span><strong>'+percent+'%</strong></div></div></div></section>';
+  }
+  var timer=0;
+  function schedule(){clearTimeout(timer);timer=setTimeout(paint,40);}
+  document.addEventListener('DOMContentLoaded',function(){schedule();new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});});
+  if(document.readyState!=='loading')schedule();
+})();
