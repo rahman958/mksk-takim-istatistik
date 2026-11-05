@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261026-player-home-3';
 import { initPlayerHub } from './player-hub.js?v=20261026-card-fit-7';
 import { initQuickEntry } from './quick-entry.js?v=20261103-login-fix-1';
-import { matchCards } from './match-cards.js?v=20261104-match-cards-1';
+import { matchCards } from './match-cards.js?v=20261105-team-record-2';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261027-grouped-sections-1';
 var config=window.MKSK_CONFIG;
