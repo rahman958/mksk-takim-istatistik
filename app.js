@@ -818,3 +818,12 @@ syncRosterChrome();
     return target;
   };
 })();
+
+
+// Keep home shortcut titles and explanation text readable in both themes.
+(function(){
+  if(document.getElementById('mksk-shortcut-legibility')) return;
+  var style=document.createElement('style');style.id='mksk-shortcut-legibility';
+  style.textContent='.simple-fast-grid.list-navigation button strong{color:#132d50!important;opacity:1!important}.simple-fast-grid.list-navigation button small{color:#284b74!important;opacity:1!important;font-weight:750!important}html[data-theme=dark] .simple-fast-grid.list-navigation button strong{color:#ffffff!important}html[data-theme=dark] .simple-fast-grid.list-navigation button small{color:#e3efff!important;opacity:1!important}html[data-theme=dark] .simple-fast-grid.list-navigation button b{color:#d8e8ff!important}';
+  document.head.appendChild(style);
+})();
