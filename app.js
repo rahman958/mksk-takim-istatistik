@@ -1497,3 +1497,85 @@ syncRosterChrome();
   };
   setTimeout(addOwnPlayerMenu,0);
 })();
+
+
+/* mksk-season-finish-center-20261105 */
+(function(){
+  if(window.__mkskSeasonFinishCenter)return;
+  window.__mkskSeasonFinishCenter=true;
+  function safeText(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+  function nextSeasonName(value){
+    var match=String(value||'').match(/^(\\d{4})-(\\d{4})$/);
+    if(!match)return '';
+    var year=Number(match[1])+1;
+    return year+'-'+(year+1);
+  }
+  function closeDialog(dialog){ if(dialog?.open)dialog.close(); dialog?.remove(); }
+  function openFinishDialog(){
+    var current=selectedSeason;
+    var dialog=document.createElement('dialog');
+    dialog.className='mksk-season-finish-dialog';
+    dialog.innerHTML='<form method="dialog" class="mksk-season-finish-card">'+
+      '<button class="mksk-season-x" value="cancel" aria-label="Kapat">×</button>'+
+      '<span class="mksk-season-kicker">SEZON MERKEZİ</span><h2>SEZONU BİTİR</h2>'+
+      '<p class="mksk-season-current"><b>'+safeText(current)+'</b> sezonunun maçları, oyuncu istatistikleri, liderleri ve takım özeti arşive alınır.</p>'+
+      '<div class="mksk-season-safe"><b>VERİLER SİLİNMEZ</b><span>Arşivden her zaman açıp bakabilirsin.</span></div>'+
+      '<label>YENİ SEZON ADI<input class="mksk-next-season" value="'+safeText(nextSeasonName(current))+'" inputmode="numeric" pattern="[0-9]{4}-[0-9]{4}" required></label>'+
+      '<label class="mksk-season-check"><input type="checkbox" class="mksk-season-confirm"> <span>'+safeText(current)+' sezonunu arşivlemek istediğimi onaylıyorum.</span></label>'+
+      '<p class="mksk-season-message" role="status"></p>'+
+      '<div class="mksk-season-actions"><button type="button" class="mksk-season-cancel">VAZGEÇ</button><button type="submit" class="mksk-season-submit" disabled>SEZONU BİTİR VE YENİSİNİ AÇ</button></div>'+
+    '</form>';
+    document.body.appendChild(dialog);
+    var form=dialog.querySelector('form'), input=dialog.querySelector('.mksk-next-season'), confirm=dialog.querySelector('.mksk-season-confirm'), submit=dialog.querySelector('.mksk-season-submit'), message=dialog.querySelector('.mksk-season-message');
+    dialog.addEventListener('close',function(){dialog.remove();});
+    dialog.querySelector('.mksk-season-cancel').onclick=function(){closeDialog(dialog);};
+    confirm.onchange=function(){submit.disabled=!confirm.checked;};
+    form.onsubmit=async function(event){
+      event.preventDefault();
+      var next=String(input.value||'').trim();
+      if(!confirm.checked)return;
+      if(!/^\\d{4}-\\d{4}$/.test(next)||Number(next.slice(5))!==Number(next.slice(0,4))+1){message.textContent='Yeni sezonu 2027-2028 gibi yaz.';return;}
+      if(next===current){message.textContent='Yeni sezon, mevcut sezondan farklı olmalı.';return;}
+      submit.disabled=true;input.disabled=true;message.textContent='ARŞİV HAZIRLANIYOR...';
+      try{
+        var result=await supabase.from('club_season_summary').insert({season:next,matches:0});
+        if(result.error){
+          if(result.error.code==='23505')throw new Error('Bu sezon zaten var. Sezon seçicisinden açabilirsin.');
+          throw result.error;
+        }
+        selectedSeason=next;
+        await setupSeasons(true);
+        var selector=el('season-select');
+        if(selector){selector.value=next;selector.dispatchEvent(new Event('change'));}
+        message.textContent=current+' ARŞİVE ALINDI. '+next+' YENİ SEZON OLARAK AÇILDI.';
+        setTimeout(function(){closeDialog(dialog);if(typeof toast==='function')toast('YENİ SEZON AÇILDI. ESKİ SEZON ARŞİVDE KORUNUYOR.');},900);
+      }catch(error){
+        message.textContent='AÇILAMADI: '+(error?.message||'Sezon oluşturulamadı.');
+        submit.disabled=false;input.disabled=false;
+      }
+    };
+    dialog.showModal();
+  }
+  function addSeasonCenter(){
+    var controls=el('season-controls');
+    if(!controls||controls.querySelector('.mksk-season-center-actions'))return;
+    var details=controls.querySelector('details');
+    if(details)details.hidden=true;
+    var section=document.createElement('section');
+    section.className='mksk-season-center-actions';
+    section.innerHTML='<div><span>SEZON YÖNETİMİ</span><strong>'+safeText(selectedSeason)+' AKTİF</strong><small>Sezonu güvenle arşivle, yeni sezonu temiz başlangıçla aç.</small></div><button type="button">SEZONU BİTİR / YENİ SEZON</button>';
+    section.querySelector('button').onclick=openFinishDialog;
+    controls.appendChild(section);
+  }
+  var originalSetupSeasons=setupSeasons;
+  setupSeasons=async function(isAdmin){
+    var result=await originalSetupSeasons.apply(this,arguments);
+    if(isAdmin)addSeasonCenter();
+    return result;
+  };
+  var originalAdminLoad=loadAdmin;
+  loadAdmin=async function(){var result=await originalAdminLoad.apply(this,arguments);setTimeout(addSeasonCenter,0);return result;};
+  var style=document.createElement('style');style.id='mksk-season-finish-center-style-20261105';
+  style.textContent='.mksk-season-center-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px;padding:15px;border:1px solid #b9cde0;border-left:6px solid #244f80;border-radius:14px;background:#f5f9ff;color:#193c64}.mksk-season-center-actions span,.mksk-season-center-actions strong,.mksk-season-center-actions small{display:block}.mksk-season-center-actions span{font-size:10px;font-weight:900;color:#54708c;letter-spacing:.06em}.mksk-season-center-actions strong{margin-top:3px;font-size:14px}.mksk-season-center-actions small{margin-top:4px;font-size:11px;line-height:1.35;color:#60758c}.mksk-season-center-actions button{flex:0 0 auto;min-height:45px;padding:10px 13px;border:1px solid #385f8b;border-radius:11px;background:linear-gradient(125deg,#254f7d,#67428f);color:#fff;-webkit-text-fill-color:#fff;font:inherit;font-size:11px;font-weight:900}.mksk-season-finish-dialog{box-sizing:border-box;width:min(92vw,470px);padding:0;border:1px solid #91a8c2;border-radius:20px;background:#f8fbff;color:#183b63;box-shadow:0 18px 55px #081b3559}.mksk-season-finish-dialog::backdrop{background:#07162acb}.mksk-season-finish-card{position:relative;padding:24px}.mksk-season-x{position:absolute;right:15px;top:15px;width:35px;height:35px;border:1px solid #a5b7cc;border-radius:50%;background:#fff;color:#24456d;font:inherit;font-size:22px}.mksk-season-kicker{font-size:10px;font-weight:900;color:#58799b;letter-spacing:.08em}.mksk-season-finish-card h2{margin:5px 42px 10px 0;font-size:24px;color:#1d4676}.mksk-season-current{margin:0;line-height:1.55;font-size:14px}.mksk-season-safe{display:grid;gap:3px;margin:15px 0;padding:12px;border-left:4px solid #557fb0;border-radius:10px;background:#e4effa;font-size:12px}.mksk-season-safe span{color:#516c86}.mksk-season-finish-card label{display:grid;gap:7px;margin:14px 0;font-size:11px;font-weight:900}.mksk-season-finish-card input.mksk-next-season{box-sizing:border-box;width:100%;min-height:46px;padding:10px;border:1px solid #90a7c1;border-radius:10px;background:#fff;color:#173b63;font:inherit;font-size:16px;font-weight:800}.mksk-season-check{display:flex!important;grid-template-columns:20px minmax(0,1fr);align-items:start;line-height:1.45;text-transform:none}.mksk-season-check input{width:17px;height:17px;margin:1px 0 0}.mksk-season-message{min-height:20px;margin:9px 0;font-size:12px;font-weight:800;color:#435f7d}.mksk-season-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}.mksk-season-actions button{min-height:45px;padding:10px 12px;border:1px solid #8ba3bc;border-radius:10px;font:inherit;font-size:11px;font-weight:900}.mksk-season-cancel{background:#fff;color:#264a72}.mksk-season-submit{background:linear-gradient(125deg,#28517f,#65418c);color:#fff}.mksk-season-submit:disabled{opacity:.48}@media(max-width:500px){.mksk-season-center-actions{display:grid}.mksk-season-center-actions button{width:100%}.mksk-season-actions{display:grid;grid-template-columns:1fr}.mksk-season-actions button{width:100%}}';
+  document.head.appendChild(style);
+})();
