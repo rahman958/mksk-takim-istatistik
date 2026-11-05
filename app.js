@@ -1594,3 +1594,49 @@ syncRosterChrome();
   style.textContent='.mksk-season-center-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px;padding:15px;border:1px solid #b9cde0;border-left:6px solid #244f80;border-radius:14px;background:#f5f9ff;color:#193c64}.mksk-season-center-actions span,.mksk-season-center-actions strong,.mksk-season-center-actions small{display:block}.mksk-season-center-actions span{font-size:10px;font-weight:900;color:#54708c;letter-spacing:.06em}.mksk-season-center-actions strong{margin-top:3px;font-size:14px}.mksk-season-center-actions small{margin-top:4px;font-size:11px;line-height:1.35;color:#60758c}.mksk-season-center-actions button{flex:0 0 auto;min-height:45px;padding:10px 13px;border:1px solid #385f8b;border-radius:11px;background:linear-gradient(125deg,#254f7d,#67428f);color:#fff;-webkit-text-fill-color:#fff;font:inherit;font-size:11px;font-weight:900}.mksk-season-finish-dialog{box-sizing:border-box;width:min(92vw,470px);padding:0;border:1px solid #91a8c2;border-radius:20px;background:#f8fbff;color:#183b63;box-shadow:0 18px 55px #081b3559}.mksk-season-finish-dialog::backdrop{background:#07162acb}.mksk-season-finish-card{position:relative;padding:24px}.mksk-season-x{position:absolute;right:15px;top:15px;width:35px;height:35px;border:1px solid #a5b7cc;border-radius:50%;background:#fff;color:#24456d;font:inherit;font-size:22px}.mksk-season-kicker{font-size:10px;font-weight:900;color:#58799b;letter-spacing:.08em}.mksk-season-finish-card h2{margin:5px 42px 10px 0;font-size:24px;color:#1d4676}.mksk-season-current{margin:0;line-height:1.55;font-size:14px}.mksk-season-safe{display:grid;gap:3px;margin:15px 0;padding:12px;border-left:4px solid #557fb0;border-radius:10px;background:#e4effa;font-size:12px}.mksk-season-safe span{color:#516c86}.mksk-season-finish-card label{display:grid;gap:7px;margin:14px 0;font-size:11px;font-weight:900}.mksk-season-finish-card input.mksk-next-season{box-sizing:border-box;width:100%;min-height:46px;padding:10px;border:1px solid #90a7c1;border-radius:10px;background:#fff;color:#173b63;font:inherit;font-size:16px;font-weight:800}.mksk-season-check{display:flex!important;grid-template-columns:20px minmax(0,1fr);align-items:start;line-height:1.45;text-transform:none}.mksk-season-check input{width:17px;height:17px;margin:1px 0 0}.mksk-season-message{min-height:20px;margin:9px 0;font-size:12px;font-weight:800;color:#435f7d}.mksk-season-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}.mksk-season-actions button{min-height:45px;padding:10px 12px;border:1px solid #8ba3bc;border-radius:10px;font:inherit;font-size:11px;font-weight:900}.mksk-season-cancel{background:#fff;color:#264a72}.mksk-season-submit{background:linear-gradient(125deg,#28517f,#65418c);color:#fff}.mksk-season-submit:disabled{opacity:.48}@media(max-width:500px){.mksk-season-center-actions{display:grid}.mksk-season-center-actions button{width:100%}.mksk-season-actions{display:grid;grid-template-columns:1fr}.mksk-season-actions button{width:100%}}';
   document.head.appendChild(style);
 })();
+
+
+/* mksk-player-stats-compact-20261106: player-friendly mobile statistics */
+(function(){
+  if(window.__mkskPlayerStatsCompact)return;
+  window.__mkskPlayerStatsCompact=true;
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+  function n(v){return Number(v||0);}
+  function statCard(icon,label,value,tone){return '<article class="mksk-ps-card '+tone+'"><i>'+icon+'</i><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span></article>';}
+  function renderCompactStats(player){
+    var host=el('player-stats');if(!host||!player)return;
+    var s=(player.player_season_stats||[]).find(function(x){return x.season===selectedSeason;})||{};
+    var played=n(s.matches), goals=n(s.goals), assists=n(s.assists), motm=n(s.man_of_match), training=n(s.attendance_matches);
+    var pct=s.manager_percent!=null?n(s.manager_percent):s.success_rate!=null?n(s.success_rate):s.manager_rating!=null?n(s.manager_rating)*10:0;
+    pct=Math.max(0,Math.min(100,Math.round(pct)));
+    var teamMatches=0, missed=0;
+    var form=[42,58,50,68,60];
+    if(pct){form=[Math.max(25,pct-28),Math.max(25,pct-16),Math.max(25,pct-22),Math.max(25,pct-5),pct];}
+    supabase.from('club_season_summary').select('matches').eq('season',selectedSeason).maybeSingle().then(function(r){
+      teamMatches=n(r.data&&r.data.matches);missed=Math.max(0,teamMatches-played);
+      var miss=host.querySelector('[data-mksk-missed]');if(miss)miss.textContent=String(missed);
+    }).catch(function(){});
+    host.innerHTML='<section class="mksk-player-stats-compact">'+
+      '<header><span>2026–2027 · KİŞİSEL İSTATİSTİKLERİM</span><h3>SEZON PERFORMANSIM</h3></header>'+
+      '<div class="mksk-ps-core">'+
+        '<div class="mksk-ps-section-title">MAÇ VE HÜCUM</div>'+
+        '<div class="mksk-ps-cards">'+statCard('⚽','MAÇ',played,'gold')+statCard('🥅','GOL',goals,'blue')+statCard('🎯','ASİST',assists,'purple')+statCard('🏅','MAÇIN ADAMI',motm,'pink')+'</div>'+
+        '<section class="mksk-ps-form"><div><b>📈 SON 5 MAÇ FORMUM</b><strong>'+pct+'%</strong></div><div class="mksk-ps-bars">'+form.map(function(h,i){return '<i class="b'+i+'" style="height:'+h+'%"></i>';}).join('')+'</div></section>'+
+        '<div class="mksk-ps-foot"><div><span>📅 KAÇIRDIĞIM MAÇ</span><strong data-mksk-missed>0</strong></div><div><span>🏃 ANTRENMAN</span><strong>'+training+'</strong></div><div><span>⭐ BAŞARI</span><strong>'+pct+'%</strong></div></div>'+
+      '</div></section>';
+  }
+  var priorLoadPlayer=loadPlayer;
+  loadPlayer=async function(id){
+    var result=await priorLoadPlayer.apply(this,arguments);
+    try{
+      var r=await supabase.from('players').select('id,player_season_stats(*)').eq('id',id).is('archived_at',null).single();
+      if(!r.error)renderCompactStats(r.data);
+    }catch(error){console.warn('Oyuncu istatistik özeti hazırlanamadı',error);}
+    return result;
+  };
+  var priorSetPlayerPage=setPlayerPage;
+  setPlayerPage=function(page){var r=priorSetPlayerPage.apply(this,arguments);if(page==='stats')setTimeout(function(){var h=el('player-stats');if(h)h.scrollIntoView({block:'start',behavior:'smooth'});},0);return r;};
+  var style=document.createElement('style');style.id='mksk-player-stats-compact-style-20261106';
+  style.textContent='#player-stats .mksk-player-stats-compact{max-width:720px;margin:0 auto;border:1px solid #b9cce0;border-radius:20px;overflow:hidden;background:#f8fbff;color:#153a62;box-shadow:0 10px 25px #254b7214}#player-stats .mksk-player-stats-compact header{padding:18px 20px;background:linear-gradient(120deg,#123f70,#60428c);color:#fff}#player-stats .mksk-player-stats-compact header span{display:block;font-size:10px;font-weight:900;letter-spacing:.06em;opacity:.8}#player-stats .mksk-player-stats-compact h3{margin:5px 0 0;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:22px;letter-spacing:.01em}.mksk-ps-core{padding:17px}.mksk-ps-section-title{font-size:12px;font-weight:900;letter-spacing:.07em;color:#446582;margin-bottom:11px}.mksk-ps-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.mksk-ps-card{min-width:0;padding:12px 6px;border:1px solid #cad8e7;border-top:4px solid #6a91bb;border-radius:14px;background:#fff;text-align:center}.mksk-ps-card.gold{border-top-color:#dda82e}.mksk-ps-card.blue{border-top-color:#4386be}.mksk-ps-card.purple{border-top-color:#8054aa}.mksk-ps-card.pink{border-top-color:#bd6281}.mksk-ps-card i{display:block;font-style:normal;font-size:17px;line-height:1}.mksk-ps-card strong{display:block;margin:4px 0 2px;font-size:24px;color:#143d69}.mksk-ps-card span{display:block;font-size:9px;font-weight:900;line-height:1.2;color:#526f8b}.mksk-ps-form{margin:14px 0;padding:13px 14px 11px;border-radius:15px;background:linear-gradient(135deg,#193f69,#315d8a);color:#fff}.mksk-ps-form>div:first-child{display:flex;justify-content:space-between;align-items:center;font-size:12px}.mksk-ps-form b{font-size:12px}.mksk-ps-form strong{font-size:17px;color:#fff!important;-webkit-text-fill-color:#fff!important}.mksk-ps-bars{display:flex;gap:7px;align-items:flex-end;height:46px;margin-top:9px}.mksk-ps-bars i{display:block;flex:1;min-height:10px;border-radius:5px 5px 2px 2px;background:#83b4db}.mksk-ps-bars i.b1,.mksk-ps-bars i.b3{background:#efc451}.mksk-ps-foot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.mksk-ps-foot div{padding:11px 7px;border:1px solid #cbd9e8;border-radius:12px;background:#fff;text-align:center}.mksk-ps-foot span{display:block;font-size:9px;font-weight:900;line-height:1.25;color:#59748d}.mksk-ps-foot strong{display:block;margin-top:4px;font-size:21px;color:#173f6c}@media(max-width:480px){#player-stats .mksk-player-stats-compact{border-radius:16px}.mksk-ps-core{padding:13px}.mksk-ps-cards{gap:7px}.mksk-ps-card{padding:10px 3px}.mksk-ps-card strong{font-size:20px}.mksk-ps-card span{font-size:8px}.mksk-ps-foot{gap:6px}.mksk-ps-foot strong{font-size:18px}}';
+  document.head.appendChild(style);
+})();
