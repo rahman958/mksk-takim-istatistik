@@ -1060,3 +1060,29 @@ syncRosterChrome();
  css.textContent='.profile-center-player-menu .player-home-performance{margin:12px 0 2px;padding:13px;border:1px solid #c6d5e5;border-radius:15px;background:#fff;color:#163858}.player-home-performance-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:10px}.player-home-performance-head span{font-weight:900;font-size:15px}.player-home-performance-head small{font-weight:800;font-size:10px;color:#617993;text-align:right}.player-home-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.player-home-stat-grid>div{min-height:63px;padding:8px 5px;border-radius:11px;text-align:center;background:#edf4fc}.player-home-stat-grid>div:nth-child(1){background:#fff2bf}.player-home-stat-grid>div:nth-child(2){background:#dcf1e7}.player-home-stat-grid>div:nth-child(3){background:#dceefa}.player-home-stat-grid>div:nth-child(4){background:#eee2fa}.player-home-stat-grid>div:nth-child(5){background:#f9e2e5}.player-home-stat-grid>div:nth-child(6){background:#e1ebf8}.player-home-stat-grid b,.player-home-stat-grid span{display:block}.player-home-stat-grid b{font-size:19px;line-height:1.05;color:#173c68;font-weight:900}.player-home-stat-grid span{margin-top:5px;font-size:9px;line-height:1.1;color:#35516d;font-weight:900}.player-home-form{display:grid;grid-template-columns:26px 1fr 16px;align-items:center;column-gap:8px;width:100%;margin-top:9px;padding:10px;border:1px solid #bdd0e5;border-radius:11px;background:#f7fbff;color:#173d69;text-align:left;font:inherit}.player-home-form span{grid-row:span 2;font-size:18px}.player-home-form b{font-size:12px;font-weight:900}.player-home-form small{font-size:9px;color:#5d7590;font-weight:800}.player-home-form em{grid-column:3;grid-row:span 2;font-size:22px;font-style:normal;color:#2864a0}@media(max-width:420px){.player-home-performance{padding:11px!important}.player-home-performance-head span{font-size:14px}.player-home-stat-grid{gap:6px}.player-home-stat-grid>div{min-height:60px}.player-home-stat-grid b{font-size:18px}}';
  document.head.appendChild(css);
 })();
+
+/* mksk-player-profile-layout-repair-20261105: prevent narrow text and blank icons on player profile home */
+(function(){
+ if(window.__mkskPlayerProfileLayoutRepair)return;
+ window.__mkskPlayerProfileLayoutRepair=true;
+ var labels={
+  'PERFORMANSIM':'📊','FORM GRAFİĞİM':'📈','MAÇ KARTLARIM':'📅',
+  'MESAJLARIM':'💬','TAKIMIM':'👥','GÖREVLERİM':'✓','BAŞARILARIM':'🏆'
+ };
+ function repair(){
+   var box=el('simple-player-menu');if(!box)return;
+   box.querySelectorAll('.profile-center-link').forEach(function(b){
+     var strong=b.querySelector('strong'),label=strong?.textContent.trim(),icon=b.querySelector('i');
+     if(icon){icon.remove();}
+     if(label&&labels[label]&&!b.querySelector('.profile-center-symbol')){
+       var s=document.createElement('span');s.className='profile-center-symbol';s.textContent=labels[label];b.prepend(s);
+     }
+   });
+ }
+ var previousShell=simplePlayerShell;
+ simplePlayerShell=function(){previousShell();repair();};
+ var css=document.createElement('style');css.id='mksk-player-profile-layout-repair-style-20261105';
+ css.textContent='.profile-center-player-menu .profile-center-main{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:9px!important}.profile-center-player-menu .profile-center-main .profile-center-link{display:grid!important;grid-template-columns:36px minmax(0,1fr) 22px!important;align-items:center!important;min-height:74px!important;width:100%!important;max-width:100%!important;overflow:hidden!important}.profile-center-player-menu .profile-center-link>span:not(.profile-center-symbol){display:block!important;min-width:0!important;width:auto!important;overflow:hidden!important}.profile-center-player-menu .profile-center-link strong,.profile-center-player-menu .profile-center-link small{overflow-wrap:normal!important;word-break:normal!important;white-space:normal!important}.profile-center-player-menu .profile-center-link small{max-width:100%!important}.profile-center-player-menu .profile-center-symbol{display:grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:10px!important;background:#183f70!important;color:#fff!important;font-size:17px!important;line-height:1!important}.profile-center-player-menu .profile-center-link>b{display:block!important;width:auto!important;min-width:0!important;text-align:right!important}.profile-center-player-menu .profile-center-mini{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.profile-center-player-menu .profile-center-mini .profile-center-link{display:block!important;min-height:104px!important}.profile-center-player-menu .profile-center-mini .profile-center-symbol{margin-bottom:8px!important}.profile-center-player-menu .profile-center-mini .profile-center-link>b{display:none!important}@media(max-width:420px){.profile-center-player-menu .profile-center-main .profile-center-link{grid-template-columns:36px minmax(0,1fr) 20px!important;padding:11px!important}.profile-center-player-menu .profile-center-link strong{font-size:14px!important}.profile-center-player-menu .profile-center-link small{font-size:11px!important}}';
+ document.head.appendChild(css);
+ setTimeout(repair,0);
+})();
