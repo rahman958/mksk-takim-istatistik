@@ -1437,3 +1437,28 @@ syncRosterChrome();
   css.textContent='.mksk-direct-season-summary .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.mksk-direct-season-summary .admin-quick-grid button{min-height:62px!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(1){background:#e6eff9!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(2){background:#def0e7!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(3){background:#fde8ea!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(4){background:#e7f2fc!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(5){background:#f0e7fa!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(6){background:#fff2bf!important}@media(max-width:460px){.mksk-direct-season-summary .admin-quick-grid span{font-size:8px!important}.mksk-direct-season-summary .admin-quick-grid b{font-size:17px!important}}';
   document.head.appendChild(css);
 })();
+
+
+/* mksk-menu-birth-entry-single-20261105 */
+(function(){
+  if(window.__mkskBirthMenuSingle)return;
+  window.__mkskBirthMenuSingle=true;
+  var baseCatalog=simpleCatalog;
+  simpleCatalog=function(admin,opener){
+    var result=baseCatalog.apply(this,arguments);
+    setTimeout(function(){
+      var dialog=Array.from(document.querySelectorAll('dialog')).reverse().find(function(item){return item.open&&item.querySelector('.easy-catalog-groups');});
+      if(!dialog)return;
+      var first=null;
+      dialog.querySelectorAll('.easy-catalog-groups button').forEach(function(button){
+        var label=String(button.textContent||'').replace(/\s+/g,' ').trim().toLocaleUpperCase('tr-TR');
+        if(!label.includes('DOĞUM TARİH')&&!label.includes('TAKIM SÜRESİ'))return;
+        if(first){button.remove();return;}
+        first=button;
+      });
+      var count=dialog.querySelector('.simple-catalog-count');
+      if(count)count.textContent=String(dialog.querySelectorAll('.easy-catalog-groups button').length)+' BÖLÜM';
+    },0);
+    return result;
+  };
+})();
