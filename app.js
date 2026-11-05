@@ -1352,3 +1352,32 @@ syncRosterChrome();
     return result;
   };
 })();
+
+/* mksk-admin-summary-team-metrics-20261105 */
+(function(){
+  if(window.__mkskAdminSummaryTeamMetrics)return;
+  window.__mkskAdminSummaryTeamMetrics=true;
+  var prior=window.renderAdminQuickOverview;
+  if(typeof prior!=='function')return;
+  window.renderAdminQuickOverview=function(rows){
+    prior(rows);
+    try{
+      var box=el('admin-quick-overview'),o=window.autoSuccessOverview||{};
+      if(!box)return;
+      var grid=box.querySelector('.admin-quick-grid');if(!grid)return;
+      var metrics=[
+        ['MAÇ',o.matches,'team'],
+        ['GALİBİYET',o.wins,'team'],
+        ['MAĞLUBİYET',o.losses,'team'],
+        ['ATILAN GOL',o.goals,'team'],
+        ['YENİLEN GOL',o.conceded,'team'],
+        ['BAŞARI',o.success==null?'—':Math.round(Number(o.success||0))+'%','team']
+      ];
+      grid.innerHTML=metrics.map(function(x){return '<button type="button" data-go="'+x[2]+'"'+(x[0]==='MAĞLUBİYET'?' data-loss-total="1"':'')+'><b>'+x[1]+'</b><span>'+x[0]+'</span></button>';}).join('');
+      grid.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){el('team-summary')?.scrollIntoView({behavior:'smooth',block:'start'});};});
+    }catch(e){console.warn('Yönetici takım metrikleri düzenlenemedi',e);}
+  };
+  var css=document.createElement('style');css.id='mksk-admin-summary-team-metrics-style-20261105';
+  css.textContent='.admin-quick-overview .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-quick-overview .admin-quick-grid button:nth-child(1){background:#e6eff9}.admin-quick-overview .admin-quick-grid button:nth-child(2){background:#def0e7}.admin-quick-overview .admin-quick-grid button:nth-child(3){background:#fde8ea}.admin-quick-overview .admin-quick-grid button:nth-child(4){background:#e7f2fc}.admin-quick-overview .admin-quick-grid button:nth-child(5){background:#f0e7fa}.admin-quick-overview .admin-quick-grid button:nth-child(6){background:#fff2bf}@media(max-width:460px){.admin-quick-overview .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-quick-overview .admin-quick-grid button{min-height:58px!important}.admin-quick-overview .admin-quick-grid b{font-size:16px!important}.admin-quick-overview .admin-quick-grid span{font-size:8px!important}}';
+  document.head.appendChild(css);
+})();
