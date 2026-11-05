@@ -1396,3 +1396,44 @@ syncRosterChrome();
   css.textContent='.admin-quick-overview .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-quick-overview .admin-quick-grid button:nth-child(1){background:#e6eff9}.admin-quick-overview .admin-quick-grid button:nth-child(2){background:#def0e7}.admin-quick-overview .admin-quick-grid button:nth-child(3){background:#fde8ea}.admin-quick-overview .admin-quick-grid button:nth-child(4){background:#e7f2fc}.admin-quick-overview .admin-quick-grid button:nth-child(5){background:#f0e7fa}.admin-quick-overview .admin-quick-grid button:nth-child(6){background:#fff2bf}@media(max-width:460px){.admin-quick-overview .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-quick-overview .admin-quick-grid button{min-height:58px!important}.admin-quick-overview .admin-quick-grid b{font-size:16px!important}.admin-quick-overview .admin-quick-grid span{font-size:8px!important}}';
   document.head.appendChild(css);
 })();
+
+/* mksk-admin-season-summary-direct-20261105 */
+(function(){
+  if(window.__mkskAdminSeasonSummaryDirect)return;
+  window.__mkskAdminSeasonSummaryDirect=true;
+  function renderDirectSeasonSummary(){
+    try{
+      var box=el('admin-quick-overview'),o=autoSuccessOverview||{};
+      if(!box)return;
+      var leader=box.querySelector('.admin-quick-leader');
+      var title=box.querySelector('.admin-quick-head strong');
+      if(title)title.textContent='SEZON ÖZETİ';
+      var subtitle=box.querySelector('.admin-quick-head small');
+      if(subtitle)subtitle.textContent=safe(selectedSeason)+' · TAKIM DURUMU';
+      var grid=box.querySelector('.admin-quick-grid');
+      if(!grid)return;
+      var metrics=[
+        ['MAÇ',numberValue(o.matches)],
+        ['GALİBİYET',numberValue(o.wins)],
+        ['MAĞLUBİYET',numberValue(o.losses)],
+        ['ATILAN GOL',numberValue(o.goals)],
+        ['YENİLEN GOL',numberValue(o.conceded)],
+        ['BAŞARI',o.success==null?'—':Math.round(Number(o.success))+'%']
+      ];
+      grid.innerHTML=metrics.map(function(metric){return '<button type="button" data-go="team"><b>'+metric[1]+'</b><span>'+metric[0]+'</span></button>';}).join('');
+      grid.querySelectorAll('button').forEach(function(button){button.onclick=function(){el('team-summary')?.scrollIntoView({behavior:'smooth',block:'start'});};});
+      if(leader){leader.style.display='none';}
+      box.classList.add('mksk-direct-season-summary');
+    }catch(error){console.warn('Sezon özeti güncellenemedi',error);}
+  }
+  var priorTeamSummary=teamSummary;
+  teamSummary=async function(players){
+    var result=await priorTeamSummary(players);
+    renderDirectSeasonSummary();
+    return result;
+  };
+  var css=document.createElement('style');
+  css.id='mksk-direct-season-summary-style-20261105';
+  css.textContent='.mksk-direct-season-summary .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.mksk-direct-season-summary .admin-quick-grid button{min-height:62px!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(1){background:#e6eff9!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(2){background:#def0e7!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(3){background:#fde8ea!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(4){background:#e7f2fc!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(5){background:#f0e7fa!important}.mksk-direct-season-summary .admin-quick-grid button:nth-child(6){background:#fff2bf!important}@media(max-width:460px){.mksk-direct-season-summary .admin-quick-grid span{font-size:8px!important}.mksk-direct-season-summary .admin-quick-grid b{font-size:17px!important}}';
+  document.head.appendChild(css);
+})();
