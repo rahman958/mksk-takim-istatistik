@@ -1669,3 +1669,43 @@ syncRosterChrome();
   document.addEventListener('DOMContentLoaded',function(){schedule();new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});});
   if(document.readyState!=='loading')schedule();
 })();
+
+/* mksk-visible-mode-switch-20261106 */
+(function(){
+  if(window.__mkskVisibleModeSwitch)return;
+  window.__mkskVisibleModeSwitch=true;
+  function mount(mode){
+    var root=el(mode==='admin'?'admin-view':'player-view');
+    if(!root)return;
+    var old=root.querySelector('.mksk-visible-mode-switch');
+    if(old)old.remove();
+    if(mode==='player'&&activeRole!=='admin'&&!window.MKSK_PLAYER_PREVIEW)return;
+    var bar=document.createElement('section');
+    bar.className='mksk-visible-mode-switch '+mode;
+    if(mode==='admin'){
+      bar.innerHTML='<span><b>YÖNETİCİ MODU</b><small>OYUNCU EKRANINA GEÇİŞ</small></span><button type="button">👤 OYUNCU GÖRÜNÜMÜNE GEÇ</button>';
+      bar.querySelector('button').onclick=async function(){
+        var b=this;b.disabled=true;
+        try{await openOwnPlayerProfile();}catch(error){if(typeof toast==='function')toast(error?.message||'Oyuncu görünümü açılamadı.');else alert(error?.message||'Oyuncu görünümü açılamadı.');}
+        finally{b.disabled=false;}
+      };
+    }else{
+      bar.innerHTML='<span><b>OYUNCU GÖRÜNÜMÜ</b><small>YÖNETİCİ ARAÇLARINA DÖN</small></span><button type="button">🛡️ YÖNETİCİ PANELİNE DÖN</button>';
+      bar.querySelector('button').onclick=async function(){
+        var b=this;b.disabled=true;
+        try{await loadAdmin();show('admin-view');window.scrollTo({top:0,behavior:'smooth'});}
+        finally{b.disabled=false;}
+      };
+    }
+    root.prepend(bar);
+  }
+  var previousAdmin=loadAdmin;
+  loadAdmin=async function(){var result=await previousAdmin.apply(this,arguments);mount('admin');return result;};
+  var previousPlayer=loadPlayer;
+  loadPlayer=async function(){var result=await previousPlayer.apply(this,arguments);mount('player');return result;};
+  var css=document.createElement('style');
+  css.id='mksk-visible-mode-switch-style';
+  css.textContent='.mksk-visible-mode-switch{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 16px;padding:12px 14px;border:1px solid #9eb4cc;border-radius:14px;background:#edf4fc;color:#183c64}.mksk-visible-mode-switch span{display:grid;gap:2px}.mksk-visible-mode-switch b{font-size:12px;letter-spacing:.04em}.mksk-visible-mode-switch small{font-size:10px;font-weight:800;color:#52718f}.mksk-visible-mode-switch button{min-height:42px;padding:9px 13px;border:0;border-radius:10px;background:linear-gradient(120deg,#194779,#68448b);color:#fff!important;-webkit-text-fill-color:#fff!important;font:800 11px/1.2 Arial,sans-serif;white-space:nowrap}.mksk-visible-mode-switch.player{background:#f3effa;border-color:#b7a7cd}@media(max-width:520px){.mksk-visible-mode-switch{align-items:stretch;flex-direction:column}.mksk-visible-mode-switch button{width:100%}}html[data-theme=dark] .mksk-visible-mode-switch{background:#1b2c45;color:#f5f8ff;border-color:#5f7592}html[data-theme=dark] .mksk-visible-mode-switch small{color:#c4d5e8}';
+  document.head.appendChild(css);
+  setTimeout(function(){if(!el('admin-view')?.classList.contains('hidden'))mount('admin');if(!el('player-view')?.classList.contains('hidden'))mount('player');},0);
+})();
