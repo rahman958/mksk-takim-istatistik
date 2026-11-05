@@ -929,3 +929,48 @@ syncRosterChrome();
 
 /* mksk-player-card-readability-20261105: high contrast player names on blue cards */
 (function(){const css=document.createElement('style');css.id='mksk-player-card-readability-20261105';css.textContent='.statistics-player-card .statistics-player-heading{background:linear-gradient(115deg,#123f70,#286aa5)!important}.statistics-player-card .statistics-player-heading h4{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:900!important;text-shadow:0 2px 3px #061d36b8!important;letter-spacing:.2px!important}.statistics-player-card .statistics-player-heading small{color:#fff3a6!important;-webkit-text-fill-color:#fff3a6!important;font-weight:850!important;text-shadow:0 1px 2px #061d36b8!important;opacity:1!important}.statistics-player-card .statistics-shirt{background:#ffe331!important;color:#133a68!important;-webkit-text-fill-color:#133a68!important;font-weight:900!important;box-shadow:0 2px 5px #061d3670!important}.statistics-player-card .statistics-attendance{color:#173d6b!important;font-weight:850!important}.statistics-player-card .statistics-quick-grid div span{color:#183b66!important;font-weight:900!important}.statistics-player-card .statistics-quick-grid div strong{color:#123e70!important;font-weight:900!important}';document.head.appendChild(css);})();
+
+
+/* mksk-player-profile-center-20261105: player-only profile center; admin menu stays unchanged */
+(function(){
+ if(window.__mkskPlayerProfileCenter)return;
+ window.__mkskPlayerProfileCenter=true;
+ function profileCenterButton(parent,label,sub,icon,action,large){
+   var b=document.createElement('button');
+   b.type='button';
+   b.className='profile-center-link'+(large?' profile-center-primary':'');
+   b.innerHTML='<i data-lucide="'+icon+'"></i><span><strong>'+label+'</strong><small>'+sub+'</small></span><b aria-hidden="true">›</b>';
+   b.onclick=action;
+   parent.appendChild(b);
+   return b;
+ }
+ var previousPlayerShell=simplePlayerShell;
+ simplePlayerShell=function(){
+   previousPlayerShell();
+   var box=el('simple-player-menu');
+   if(!box)return;
+   var task=!!profileStaffData&&(profileStaffData.enabled||(profileStaffData.tasks||[]).length>0);
+   box.classList.remove('sectioned-player-menu');
+   box.classList.add('profile-center-player-menu');
+   box.replaceChildren();
+   box.insertAdjacentHTML('beforeend','<div class="profile-center-brand"><img src="güncel logo.jfif" alt="MKSK logosu"><span><strong>OYUNCU PANELİ</strong><small>BANA AİT BİLGİLER</small><em>TAKIM KURULUŞ: 11.06.2008</em></span></div><p class="profile-center-caption">HIZLI ERİŞİM</p>');
+   var main=document.createElement('div');main.className='profile-center-main';box.appendChild(main);
+   profileCenterButton(main,'PERFORMANSIM','MAÇ, GOL, ASİST VE PUAN','chart-no-axes-combined',function(){setPlayerPage('stats');},true);
+   profileCenterButton(main,'FORM GRAFİĞİM','SON MAÇ PERFORMANSIM','chart-line',function(){setPlayerPage('form_graph');},true);
+   profileCenterButton(main,'MAÇ KARTLARIM','OYNADIM VE OYNAMADIM','calendar-days',function(){setPlayerPage('stats');setTimeout(function(){document.getElementById('player-match-cards')?.scrollIntoView({behavior:'smooth',block:'start'});},0);},true);
+   var mini=document.createElement('div');mini.className='profile-center-mini';box.appendChild(mini);
+   profileCenterButton(mini,'MESAJLARIM','OKUNMAMIŞ MESAJLAR','message-circle',function(){setPlayerPage('manager_messages');});
+   profileCenterButton(mini,'TAKIMIM','KADRO VE LİDERLER','users-round',function(){setPlayerPage('hub_team');});
+   if(task)profileCenterButton(mini,'GÖREVLERİM','BEKLEYEN İŞLERİM','clipboard-check',function(){setPlayerPage('staff_tasks');});
+   var nav=el('player-nav');if(nav)nav.hidden=true;
+   if(window.lucide)window.lucide.createIcons({attrs:{width:22,height:22}});
+ };
+ var profileCenterLoad=loadPlayer;
+ loadPlayer=async function(id){await profileCenterLoad(id);simplePlayerShell();};
+ var profileCenterPage=setPlayerPage;
+ setPlayerPage=function(page){profileCenterPage(page);queueMicrotask(function(){if(el('simple-player-menu'))simplePlayerShell();});};
+ var css=document.createElement('style');
+ css.id='mksk-player-profile-center-style-20261105';
+ css.textContent='.profile-center-player-menu{margin:16px 0;padding:14px;border:1px solid #b8c9dc;border-radius:18px;background:#edf3fb!important;color:#17324e!important}.profile-center-brand{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#1d4676,#60438b);color:#fff}.profile-center-brand img{width:54px;height:54px;object-fit:contain;border-radius:12px;background:#fff;border:2px solid #f1cb55}.profile-center-brand span{min-width:0}.profile-center-brand strong,.profile-center-brand small,.profile-center-brand em{display:block}.profile-center-brand strong{font-size:17px}.profile-center-brand small{margin-top:3px;font-size:12px;color:#fff}.profile-center-brand em{margin-top:6px;font-size:11px;color:#ffe993;font-style:normal;font-weight:800}.profile-center-caption{margin:14px 2px 9px;color:#516d89;font-size:12px;font-weight:900;letter-spacing:.08em}.profile-center-main{display:grid;gap:9px}.profile-center-link{display:flex;align-items:center;gap:11px;width:100%;border:1px solid #c5d5e5;border-radius:13px;background:#fff;color:#173858;text-align:left;padding:12px;font:inherit}.profile-center-link>i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#e8f1fb;color:#225991;flex:0 0 auto}.profile-center-link>span{flex:1;min-width:0}.profile-center-link strong,.profile-center-link small{display:block}.profile-center-link strong{font-size:14px;font-weight:900}.profile-center-link small{margin-top:3px;color:#5b7590;font-size:11px;line-height:1.35}.profile-center-link>b{font-size:23px;line-height:1;color:#28609a}.profile-center-primary{background:#fff;border-left:5px solid #2866a0;padding-left:10px}.profile-center-primary>i{background:#183f70;color:#fff}.profile-center-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px}.profile-center-mini .profile-center-link{display:block;min-height:96px}.profile-center-mini .profile-center-link>i{margin-bottom:8px}.profile-center-mini .profile-center-link>b{display:none}.profile-center-mini .profile-center-link strong{font-size:13px}.profile-center-mini .profile-center-link small{font-size:10px}@media(max-width:420px){.profile-center-player-menu{padding:10px;border-radius:14px}.profile-center-brand{padding:12px}.profile-center-brand strong{font-size:16px}.profile-center-link{padding:11px}.profile-center-mini{grid-template-columns:1fr 1fr;gap:8px}}';
+ document.head.appendChild(css);
+})();
