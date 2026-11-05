@@ -297,7 +297,7 @@ html[data-theme="dark"] .manager-role-slot,html[data-theme="dark"] .manager-acti
       </section>
     </main>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=20261105-manager-role-1"></script>
+    <script type="module" src="app.js?v=20261105-sectioned-menu-1"></script>
   <script type="module" src="lineups.js?v=20261027-simple-lineup-2"></script>
 <script type="module" src="global-search.js?v=20261016-search-3"></script>
 <script>(function(){var controls=document.createElement('div');controls.className='theme-controls';var button=document.createElement('button');button.type='button';button.className='theme-toggle';button.id='theme-toggle';function update(){var dark=document.documentElement.dataset.theme==='dark';button.textContent=dark?'GÜNDÜZ MODU':'GECE MODU';button.setAttribute('aria-pressed',String(dark));button.title=dark?'Açık temaya geç':'Koyu temaya geç';}button.onclick=function(){var next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('mksk-theme',next);}catch(e){}update();};controls.appendChild(button);document.querySelector('.topbar').after(controls);update();})();</script>
@@ -322,5 +322,18 @@ html[data-theme="dark"] .manager-role-slot,html[data-theme="dark"] .manager-acti
 (()=>{const dialog=document.getElementById('phone-help-dialog');let opener;function add(target){if(!target)return;const b=document.createElement('button');b.type='button';b.className='phone-help-launch';b.textContent='TELEFONA EKLE';b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls',dialog.id);b.onclick=()=>{opener=b;if(!dialog.open)dialog.showModal();};target.appendChild(b);}add(document.getElementById('login-view'));add(document.querySelector('#player-view .welcome'));dialog.querySelector('.phone-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{if(opener?.isConnected)opener.focus();});})();
 </script>
 <script>(()=>{const b=document.createElement('aside');b.className='club-foundation-banner';b.innerHTML='TAKIM KURULUŞ TARİHİ: <time datetime="2008-06-11">11.06.2008</time>';document.querySelector('.topbar')?.after(b);})();</script>
+<script id="mksk-light-only-20261105">
+(() => {
+  const forceLight = () => {
+    document.documentElement.dataset.theme = 'light';
+    document.documentElement.classList.remove('dark');
+    try { localStorage.setItem('mksk-theme', 'light'); } catch (_) {}
+    document.querySelector('.theme-controls')?.remove();
+    document.querySelector('#theme-toggle')?.remove();
+  };
+  forceLight();
+  window.addEventListener('pageshow', forceLight);
+})();
+</script>
 </body>
 </html>
