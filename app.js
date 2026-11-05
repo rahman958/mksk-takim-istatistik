@@ -1320,3 +1320,35 @@ syncRosterChrome();
   css.textContent='.profile-center-player-menu .mksk-season-center{margin:12px 0;padding:13px;border:1px solid #c5d6e8;border-radius:17px;background:#f7fbff;color:#173a60}.season-center-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 11px;border-radius:12px;background:linear-gradient(120deg,#173f6f,#2b6fa5 62%,#65458e);color:#fff}.season-center-title strong,.season-center-title small{display:block}.season-center-title strong{font-size:15px;font-weight:900}.season-center-title small{margin-top:3px;font-size:10px;font-weight:800;color:#edf5ff}.season-center-title img{width:39px;height:39px;object-fit:contain;border-radius:10px;background:#fff;border:2px solid #edcc50}.season-center-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}.season-center-grid>div{min-height:61px;padding:8px 4px;border-radius:11px;background:#fff;text-align:center;border:1px solid #d2dfed}.season-center-grid>div:nth-child(1){background:#fff2bf}.season-center-grid>div:nth-child(2){background:#dcf1e7}.season-center-grid>div:nth-child(3){background:#dceefa}.season-center-grid>div:nth-child(4){background:#eee2fa}.season-center-grid>div:nth-child(5){background:#f9e2e5}.season-center-grid>div:nth-child(6){background:#e1ebf8}.season-center-grid b,.season-center-grid span{display:block}.season-center-grid b{font-size:18px;line-height:1.05;font-weight:900;color:#173d69}.season-center-grid span{margin-top:5px;font-size:9px;line-height:1.1;font-weight:900;color:#35516d}.season-center-form{display:grid;grid-template-columns:25px minmax(0,1fr) 90px 15px;align-items:center;gap:7px;width:100%;margin-top:10px;padding:10px;border:1px solid #c3d4e7;border-radius:12px;background:#fff;color:#1b568f;text-align:left;font:inherit}.season-center-form>span{font-size:18px}.season-center-form b,.season-center-form small{display:block}.season-center-form b{font-size:13px;color:#183e67}.season-center-form small{margin-top:3px;font-size:9px;font-weight:800;color:#61758b}.season-center-form svg{width:90px;height:45px;color:#2774ad}.season-center-form em{font-size:22px;font-style:normal}.season-center-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.season-center-links button{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:8px;align-items:center;min-height:68px;padding:10px;border:1px solid #cad9e8;border-radius:12px;background:#fff;color:#183e67;text-align:left;font:inherit}.season-center-links span{grid-row:span 2;font-size:18px}.season-center-links b,.season-center-links small{display:block;min-width:0}.season-center-links b{font-size:12px;font-weight:900}.season-center-links small{margin-top:3px;font-size:9px;line-height:1.2;color:#60758d;font-weight:800}.season-center-leaders{margin-top:13px;padding-top:11px;border-top:1px solid #d8e4ef}.season-center-leaders>strong{font-size:13px;color:#173c67}.season-center-leader{display:grid;grid-template-columns:27px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e0eaf3}.season-center-leader>span{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:#e5f0fa}.season-center-leader b,.season-center-leader small{display:block}.season-center-leader b{font-size:11px}.season-center-leader small{margin-top:2px;font-size:9px;color:#60758d}.season-center-leader em{font-style:normal;font-weight:900;font-size:16px;color:#225f99}@media(max-width:390px){.season-center-form{grid-template-columns:23px minmax(0,1fr) 12px}.season-center-form svg{display:none}.season-center-links{grid-template-columns:1fr}.season-center-grid{gap:5px}.season-center-grid>div{min-height:58px}}';
   document.head.appendChild(css);
 })();
+
+/* mksk-player-missed-matches-source-fix-20261105 */
+(function(){
+  if(window.__mkskMissedMatchesSourceFix)return;
+  window.__mkskMissedMatchesSourceFix=true;
+  function n(v){var x=Number(v);return Number.isFinite(x)?x:0;}
+  async function correctMissed(playerId){
+    try{
+      var player=window.__mkskPlayerHomeRecord;
+      if(!player||String(player.id)!==String(playerId))return;
+      var stat=(player.player_season_stats||[]).find(function(s){return s.season===selectedSeason;})||{};
+      var q=await supabase.from('club_season_summary').select('matches').eq('season',selectedSeason).maybeSingle();
+      if(q.error||!q.data)return;
+      var total=n(q.data.matches),played=n(stat.matches),missed=Math.max(0,total-played);
+      window.teamMatchCount=total;
+      var box=el('simple-player-menu');
+      var cells=box?box.querySelectorAll('.mksk-season-center .season-center-grid>div'):null;
+      if(cells&&cells[4]){
+        var value=cells[4].querySelector('b');
+        if(value)value.textContent=String(missed);
+      }
+      var note=box&&box.querySelector('.mksk-season-center .season-center-title small');
+      if(note)note.textContent=selectedSeason+' · '+total+' TAKIM MAÇI';
+    }catch(e){console.warn('Kaçırılan maç toplamı alınamadı',e);}
+  }
+  var previousLoadPlayer=loadPlayer;
+  loadPlayer=async function(id){
+    var result=await previousLoadPlayer.apply(this,arguments);
+    await correctMissed(id);
+    return result;
+  };
+})();
