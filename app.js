@@ -932,7 +932,7 @@ syncRosterChrome();
   if(staffCan('roster'))addMenuButton(quick,'TRANSFER GİRİŞİ','YENİ OYUNCU EKLE','user-plus',openTransferEntry);
   if(staffCan('statistics'))addMenuButton(quick,'GÖRSEL VE ANALİZ PAYLAŞIMLARI','TAKIM LİSTESİ VE İSTATİSTİK GÖRSELLERİ','chart-column',openShareMenu);
   var players=section(box,'OYUNCULAR','folder-user');
-  if(staffCan('statistics')||staffCan('matches'))addMenuButton(players,'BAŞARI YÜZDESİNİ GÜNCELLE','OYUNCU SEÇ VE 0–10 ARASI PUANINI GİR','chart-line',function(){void entryOpen();});
+  if(staffCan('statistics')||staffCan('matches'))addMenuButton(players,'BAŞARI YÜZDESİNİ GÜNCELLE','OYUNCU SEÇ VE 0–10 ARASI PUANINI GİR','chart-line',function(){void quickEntryApp?.open();});
   addMenuButton(players,'OYUNCU DOSYALARI','OYUNCU SEÇ, İŞLEMLERİNİ AÇ','contact-round',function(){playerHubInstance?.openDirectory();});
   addMenuButton(players,'OYUNCU İSTATİSTİK ÖZETİ','KOMPAKT KARTLAR VE SEZON LİDERLERİ','chart-column',function(){ensureSeasonOverview().open();});
   var manage=section(box,'YÖNETİM VE İLETİŞİM','shield-check');
