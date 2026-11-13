@@ -1,4 +1,4 @@
-import { installPlayerNotifications } from './player-notifications.js?v=20261113-player-notifications-1';
+import { installPlayerNotifications } from './player-notifications.js?v=20261113-player-notifications-2';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261026-player-home-3';
 import { initPlayerHub } from './player-hub.js?v=20261113-match-rating-1';
@@ -1659,7 +1659,7 @@ syncRosterChrome();
 window.addEventListener('mksk-match-changed',()=>{if(activeRole==='admin')void loadAdmin().catch(console.error);});
 
 const refreshPlayerNotifications = installPlayerNotifications({
-  db: supabase,
+  db: () => supabase,
   active: () => !window.MKSK_PLAYER_PREVIEW && el('player-view')?.classList.contains('hidden') === false,
   openMessage: () => setPlayerPage('manager_messages')
 });

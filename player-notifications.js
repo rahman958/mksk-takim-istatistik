@@ -24,7 +24,7 @@ export function installPlayerNotifications({ db, active, openMessage }) {
   close.onclick = () => dialog.close();
   async function refresh() {
     const request = ++revision;
-    button.hidden = !active();
+    button.hidden = !active() || !db();
     if (button.hidden) {
       badge.hidden = true;
       button.setAttribute('aria-label', 'Bildirimler');
@@ -32,7 +32,7 @@ export function installPlayerNotifications({ db, active, openMessage }) {
       list.replaceChildren();
       return;
     }
-    const table = () => db.from('club_player_notifications');
+    const table = () => db().from('club_player_notifications');
     const unread = table().select('id', {count:'exact',head:true}).is('read_at',null);
     const page = dialog.open ? table().select('id,kind,title,detail,created_at,read_at').order('created_at',{ascending:false}).order('id',{ascending:false}).limit(limit+1) : null;
     const [count, result] = await Promise.all([unread,page]);
