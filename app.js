@@ -1,4 +1,4 @@
-import { installPlayerNotifications } from './player-notifications.js?v=20261113-player-notifications-2';
+import { installPlayerNotifications } from './player-notifications.js?v=20261113-admin-notifications-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261026-player-home-3';
 import { initPlayerHub } from './player-hub.js?v=20261113-match-rating-1';
@@ -1663,9 +1663,21 @@ const refreshPlayerNotifications = installPlayerNotifications({
   active: () => !window.MKSK_PLAYER_PREVIEW && el('player-view')?.classList.contains('hidden') === false,
   openMessage: () => setPlayerPage('manager_messages')
 });
+const refreshAdminNotifications = installPlayerNotifications({
+  db: () => supabase,
+  active: () => !window.MKSK_PLAYER_PREVIEW && el('admin-view')?.classList.contains('hidden') === false,
+  tableName: 'club_admin_notifications',
+  scope: 'admin',
+  destinations: {
+    task: ['Görevleri aç', () => void openStaffPanel()],
+    message: ['Mesajları aç', () => setDashboardPage('messages')],
+    correction: ['Talepleri aç', () => setDashboardPage('corrections')]
+  }
+});
 const showWithNotifications = show;
 show = function(view) {
   const result = showWithNotifications(view);
   void refreshPlayerNotifications();
+  void refreshAdminNotifications();
   return result;
 };

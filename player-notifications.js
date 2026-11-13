@@ -1,4 +1,4 @@
-export function installPlayerNotifications({ db, active, openMessage }) {
+export function installPlayerNotifications({ db, active, openMessage, tableName = 'club_player_notifications', scope = 'player', destinations = {} }) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'mksk-notification-bell';
@@ -11,8 +11,8 @@ export function installPlayerNotifications({ db, active, openMessage }) {
 
   const dialog = document.createElement('dialog');
   dialog.className = 'mksk-notifications';
-  dialog.setAttribute('aria-labelledby', 'mksk-notifications-title');
-  dialog.innerHTML = '<header><h2 id="mksk-notifications-title">Bildirimler</h2><button type="button" class="notification-close">Kapat ×</button></header><p role="status"></p><div class="notification-list"></div>';
+  dialog.setAttribute('aria-labelledby', 'mksk-notifications-title-'+scope);
+  dialog.innerHTML = '<header><h2 id="mksk-notifications-title-'+scope+'">Bildirimler</h2><button type="button" class="notification-close">Kapat ×</button></header><p role="status"></p><div class="notification-list"></div>';
   document.body.append(button, dialog);
   const close = dialog.querySelector('.notification-close');
   const status = dialog.querySelector('[role=status]');
@@ -32,7 +32,7 @@ export function installPlayerNotifications({ db, active, openMessage }) {
       list.replaceChildren();
       return;
     }
-    const table = () => db().from('club_player_notifications');
+    const table = () => db().from(tableName);
     const unread = table().select('id', {count:'exact',head:true}).is('read_at',null);
     const page = dialog.open ? table().select('id,kind,title,detail,created_at,read_at').order('created_at',{ascending:false}).order('id',{ascending:false}).limit(limit+1) : null;
     const [count, result] = await Promise.all([unread,page]);
@@ -57,10 +57,11 @@ export function installPlayerNotifications({ db, active, openMessage }) {
       detail.textContent = item.detail;
       time.textContent = date.format(new Date(item.created_at));
       row.append(title,detail,time);
-      if (!item.read_at || item.kind === 'message') {
+      const destination = destinations[item.kind] || (item.kind === 'message' && openMessage ? ['Mesajları aç', openMessage] : null);
+      if (!item.read_at || destination) {
         const action = document.createElement('button');
         action.type = 'button';
-        action.textContent = item.kind === 'message' ? 'Mesajları aç' : 'Okudum';
+        action.textContent = destination?.[0] || 'Okudum';
         action.onclick = async () => {
           action.disabled = true;
           if (!item.read_at) {
@@ -72,9 +73,9 @@ export function installPlayerNotifications({ db, active, openMessage }) {
             }
           }
           if (!active()) return;
-          if (item.kind === 'message') {
+          if (destination) {
             dialog.close();
-            openMessage();
+            destination[1]();
           }
           void refresh();
         };
