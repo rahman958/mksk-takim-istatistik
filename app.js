@@ -1,6 +1,6 @@
 import { installPlayerNotifications } from './player-notifications.js?v=20261113-notification-layout-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { drawRosterImage } from './roster-export.js?v=20261113-roster-table-1';
+import { drawRosterImage } from './roster-export.js?v=20261113-roster-final-1';
 import { initPlayerHub } from './player-hub.js?v=20261113-match-rating-1';
 import { initQuickEntry } from './quick-entry.js?v=20261113-match-rating-1';
 import { matchCards } from './match-cards.js?v=20261113-match-rating-1';
@@ -776,9 +776,15 @@ async function shareMobileRoster(){
     applyFilters();var response=await supabase.from('players').select('*,player_season_stats(*)').is('archived_at',null);if(response.error)throw response.error;
     await applyAutoSuccess(response.data);var ids=new Set(Array.from(document.querySelectorAll('#roster-list .name-row[data-player]')).map(n=>n.dataset.player));
     var players=response.data.filter(p=>ids.has(p.id));if(!players.length)throw Error('Filtreye uygun oyuncu yok.');
-    var canvas=document.createElement('canvas'),team=await fetchClubOverview(),logo=await loadClubLogo();
+    var canvas=document.createElement('canvas');
+    var [team,logo,portrait]=await Promise.all([fetchClubOverview(),loadClubLogo(),new Promise((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>resolve(image);
+      image.onerror=()=>reject(new Error('Atatürk fotoğrafı yüklenemedi. Tekrar dene.'));
+      image.src=new URL('./ataturk-roster.jpg',import.meta.url).href;
+    })]);
     var rosterOrder=await supabase.rpc('club_roster_order',{p_action:'get'});if(rosterOrder.error)throw rosterOrder.error;
-    drawRosterImage(canvas,players,{orderIds:rosterOrder.data.ids||[],season:selectedSeason,date:new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),team,logo});
+    drawRosterImage(canvas,players,{orderIds:rosterOrder.data.ids||[],season:selectedSeason,date:new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),team,logo,portrait});
     var blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Görsel oluşturulamadı.');
     var file=new File([blob],'mksk-takim-listesi-tek-gorsel.png',{type:'image/png'}),url=URL.createObjectURL(blob),d=document.createElement('dialog');
     d.className='share-preview mobile-roster-preview';d.innerHTML='<h3>TAKIM LİSTESİ · TEK GÖRSEL</h3><p>Tüm oyuncular ve 17 sütun tek PNG dosyasında. Tam boy açıp yakınlaştırabilirsin.</p><a class="full-roster-image" target="_blank" rel="noopener">TAM BOY AÇ / YAKINLAŞTIR</a><img alt="Mevkilere ayrılmış tek sayfalık takım listesi"><div class="mobile-roster-actions"><a class="download-roster-image">PNG GÖRSELİ İNDİR</a><button type="button" class="send-roster-image">PAYLAŞ</button><button type="button" class="close-roster-image">KAPAT</button></div><p class="mobile-roster-status" role="status"></p>';
