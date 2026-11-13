@@ -1,4 +1,4 @@
-import { installPlayerNotifications } from './player-notifications.js?v=20261113-admin-notifications-1';
+import { installPlayerNotifications } from './player-notifications.js?v=20261113-notification-layout-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261026-player-home-3';
 import { initPlayerHub } from './player-hub.js?v=20261113-match-rating-1';

@@ -13,7 +13,11 @@ export function installPlayerNotifications({ db, active, openMessage, tableName 
   dialog.className = 'mksk-notifications';
   dialog.setAttribute('aria-labelledby', 'mksk-notifications-title-'+scope);
   dialog.innerHTML = '<header><h2 id="mksk-notifications-title-'+scope+'">Bildirimler</h2><button type="button" class="notification-close">Kapat ×</button></header><p role="status"></p><div class="notification-list"></div>';
-  document.body.append(button, dialog);
+  const toolbar = document.querySelector('.mksk-header-tools');
+  toolbar.append(button);
+  const clock = document.getElementById('club-clock');
+  if (clock && clock.parentElement !== toolbar) toolbar.prepend(clock);
+  document.body.append(dialog);
   const close = dialog.querySelector('.notification-close');
   const status = dialog.querySelector('[role=status]');
   const list = dialog.querySelector('.notification-list');
