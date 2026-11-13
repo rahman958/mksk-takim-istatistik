@@ -1,6 +1,6 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>String(v||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
-export const quickFields=[['matches','MAÇ SAYISI'],['goals','ATTIĞI GOL'],['assists','ASİST'],['goals_conceded','YEDİĞİ GOL'],['man_of_match','MAÇIN ADAMI'],['points','TOPLAM MAÇ PUANI'],['manager_rating','OYUNCU PUANI / 10'],['attendance_matches','ANTRENMAN SAYISI'],['attendance_goals','ANTRENMAN GOLÜ'],['attendance_points','ANTRENMAN PUANI'],['discipline_referrals','DİSİPLİN SEVK SAYISI']];
+export const quickFields=[['matches','MAÇ SAYISI'],['goals','ATTIĞI GOL'],['assists','ASİST'],['goals_conceded','YEDİĞİ GOL'],['man_of_match','MAÇIN ADAMI'],['attendance_matches','ANTRENMAN SAYISI'],['attendance_goals','ANTRENMAN GOLÜ'],['attendance_points','ANTRENMAN PUANI'],['discipline_referrals','DİSİPLİN SEVK SAYISI']];
 const areaFor=key=>key.startsWith('attendance_')?'training':key==='discipline_referrals'?'penalties':'statistics';
 const numbers=(row,fields)=>Object.fromEntries(fields.map(k=>[k,k==='manager_rating'?(row?.[k]??null):Number(row?.[k]||0)]));
 export function initQuickEntry(api){
