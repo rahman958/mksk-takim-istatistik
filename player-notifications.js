@@ -1,3 +1,4 @@
+import { formatClubDatesInText } from './club-date.js?v=20261114-date-format-1';
 export function installPlayerNotifications({ db, active, openMessage, tableName = 'club_player_notifications', scope = 'player', destinations = {} }) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -58,7 +59,7 @@ export function installPlayerNotifications({ db, active, openMessage, tableName 
       const detail = document.createElement('div');
       const time = document.createElement('small');
       title.textContent = item.title;
-      detail.textContent = item.detail;
+      detail.textContent = formatClubDatesInText(item.detail);
       time.textContent = date.format(new Date(item.created_at));
       row.append(title,detail,time);
       const destination = destinations[item.kind] || (item.kind === 'message' && openMessage ? ['Mesajları aç', openMessage] : null);

@@ -1,3 +1,4 @@
+import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 export function formTrend(items){
  const rated=items.slice(-2);
  if(rated.length<2||rated.some(r=>r.points===null||r.points===undefined||!Number.isFinite(Number(r.points))))return {label:'VERİ YETERSİZ',tone:'blue',delta:null};
@@ -10,7 +11,7 @@ export function chartSvg(items){
  const x=i=>items.length===1?300:48+i*(504/Math.max(1,items.length-1)),y=v=>190-Number(v)*16;
  let svg='<svg viewBox="0 0 600 242" role="img" aria-label="Son maç puanları. Puan ölçeği sıfır ile on arasında.">';
  for(const p of [0,2,4,6,8,10])svg+='<line x1="40" x2="565" y1="'+y(p)+'" y2="'+y(p)+'" stroke="currentColor" opacity=".15"/><text x="20" y="'+(y(p)+5)+'" fill="currentColor" font-size="14">'+p+'</text>';
- items.forEach((r,i)=>{if(r.points===null||r.points===undefined)return;const prev=items[i-1],delta=prev?.points==null?0:Number(r.points)-Number(prev.points),color=delta>0?colors.purple:delta<0?colors.orange:colors.blue;if(i&&prev?.points!=null)svg+='<line x1="'+x(i-1)+'" y1="'+y(prev.points)+'" x2="'+x(i)+'" y2="'+y(r.points)+'" stroke="'+color+'" stroke-width="4"/>';svg+='<circle cx="'+x(i)+'" cy="'+y(r.points)+'" r="7" fill="'+color+'"><title>'+esc(r.match_date+' '+r.opponent+' — PUAN '+r.points)+'</title></circle><text x="'+x(i)+'" y="'+(y(r.points)-13)+'" fill="currentColor" text-anchor="middle" font-size="16" font-weight="bold">'+esc(r.points)+'</text>';});
+ items.forEach((r,i)=>{if(r.points===null||r.points===undefined)return;const prev=items[i-1],delta=prev?.points==null?0:Number(r.points)-Number(prev.points),color=delta>0?colors.purple:delta<0?colors.orange:colors.blue;if(i&&prev?.points!=null)svg+='<line x1="'+x(i-1)+'" y1="'+y(prev.points)+'" x2="'+x(i)+'" y2="'+y(r.points)+'" stroke="'+color+'" stroke-width="4"/>';svg+='<circle cx="'+x(i)+'" cy="'+y(r.points)+'" r="7" fill="'+color+'"><title>'+esc(formatClubDate(r.match_date)+' '+r.opponent+' — PUAN '+r.points)+'</title></circle><text x="'+x(i)+'" y="'+(y(r.points)-13)+'" fill="currentColor" text-anchor="middle" font-size="16" font-weight="bold">'+esc(r.points)+'</text>';});
  items.forEach((r,i)=>{svg+='<text x="'+x(i)+'" y="220" fill="currentColor" font-size="13" text-anchor="middle">'+esc(r.match_date.slice(5).split('-').reverse().join('.'))+'</text>';});
  return svg+'</svg>';
 }
