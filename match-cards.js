@@ -52,7 +52,7 @@ function entriesFrom(box){
   });
   return rows;
 }
-function showDetail(card){
+function showDetail(card,notice){
   const names=new Map(people.map(p=>[p.id,p.full_name]));
   const rows=Array.isArray(card.player_entries)?card.player_entries:[];
   const d=document.createElement('dialog');d.className='mcc-detail-dialog';
@@ -85,11 +85,54 @@ function showDetail(card){
       finally{save.disabled=false;}
     };
   }
+  const candidates=people.filter(player=>!rows.some(row=>row.player_id===player.id));
+  if(candidates.length){
+    const section=document.createElement('details');
+    section.innerHTML='<summary>OYUNCU EKLE</summary><form class="mcc-meta">'+
+      '<label>OYUNCU<select name="player" required><option value="">OYUNCU SEÇ</option>'+
+      candidates.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.full_name)+'</option>').join('')+'</select></label>'+
+      '<label>GOL<input name="goals" type="number" min="0" max="200" step="1" value="0" required></label>'+
+      '<label>ASİST<input name="assists" type="number" min="0" max="200" step="1" value="0" required></label>'+
+      '<label>MAÇ PUANI (0–10)<input name="points" type="number" min="0" max="10" step="1" inputmode="numeric"></label>'+
+      (card.count_team_match?'<label><input name="already" type="checkbox"> İSTATİSTİKLER SEZON TOPLAMINDA ZATEN VAR</label>':'<p>Geçmiş maç kartı. Bu giriş sezon toplamına eklenmez.</p>')+
+      '<button type="submit">OYUNCUYU KAYDET</button><p role="status"></p></form>';
+    d.append(section);
+    const form=section.querySelector('form');
+    const save=form.querySelector('button');
+    const status=form.querySelector('[role=status]');
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      if(save.disabled)return;
+      const values=form.elements;
+      save.disabled=true;
+      status.textContent='Oyuncu kaydediliyor…';
+      try{
+        const result=await db().rpc('club_add_saved_match_player',{
+          p_match:card.id,p_player:values.player.value,p_goals:Number(values.goals.value),
+          p_assists:Number(values.assists.value),p_points:values.points.value===''?null:Number(values.points.value),
+          p_already_counted:values.already?.checked??false
+        });
+        if(result.error)throw result.error;
+        const stillOpen=d.open;
+        if(stillOpen)d.close();
+        await refresh();
+        window.dispatchEvent(new Event('mksk-match-changed'));
+        if(stillOpen&&cardDialog.open)showDetail({...card,player_entries:[...rows,result.data]},'Oyuncu karta eklendi.');
+      }catch(error){status.textContent='Kaydedilemedi: '+error.message;}
+      finally{save.disabled=false;}
+    };
+  }
+  if(notice){
+    const status=document.createElement('p');
+    status.setAttribute('role','status');
+    status.textContent=notice;
+    d.querySelector('h3').after(status);
+  }
   d.querySelector('button').onclick=()=>d.close();d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
 }
 function renderCards(cards){
   const list=cardDialog.querySelector('.mcc-list');
-  list.innerHTML=cards.length?cards.map((card,i)=>'<article class="mcc-row" data-card-index="'+i+'"><div><h4>'+esc(fmtDate(card.match_date))+' · '+esc(card.opponent)+'</h4><p>'+esc(card.our_score)+'–'+esc(card.opponent_score)+' · <span class="mcc-result">'+esc(scoreText(card))+'</span> · '+(card.match_time?esc(card.match_time):'SAAT YOK')+'</p><p>'+((card.player_entries||[]).length)+' OYUNCU İŞLENDİ · '+(card.count_team_match?'SEZON TOPLAMINA EKLENDİ':'GEÇMİŞ KARTI / TOPLAMA EKLENMEDİ')+'</p></div><div class="mcc-actions"><button type="button" data-action="view">KARTI GÖR / PUAN DÜZELT</button><button type="button" class="danger" data-action="delete">SİL / GERİ AL</button></div></article>').join(''):'<p class="mcc-empty">HENÜZ MAÇ KARTI YOK. AŞAĞIDAKİ “YENİ MAÇ KARTI”NDAN EKLEYEBİLİRSİN.</p>';
+  list.innerHTML=cards.length?cards.map((card,i)=>'<article class="mcc-row" data-card-index="'+i+'"><div><h4>'+esc(fmtDate(card.match_date))+' · '+esc(card.opponent)+'</h4><p>'+esc(card.our_score)+'–'+esc(card.opponent_score)+' · <span class="mcc-result">'+esc(scoreText(card))+'</span> · '+(card.match_time?esc(card.match_time):'SAAT YOK')+'</p><p>'+((card.player_entries||[]).length)+' OYUNCU İŞLENDİ · '+(card.count_team_match?'SEZON TOPLAMINA EKLENDİ':'GEÇMİŞ KARTI / TOPLAMA EKLENMEDİ')+'</p></div><div class="mcc-actions"><button type="button" data-action="view">KARTI GÖR / DÜZENLE</button><button type="button" class="danger" data-action="delete">SİL / GERİ AL</button></div></article>').join(''):'<p class="mcc-empty">HENÜZ MAÇ KARTI YOK. AŞAĞIDAKİ “YENİ MAÇ KARTI”NDAN EKLEYEBİLİRSİN.</p>';
   list.querySelectorAll('.mcc-row').forEach(row=>{const card=cards[Number(row.dataset.cardIndex)];row.querySelector('[data-action=view]').onclick=()=>showDetail(card);row.querySelector('[data-action=delete]').onclick=async()=>{if(!confirm(card.opponent+' maç kartını silmek / geri almak istiyor musun?'))return;const status=cardDialog.querySelector('.mcc-status');status.textContent='KART KALDIRILIYOR…';try{const res=await db().rpc('club_remove_match',{p_match:card.id});if(res.error)throw res.error;status.textContent=res.data||'MAÇ KARTI KALDIRILDI.';window.dispatchEvent(new Event('mksk-match-changed'));await refresh();}catch(error){status.textContent='KALDIRILAMADI: '+error.message;}};});
 }
 async function refresh(){
