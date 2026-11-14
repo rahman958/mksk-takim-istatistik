@@ -402,7 +402,7 @@ var missingAdminBase=loadAdmin;loadAdmin=async function(){await missingAdminBase
 
 // Owner-managed staff permissions and task approval.
 var staffState=null,staffPoll=null,staffBusy=false;
-var staffLabels={roster:'OYUNCU BİLGİLERİ / EKLE-SİL',statistics:'MAÇ İSTATİSTİKLERİ / OYUNCU PUANI',training:'ANTRENMAN VERİLERİ',matches:'MAÇI TOPLU İŞLE / MAÇ KAYITLARI',lineup:'KADRO OLUŞTUR / YAYINLA',penalties:'CEZA / DİSİPLİN',reports:'GELİŞİM HEDEFİ / RAPOR',messages:'OYUNCU MESAJLARI',notifications:'E-POSTA BİLDİRİMLERİ GÖNDERME',history:'DEĞİŞİKLİK GEÇMİŞİ',archives:'SEZON ARŞİVİ / ÖDÜLLER',settings:'SEZON / AYARLAR',backup:'YEDEK AL',leaves:'İZİN DÖNEMLERİ',contacts:'YÖNETİM İLETİŞİMİ',visits:'GİRİŞ / SON GÖRÜLME GEÇMİŞİ',preview:'OYUNCU GÖRÜNÜMÜ ÖNİZLEME',links:'KİŞİSEL DAVET BAĞLANTISI OLUŞTURMA'};
+var staffLabels={free_jerseys:'BOŞ FORMA NUMARALARINI GÖR',roster:'OYUNCU BİLGİLERİ / EKLE-SİL',statistics:'MAÇ İSTATİSTİKLERİ / OYUNCU PUANI',training:'ANTRENMAN VERİLERİ',matches:'MAÇI TOPLU İŞLE / MAÇ KAYITLARI',lineup:'KADRO OLUŞTUR / YAYINLA',penalties:'CEZA / DİSİPLİN',reports:'GELİŞİM HEDEFİ / RAPOR',messages:'OYUNCU MESAJLARI',notifications:'E-POSTA BİLDİRİMLERİ GÖNDERME',history:'DEĞİŞİKLİK GEÇMİŞİ',archives:'SEZON ARŞİVİ / ÖDÜLLER',settings:'SEZON / AYARLAR',backup:'YEDEK AL',leaves:'İZİN DÖNEMLERİ',contacts:'YÖNETİM İLETİŞİMİ',visits:'GİRİŞ / SON GÖRÜLME GEÇMİŞİ',preview:'OYUNCU GÖRÜNÜMÜ ÖNİZLEME',links:'KİŞİSEL DAVET BAĞLANTISI OLUŞTURMA'};
 function staffCan(area){return !!staffState&&(staffState.owner||staffState.enabled&&staffState.areas?.[area]);}
 function staffCanEnterPlayerData(){return ['matches','statistics','training','penalties','settings'].some(staffCan);}
 function staffPageAllowed(page){if(!staffState)return false;if(staffState.owner)return true;var ownerOnly=['access','roles','deleted','accounts','invites'];if(ownerOnly.includes(page))return false;var map={bulk_statistics:'statistics',visits:'visits',links:'links',application_links:'links',player_preview:'preview',messages:'messages',matches:'matches',bulk:'matches',bulk_match:'matches',bulk_matches:'matches',match_processing:'matches',lineups:'lineup',penalties:'penalties',history:'history',backup:'backup',season_archive:'archives',season_awards:'archives',team_history:'archives',settings:'settings',leaves:'leaves',contacts:'contacts',contact:'contacts',player_info:'roster',jerseys:'roster',birthdays:'roster',corrections:'statistics',missing_ratings:'statistics'};if(['roster','statistics','staff','comparison','season_cards','global_search'].includes(page))return true;return !!map[page]&&staffCan(map[page]);}
@@ -699,6 +699,25 @@ var seasonOverviewPlayerPage=setPlayerPage;setPlayerPage=function(p){seasonOverv
 var seasonOverviewShow=show;show=function(id){if(id==='login-view')seasonOverviewInstance?.clear();return seasonOverviewShow(id);};
 var seasonOverviewAllowed=staffPageAllowed;staffPageAllowed=function(page){return page==='stat_overview'?!!staffState:seasonOverviewAllowed(page);};
 
+async function openFreeJerseysReadOnly(){
+ if(!staffCan('free_jerseys'))return;
+ const dialog=document.createElement('dialog');
+ dialog.className='player-hub-dialog';
+ dialog.innerHTML='<header><h2>Boş forma numaraları</h2><form method="dialog"><button>Kapat</button></form></header><p role="status">Yükleniyor…</p><div class="free-jersey-grid"></div>';
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+ document.body.append(dialog);
+ dialog.showModal();
+ const result=await supabase.rpc('club_free_jerseys');
+ if(!dialog.isConnected)return;
+ dialog.querySelector('[role=status]').textContent=result.error?result.error.message:result.data.length+' boş numara';
+ if(result.error)return;
+ for(const number of result.data){
+   const item=document.createElement('strong');
+   item.textContent=number;
+   dialog.querySelector('.free-jersey-grid').append(item);
+ }
+}
+
 function openManagerAccess(){if(!staffState?.owner)return;var d=document.createElement('dialog');d.className='player-hub-dialog';d.innerHTML='<header><h2>YÖNETİCİ YETKİLERİ</h2><button type="button" class="close">KAPAT ×</button></header><label>OYUNCU SEÇ<select><option value="">SEÇ</option></select></label><p class="person-status"></p><div class="hub-person-list"><button type="button" class="role" disabled>YÖNETİCİ YAP</button><button type="button" class="primary">ANA YÖNETİCİ / İŞLEM ALANLARI</button></div><div class="manager-task-slot"></div>';
  var s=d.querySelector('select'),b=d.querySelector('.role');document.querySelectorAll('.player-edit').forEach(f=>{var o=document.createElement('option');o.value=f.dataset.id;o.textContent=f.querySelector('[name=full_name]').value;s.appendChild(o);});s.onchange=()=>{b.disabled=!s.value||!accountRoles[s.value];b.textContent=accountRoles[s.value]==='admin'?'YÖNETİCİ YETKİSİNİ KALDIR':'YÖNETİCİ YAP';d.querySelector('.person-status').textContent=s.value&&!accountRoles[s.value]?'Önce oyuncunun hesabı bağlanmalı.':'';var slot=d.querySelector('.manager-task-slot');if(!s.value){slot.replaceChildren();return;}var person=clubMetadataRows.find(p=>p.id===s.value),task=document.createElement('details');task.className='staff-inline-task';task.innerHTML='<summary>BU KİŞİYE GÖREV ATA</summary><form><label>İŞLEM ALANI<select name="area">'+Object.entries(staffLabels).map(([k,l])=>'<option value="'+k+'">'+l+'</option>').join('')+'</select></label><label>GÖREV BAŞLIĞI<input name="title" maxlength="200" required placeholder="ÖRN. MAÇ VERİLERİNİ GİR"></label><label>AÇIKLAMA<textarea name="description" maxlength="4000" rows="3"></textarea></label><label>SON TARİH (İSTEĞE BAĞLI)<input name="due_on" type="date"></label><button type="submit">GÖREVİ ATA</button><p class="staff-feedback" role="status"></p></form>';slot.replaceChildren(task);task.querySelector('form').onsubmit=async e=>{e.preventDefault();var f=e.currentTarget;if(!f.reportValidity())return;var button=f.querySelector('[type=submit]'),status=f.querySelector('.staff-feedback');button.disabled=true;try{var values=Object.fromEntries(new FormData(f));values.assignee=s.value;await staffAction('create_task',values);status.textContent=(person?.full_name||'YÖNETİCİ')+' İÇİN GÖREV ATANDI.';f.reset();task.open=false;}catch(error){status.textContent='GÖREV ATANAMADI: '+error.message;}finally{button.disabled=false;}};};b.onclick=async()=>{if(!staffState?.owner||!s.value)return;await changeManagerRole(s.value,b);s.onchange();};d.querySelector('.primary').onclick=()=>{d.close();void openStaffPanel();};d.querySelector('.close').onclick=()=>d.close();d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
 }
@@ -898,7 +917,8 @@ var openClubEmail;
       {key:'player_data',label:'OYUNCU / ANTRENMAN VERİLERİ',description:'YETKİLİ OLDUĞUN ALANLARI DÜZENLE',group:1,action:()=>quickEntryApp?.open()},
       {key:'transfer_entry',label:'TRANSFER GİRİŞİ',description:'YENİ OYUNCU EKLE',group:0,action:openTransferEntry},
       {key:'free_jerseys',label:'BOŞTA OLAN FORMA NUMARALARI',description:'KULLANILABİLİR NUMARALARI GÖR',group:0,action:function(){
-        var target=simpleNative(true).find(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')>-1;});
+        if(!staffCan('roster'))return openFreeJerseysReadOnly();
+        var target=el('dashboard-nav')?.querySelector('[data-page=jerseys]');
         if(target)target.click();
       }},
       {key:'player_preview',label:'OYUNCU GÖRÜNÜMÜ ÖNİZLE',description:'OYUNCUNUN GÖRDÜĞÜ EKRANI AÇ',group:0,action:function(){
@@ -916,8 +936,8 @@ var openClubEmail;
       var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')===-1;}).filter(function(b){var k=easyMenuKey(b);return !b.classList.contains('player-preview-launch')&&!['match','data_entry','bulk_statistics','preview','player_preview','comparison'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ İŞLE':target.textContent.trim(),description:key==='match_cards'?'MAÇ BİLGİSİ, OYUNCU VE KARTLAR':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
       rows=rows.concat(tools.filter(row=>{
         if(row.key==='player_data')return staffCanEnterPlayerData();
-        const area={match_cards:'matches',email:'notifications',history:'history',backup:'backup',transfer_entry:'roster',free_jerseys:'roster',player_preview:'preview'}[row.key];
-        return !area||staffCan(area);
+        const area={match_cards:'matches',email:'notifications',history:'history',backup:'backup',transfer_entry:'roster',player_preview:'preview'}[row.key];
+        return row.key==='free_jerseys' ? staffCan('roster') || staffCan('free_jerseys') : !area||staffCan(area);
       })).filter(function(row){if(seen.has(row.key))return false;seen.add(row.key);return (row.label+' '+row.description).toLocaleLowerCase('tr-TR').includes(q);});
       var groups=['OYUNCULAR VE İSTATİSTİKLER','MAÇ VE KADRO','YÖNETİM VE İLETİŞİM','ARŞİV VE ARAÇLAR'],area=d.querySelector('.easy-catalog-groups');area.innerHTML='';
       groups.forEach(function(title,index){var items=rows.filter(function(row){return row.group===index;});if(!items.length)return;var section=document.createElement('section'),h=document.createElement('h3');h.textContent=title;section.appendChild(h);if(index===0){var priority={roster:0,transfer_entry:1,free_jerseys:2,player_preview:3,comparison:4};items.sort(function(a,b){var pa=Object.prototype.hasOwnProperty.call(priority,a.key)?priority[a.key]:50,pb=Object.prototype.hasOwnProperty.call(priority,b.key)?priority[b.key]:50;return pa-pb||String(a.label).localeCompare(String(b.label),'tr');});}items.forEach(function(row){var b=document.createElement('button'),s=document.createElement('strong'),p=document.createElement('small');b.type='button';s.textContent=row.label;p.textContent=row.description;b.append(s,p);b.onclick=function(){d.close();setTimeout(function(){if(row.action)row.action();else if(row.target?.isConnected&&!row.target.hidden)row.target.click();else draw();},0);};section.appendChild(b);});area.appendChild(section);});
@@ -995,7 +1015,73 @@ var openClubEmail;
    var activeBox=document.createElement('section');activeBox.className='manager-active-list';
    (taskSlot||dialog.querySelector('.hub-person-list')).before(roleBox);(taskSlot||dialog.querySelector('.hub-person-list')).after(activeBox);
    function syncRole(){var id=select.value;roleBox.hidden=!id;if(!id){input.value='';feedback.textContent='';renderActiveManagers(activeBox);return;}input.value=titleOf(id);feedback.textContent='';renderActiveManagers(activeBox);}
-   select.addEventListener('change',syncRole);syncRole();
+   const permissionBox=document.createElement('section');
+   permissionBox.className='manager-role-slot manager-inline-permissions';
+   roleBox.before(permissionBox);
+   const more=dialog.querySelector('.primary');
+   more.textContent='Ana yönetici atama ve görev takibi';
+   dialog.append(more);
+   let revision=0;
+   async function showPermissions(){
+     const token=++revision;
+     const id=select.value;
+     permissionBox.hidden=!id || accountRoles[id]!=='admin';
+     permissionBox.replaceChildren();
+     if(permissionBox.hidden)return;
+     const message=document.createElement('p');
+     message.setAttribute('role','status');
+     message.textContent='Yetkiler yükleniyor…';
+     permissionBox.append(message);
+     const result=await supabase.rpc('club_staff',{p_action:'context'});
+     if(token!==revision||!dialog.isConnected)return;
+     if(result.error){message.textContent=result.error.message;return;}
+     const person=result.data.admins?.find(admin=>admin.player_id===id);
+     if(!person||person.owner){
+       message.textContent=person?.owner?'Ana yönetici · Tüm yetkiler açık.':'Yönetici kaydı bulunamadı.';
+       return;
+     }
+     const groups=[
+       ['Oyuncular',['free_jerseys','roster','preview','links']],
+       ['Maç ve kadro',['matches','statistics','training','lineup','reports']],
+       ['İletişim ve disiplin',['messages','notifications','penalties','leaves','contacts']],
+       ['Diğer yetkiler',['history','archives','settings','backup','visits']]
+     ];
+     const field=(label,attributes,checked)=>'<label class="staff-check"><input type="checkbox" '+attributes+(checked?' checked':'')+'> '+safe(label)+'</label>';
+     const form=document.createElement('form');
+     form.innerHTML='<h3>İşlem yetkileri</h3>'+field('İşlem yetkisi açık','name="enabled"',person.enabled)+
+       groups.map(([label,keys],index)=>'<details'+(index===0?' open':'')+'><summary>'+label+'</summary>'+keys.map(key=>field(staffLabels[key],'data-area="'+key+'"',person.areas?.[key])).join('')+'</details>').join('')+
+       '<button type="submit">Yetkileri kaydet</button>';
+     permissionBox.prepend(form);
+     message.textContent='';
+     form.onsubmit=async event=>{
+       event.preventDefault();
+       const button=form.querySelector('button');
+       const areas={...person.areas,...Object.fromEntries(Array.from(form.querySelectorAll('[data-area]'),node=>[node.dataset.area,node.checked]))};
+       button.disabled=true;
+       select.disabled=true;
+       dialog.querySelector('.role').disabled=true;
+       message.textContent='Kaydediliyor…';
+       try{
+         const saved=await supabase.rpc('club_staff',{p_action:'permissions',p_data:{user_id:person.id,enabled:form.elements.enabled.checked,areas,version:person.version}});
+         if(saved.error)throw saved.error;
+         await showPermissions();
+         const status=permissionBox.querySelector('[role=status]');
+         if(status&&!status.textContent)status.textContent='Yetkiler kaydedildi.';
+       }catch(error){
+         message.textContent=error.message;
+         button.disabled=false;
+       }finally{
+         select.disabled=false;
+         dialog.querySelector('.role').disabled=false;
+       }
+     };
+   }
+   select.addEventListener('change',()=>{syncRole();void showPermissions();});
+   const roleButton=dialog.querySelector('.role');
+   const changeRole=roleButton.onclick;
+   roleButton.onclick=async()=>{await changeRole();syncRole();await showPermissions();};
+   syncRole();
+   void showPermissions();
    save.onclick=async function(){var id=select.value;if(!id)return;save.disabled=true;feedback.textContent='KAYDEDİLİYOR…';try{var result=await supabase.rpc('club_set_management_role',{p_player_id:id,p_role:input.value.trim()});if(result.error)throw result.error;var person=managerPerson(id);if(person)person.management_role=input.value.trim()||null;var form=document.querySelector('.player-edit[data-id="'+CSS.escape(id)+'"]');var old=form?.querySelector('[name=management_role]');if(old)old.value=input.value.trim();feedback.textContent='UNVAN KAYDEDİLDİ. LİSTEDE GÖRÜNÜR.';renderActiveManagers(activeBox);}catch(error){feedback.textContent='UNVAN KAYDEDİLEMEDİ: '+error.message;}finally{save.disabled=false;}};
    dialog.addEventListener('close',function(){roleBox.remove();activeBox.remove();});
  };
