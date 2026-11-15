@@ -4,8 +4,8 @@
   let loading=false,oldScroll=0;
   const style=document.createElement('style');style.textContent=`
     #dashboard-nav .player-preview-launch{background:linear-gradient(120deg,#8c3cb0,#3458b8);color:#fff;border:1px solid #c5a2e5}
-    #player-preview-banner{position:sticky;top:8px;z-index:30;padding:16px;border-radius:16px;background:linear-gradient(120deg,#57308e,#244c8c);color:#fff;border:2px solid #ffdc4a;box-shadow:0 5px 20px #0003;margin-bottom:20px}
-    #player-preview-banner p{color:#fff;margin:8px 0;font-size:13px}#player-preview-banner .preview-controls{display:flex;flex-wrap:wrap;gap:10px}#player-preview-banner button{background:#ffdf46;color:#142846;border:0;min-height:44px;font-weight:900}
+    #player-preview-banner{position:sticky;top:8px;z-index:30;padding:16px;border-radius:16px;background:linear-gradient(120deg,#57308e,#244c8c);color:#fff;border:2px solid #aecbf0;box-shadow:0 5px 20px #0003;margin-bottom:20px}
+    #player-preview-banner p{color:#fff;margin:8px 0;font-size:13px}#player-preview-banner .preview-controls{display:flex;flex-wrap:wrap;gap:10px}#player-preview-banner button{background:#aecbf0;color:#142846;border:0;min-height:44px;font-weight:900}
     .preview-picker{width:min(520px,calc(100vw - 32px));box-sizing:border-box;border:2px solid #9971cc;border-radius:20px;background:linear-gradient(135deg,#f4edff,#e6f2ff);color:#142846;padding:22px}.preview-picker::backdrop{background:#101c35b8}.preview-picker select{width:100%;box-sizing:border-box;min-height:48px;margin:12px 0}.preview-picker button{min-height:44px;margin:6px;background:#68439e;color:#fff}.preview-picker [role=status]{white-space:pre-line}
     html[data-theme=dark] .preview-picker{background:linear-gradient(135deg,#2c2445,#1b304b);color:#fff}html[data-theme=dark] .preview-picker select{background:#112138;color:#fff}
     html[data-player-preview] #logout,html[data-player-preview] #season-controls{display:none!important}

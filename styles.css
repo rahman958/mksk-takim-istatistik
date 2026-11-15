@@ -1,4 +1,4 @@
-:root { --navy:#0b2447; --blue:#183f73; --ice:#eef5fb; --line:#d7e1ed; --yellow:#f6db31; --ink:#132238; --muted:#617087; --white:#fff; }
+:root { --navy:#0b2447; --blue:#183f73; --ice:#eef5fb; --line:#d7e1ed; --yellow:#aecbf0; --ink:#132238; --muted:#617087; --white:#fff; }
 * { box-sizing:border-box; }
 .admin-actions{display:flex;gap:10px;align-items:center}.add-player{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;margin:0 0 16px;padding:16px;background:#fff;border:1px solid var(--line);border-radius:12px}.danger{margin-top:14px;background:#e85d5d;color:#fff;padding:8px 10px;font-size:.8rem}
 body { margin:0; background:linear-gradient(145deg,#eef4fa,#f9fbfd); color:var(--ink); font:16px/1.45 Arial,sans-serif; }
