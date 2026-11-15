@@ -3,7 +3,7 @@ import { installPlayerNotifications } from './player-notifications.js?v=20261114
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261113-roster-final-1';
 import { initPlayerHub } from './player-hub.js?v=20261114-date-format-1';
-import { initQuickEntry } from './quick-entry.js?v=20261114-manager-menu-1';
+import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
 import { matchCards } from './match-cards.js?v=20261114-saved-match-player-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261027-grouped-sections-1';
@@ -239,9 +239,9 @@ var beforeExpandedPlayerPage=setPlayerPage;setPlayerPage=function(page){beforeEx
 import './player-management.js?v=20261016-management-1';
 
 var beforeLastFiveFormPlayer=loadPlayer;
-loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');var nav=el('player-nav');if(nav&&!nav.querySelector('[data-player-page=form_graph]')){var graphButton=document.createElement('button');graphButton.type='button';graphButton.dataset.playerPage='form_graph';graphButton.className='form-launch';graphButton.textContent='MAÇ KARTLARIM / FORM GRAFİĞİ';graphButton.setAttribute('aria-pressed','false');graphButton.onclick=()=>setPlayerPage('form_graph');var statsButton=nav.querySelector('[data-player-page=stats]');if(statsButton)statsButton.after(graphButton);else nav.appendChild(graphButton);}await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='form_graph');};
+loadPlayer=async function(id){await beforeLastFiveFormPlayer(id);var keeper=Array.from(document.querySelectorAll('#player-summary .metric')).some(m=>m.querySelector('span')?.textContent==='Mevki'&&m.querySelector('strong')?.textContent==='GK');var nav=el('player-nav');if(nav&&!nav.querySelector('[data-player-page=form_graph]')){var graphButton=document.createElement('button');graphButton.type='button';graphButton.dataset.playerPage='form_graph';graphButton.className='form-launch';graphButton.textContent='MAÇLARIM VE FORM';graphButton.setAttribute('aria-pressed','false');graphButton.onclick=()=>setPlayerPage('form_graph');var statsButton=nav.querySelector('[data-player-page=stats]');if(statsButton)statsButton.after(graphButton);else nav.appendChild(graphButton);}await window.MKSK_DRAW_PLAYER_FORM(id,keeper);window.MKSK_SHOW_PLAYER_FORM(playerDashboardPage==='form_graph');};
 var beforeLastFiveFormPage=setPlayerPage;setPlayerPage=function(page){beforeLastFiveFormPage(page);window.MKSK_SHOW_PLAYER_FORM?.(page==='form_graph');};
-import './player-form.js?v=20261114-player-status-1';
+import './player-form.js?v=20261116-navigation-audit-1';
 
 
 // Season overview and automatic player ratings: pending grades are excluded.
@@ -597,7 +597,7 @@ var unifiedShowBase=show;show=function(id){if(id!=='player-view')el('important-d
 var playerWorkOwner=null,playerWorkSeason=null,playerWorkState={duty:undefined,corrections:undefined};
 function recordPlayerDuty(id,season,data){if(id!==playerWorkOwner||season!==playerWorkSeason)return;playerWorkState.duty=data;renderPlayerWorkSummary();}
 function recordPlayerCorrections(id,season,rows){if(id!==playerWorkOwner||season!==playerWorkSeason)return;playerWorkState.corrections=rows;renderPlayerWorkSummary();}
-function renderPlayerWorkSummary(){var box=el('player-message-quick');if(!box||window.MKSK_PLAYER_PREVIEW)return;var unread=box.querySelector('.player-unread-open');if(!unread)return;var grid=box.querySelector('.player-work-grid');if(!grid){var h=document.createElement('h3');h.textContent='BEKLEYEN İŞLERİM';var p=document.createElement('p');p.className='player-work-private';p.textContent='Yalnız sana ait mesaj, kadro görevi ve talepler gösterilir.';grid=document.createElement('div');grid.className='player-work-grid';box.prepend(h,p,grid);grid.appendChild(unread);}grid.querySelectorAll('.player-work-link').forEach(n=>n.remove());var duty=playerWorkState.duty,rows=playerWorkState.corrections,dutyCount=duty===undefined?'…':duty===null?'—':duty.published&&duty.selected&&duty.match_date>=clubToday()?1:0,correctionCount=rows===undefined?'…':rows===null?'—':(rows.length>=1000?rows.filter(r=>r.status==='pending').length+'+':rows.filter(r=>r.status==='pending').length),defs=[['İSTATİSTİKLERİM','→','stats'],['MAÇ KARTLARIM','→','form_graph'],['CEZALARIM / UYARILARIM','→','penalties'],['YAKLAŞAN KADRO GÖREVİM',dutyCount,'my_lineup'],['YANIT BEKLEYEN TALEPLERİM',correctionCount,'corrections']];if(profileStaffData?.enabled)defs.push(['YÖNETİCİLİK GÖREVLERİM',(profileStaffData.tasks||[]).filter(t=>['pending','working','returned'].includes(t.status)).length,'staff_tasks']);defs.forEach(([label,count,page])=>{var b=document.createElement('button');b.type='button';b.className='player-work-link';b.dataset.workPage=page;b.innerHTML='<span>'+safe(label)+'</span><strong>'+safe(count)+'</strong><small>LİSTEYİ AÇ →</small>';b.onclick=()=>setPlayerPage(page);grid.appendChild(b);});box.hidden=false;box.classList.remove('hidden');}
+function renderPlayerWorkSummary(){var box=el('player-message-quick');if(!box||window.MKSK_PLAYER_PREVIEW)return;var unread=box.querySelector('.player-unread-open');if(!unread)return;var grid=box.querySelector('.player-work-grid');if(!grid){var h=document.createElement('h3');h.textContent='BEKLEYEN İŞLERİM';var p=document.createElement('p');p.className='player-work-private';p.textContent='Yalnız sana ait mesaj, kadro görevi ve talepler gösterilir.';grid=document.createElement('div');grid.className='player-work-grid';box.prepend(h,p,grid);grid.appendChild(unread);}grid.querySelectorAll('.player-work-link').forEach(n=>n.remove());var duty=playerWorkState.duty,rows=playerWorkState.corrections,dutyCount=duty===undefined?'…':duty===null?'—':duty.published&&duty.selected&&duty.match_date>=clubToday()?1:0,correctionCount=rows===undefined?'…':rows===null?'—':(rows.length>=1000?rows.filter(r=>r.status==='pending').length+'+':rows.filter(r=>r.status==='pending').length),defs=[['İSTATİSTİKLERİM','→','stats'],['CEZALARIM / UYARILARIM','→','penalties'],['YAKLAŞAN KADRO GÖREVİM',dutyCount,'my_lineup'],['YANIT BEKLEYEN TALEPLERİM',correctionCount,'corrections']];if(profileStaffData?.enabled)defs.push(['YÖNETİCİLİK GÖREVLERİM',(profileStaffData.tasks||[]).filter(t=>['pending','working','returned'].includes(t.status)).length,'staff_tasks']);defs.forEach(([label,count,page])=>{var b=document.createElement('button');b.type='button';b.className='player-work-link';b.dataset.workPage=page;b.innerHTML='<span>'+safe(label)+'</span><strong>'+safe(count)+'</strong><small>LİSTEYİ AÇ →</small>';b.onclick=()=>setPlayerPage(page);grid.appendChild(b);});box.hidden=false;box.classList.remove('hidden');}
 var playerWorkLoad=loadPlayer;loadPlayer=async function(id){profileStaffData=null;playerWorkOwner=id;playerWorkSeason=selectedSeason;playerWorkState={duty:undefined,corrections:undefined};await playerWorkLoad(id);renderPlayerWorkSummary();};
 var playerWorkShow=show;show=function(id){if(id==='login-view'){playerWorkOwner=null;playerWorkSeason=null;playerWorkState={duty:undefined,corrections:undefined};}return playerWorkShow(id);};
 (function(){var s=document.createElement('style');s.textContent='.player-message-quick>h3{font-size:16px!important;margin:4px 0 8px}.player-work-private{font-size:11px!important;line-height:1.6;margin:0 0 12px}.player-work-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.player-work-grid>button{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:8px;border:1px solid #7e81a8;border-radius:12px;padding:12px!important;background:linear-gradient(120deg,#285a78,#584981)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;line-height:1.5}.player-work-grid span{font-size:11px!important;font-weight:800;text-align:left}.player-work-grid strong{font-size:23px!important}.player-work-grid small{font-size:10px!important}.player-work-grid>.player-unread-open span{flex:none}.player-work-grid>.player-unread-open{flex-wrap:nowrap}html[data-theme=dark] .player-message-quick>h3,html[data-theme=dark] .player-work-private{color:#f5efff!important;-webkit-text-fill-color:#f5efff!important}@media(max-width:340px){.player-work-grid{grid-template-columns:1fr}}';document.head.appendChild(s);})();
@@ -686,7 +686,7 @@ var legacyMetadataSave=savePlayer;savePlayer=async function(e){e.preventDefault(
 var playerHubInstance=null,playerHubLoadAdmin=loadAdmin;
 loadAdmin=async function(){await playerHubLoadAdmin();if(!playerHubInstance)playerHubInstance=initPlayerHub({db:supabase,can:area=>staffCan(area),owner:()=>!!staffState?.owner,season:()=>selectedSeason,edit:id=>{simpleActivate(simplePick('roster'));openPlayerEditor(id);},action:openDossierAction,mountInvite:mountPlayerInvite});};
 var hubPageAllowed=staffPageAllowed;staffPageAllowed=function(page){if(page==='player_files')return staffCan('roster');if(page==='roster_order')return !!staffState?.owner;if(page==='match_cards')return staffCan('matches');return hubPageAllowed(page);};
-var matchPlayerShell=simplePlayerShell;simplePlayerShell=function(){matchPlayerShell();const box=el('simple-player-menu');if(box&&!box.querySelector('.player-match-cards')){const b=document.createElement('button');b.type='button';b.className='player-match-cards';b.textContent='MAÇ KARTLARIM / DETAYLAR';b.onclick=()=>{setPlayerPage('form_graph');el('player-form-chart')?.querySelector('.form-games')?.scrollIntoView({block:'start'});};box.appendChild(b);}};
+var matchPlayerShell=simplePlayerShell;simplePlayerShell=function(){matchPlayerShell();const box=el('simple-player-menu');if(box&&!box.querySelector('.player-match-cards')){const b=document.createElement('button');b.type='button';b.className='player-match-cards';b.textContent='MAÇLARIM VE FORM';b.onclick=()=>{setPlayerPage('form_graph');el('player-form-chart')?.querySelector('.form-games')?.scrollIntoView({block:'start'});};box.appendChild(b);}};
 
 
 
@@ -930,7 +930,7 @@ var openClubEmail;
         if(target)target.click(); else if(typeof setDashboardPage==='function')setDashboardPage('comparison');
       }}
     ];
-    function nativeGroup(key){return (key==='match_cards'||['data_entry','lineups'].includes(key))?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts'].includes(key)?2:0;}
+    function nativeGroup(key){return (key==='match_cards'||['data_entry','lineups'].includes(key))?1:['history','backup','settings','season_archive','team_history','season_awards','season_cards'].includes(key)?3:['staff','messages','visits','leaves','contacts','penalties'].includes(key)?2:0;}
     function draw(){
       var seen=new Set(),q=d.querySelector('input').value.toLocaleLowerCase('tr-TR');
       var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')===-1;}).filter(function(b){var k=easyMenuKey(b);return !b.classList.contains('player-preview-launch')&&!['match','data_entry','bulk_statistics','preview','player_preview','comparison'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ İŞLE':target.textContent.trim(),description:key==='match_cards'?'MAÇ BİLGİSİ, OYUNCU VE KARTLAR':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
@@ -1004,6 +1004,21 @@ var openClubEmail;
    var dialog=dialogs[dialogs.length-1];if(!dialog||dialog.dataset.managerRoleEditor)return;
    dialog.dataset.managerRoleEditor='1';
    var select=dialog.querySelector('select'),taskSlot=dialog.querySelector('.manager-task-slot');if(!select)return;
+   const playerOptions=Array.from(select.options).slice(1);
+   const pickerLabel=select.closest('label');
+   const modeButton=document.createElement('button');
+   modeButton.type='button';
+   pickerLabel.after(modeButton);
+   let addingManager=false;
+   function renderManagerOptions(selected=''){
+     const options=playerOptions.filter(option=>addingManager?accountRoles[option.value]==='player':accountRoles[option.value]==='admin');
+     select.replaceChildren(new Option(addingManager?'Oyuncu seç':'Yönetici seç',''),...options.map(option=>option.cloneNode(true)));
+     select.value=options.some(option=>option.value===selected)?selected:'';
+     pickerLabel.firstChild.textContent=addingManager?'OYUNCU SEÇ':'YÖNETİCİ SEÇ';
+     modeButton.textContent=addingManager?'Yöneticilere dön':'Yönetici ekle';
+     select.dispatchEvent(new Event('change'));
+   }
+   modeButton.onclick=()=>{addingManager=!addingManager;renderManagerOptions();};
    var roleBox=document.createElement('section');roleBox.className='manager-role-slot';roleBox.hidden=true;
    var roleTitle=document.createElement('h3');roleTitle.textContent='YÖNETİCİ UNVANI';
    var help=document.createElement('p');help.textContent='ÖRN. MKSK BAŞKAN YARDIMCISI. KAYDEDİNCE LİSTEDE OTOMATİK GÖRÜNÜR.';
@@ -1079,9 +1094,19 @@ var openClubEmail;
    select.addEventListener('change',()=>{syncRole();void showPermissions();});
    const roleButton=dialog.querySelector('.role');
    const changeRole=roleButton.onclick;
-   roleButton.onclick=async()=>{await changeRole();syncRole();await showPermissions();};
-   syncRole();
-   void showPermissions();
+   roleButton.onclick=async()=>{
+     const id=select.value;
+     const previousRole=accountRoles[id];
+     await changeRole();
+     if(accountRoles[id]!==previousRole){
+       addingManager=false;
+       renderManagerOptions(id);
+     }else{
+       syncRole();
+       await showPermissions();
+     }
+   };
+   renderManagerOptions();
    save.onclick=async function(){var id=select.value;if(!id)return;save.disabled=true;feedback.textContent='KAYDEDİLİYOR…';try{var result=await supabase.rpc('club_set_management_role',{p_player_id:id,p_role:input.value.trim()});if(result.error)throw result.error;var person=managerPerson(id);if(person)person.management_role=input.value.trim()||null;var form=document.querySelector('.player-edit[data-id="'+CSS.escape(id)+'"]');var old=form?.querySelector('[name=management_role]');if(old)old.value=input.value.trim();feedback.textContent='UNVAN KAYDEDİLDİ. LİSTEDE GÖRÜNÜR.';renderActiveManagers(activeBox);}catch(error){feedback.textContent='UNVAN KAYDEDİLEMEDİ: '+error.message;}finally{save.disabled=false;}};
    dialog.addEventListener('close',function(){roleBox.remove();activeBox.remove();});
  };
@@ -1168,8 +1193,6 @@ var openClubEmail;
    box.insertAdjacentHTML('beforeend','<div class="profile-center-brand"><img src="güncel logo.jfif" alt="MKSK logosu"><span><strong>OYUNCU PANELİ</strong><small>BANA AİT BİLGİLER</small><em>TAKIM KURULUŞ: 11.06.2008</em></span></div><p class="profile-center-caption">HIZLI ERİŞİM</p>');
    var main=document.createElement('div');main.className='profile-center-main';box.appendChild(main);
    profileCenterButton(main,'PERFORMANSIM','MAÇ, GOL, ASİST VE PUAN','chart-no-axes-combined',function(){setPlayerPage('stats');},true);
-   profileCenterButton(main,'FORM GRAFİĞİM','SON MAÇ PERFORMANSIM','chart-line',function(){setPlayerPage('form_graph');},true);
-   profileCenterButton(main,'MAÇ KARTLARIM','OYNADIM VE OYNAMADIM','calendar-days',function(){setPlayerPage('stats');setTimeout(function(){document.getElementById('player-match-cards')?.scrollIntoView({behavior:'smooth',block:'start'});},0);},true);
    var mini=document.createElement('div');mini.className='profile-center-mini';box.appendChild(mini);
 
 
@@ -1352,13 +1375,6 @@ var openClubEmail;
   function repairAdminSummary(){
     var quick=node('admin-quick-overview');
     if(!quick)return;
-    var grid=quick.querySelector('.admin-quick-grid');
-    if(!grid||grid.querySelector('[data-loss-total]')){installProfileLaunch();return;}
-    var overview=window.autoSuccessOverview||{};
-    var losses=Number(overview.losses??overview.defeats??overview.loss??0)||0;
-    var b=document.createElement('button');
-    b.type='button';b.setAttribute('data-loss-total','1');b.innerHTML='<b>'+losses+'</b><span>MAĞLUBİYET</span>';
-    grid.insertBefore(b,grid.children[2]||null);
     installProfileLaunch();
   }
   var oldLoadAdmin=window.loadAdmin;
@@ -1425,10 +1441,9 @@ var openClubEmail;
       '<div class="season-center-grid">'+
       '<div><b>'+played+'</b><span>MAÇ SAYISI</span></div><div><b>'+num(s.goals)+'</b><span>GOL SAYISI</span></div><div><b>'+num(s.assists)+'</b><span>ASİST</span></div>'+
       '<div><b>'+num(s.man_of_match)+'</b><span>MAÇIN ADAMI</span></div><div><b>'+(s.manager_percent!=null?num(s.manager_percent)+'%':(s.manager_rating!=null?num(s.manager_rating)*10+'%':'—'))+'</b><span>BAŞARI YÜZDESİ</span></div><div><b>'+missed+'</b><span>KAÇIRDIĞI MAÇ</span></div></div>'+
-      '<button type="button" class="season-center-form" data-season-page="form_graph"><span>📈</span><div><b>FORM GRAFİĞİM</b><small>SON MAÇ PERFORMANSIM</small></div><em>›</em></button>'+
+      '<button type="button" class="season-center-form" data-season-page="form_graph"><span>📈</span><div><b>MAÇLARIM VE FORM</b><small>MAÇ KARTLARI VE PUAN GRAFİĞİ</small></div><em>›</em></button>'+
       '<div class="season-center-links">'+
       '<button type="button" data-season-page="stats"><span>📊</span><b>PERFORMANSIM</b><small>MAÇ, GOL, ASİST VE PUAN</small></button>'+
-      '<button type="button" data-season-page="match_cards"><span>🗓️</span><b>MAÇ KARTLARIM</b><small>OYNADIM / OYNAMADIM</small></button>'+
       '<button type="button" data-season-page="messages"><span>✉️</span><b>MESAJLARIM</b><small>OKUNMAMIŞ MESAJLAR</small></button>'+
       '<button type="button" data-season-page="team"><span>⚽</span><b>TAKIMIM</b><small>KADRO VE LİDERLER</small></button>'+
       '</div>'+
@@ -1437,10 +1452,7 @@ var openClubEmail;
     brand.insertAdjacentHTML('afterend',html);
     box.querySelectorAll('[data-season-page]').forEach(function(b){b.onclick=function(){
       var page=b.dataset.seasonPage;
-      if(page==='match_cards'){
-        openPage('form_graph');
-        requestAnimationFrame(()=>el('player-form-chart')?.querySelector('.form-games')?.scrollIntoView({block:'start'}));
-      }else openPage({messages:'manager_messages',team:'hub_team'}[page]||page);
+      openPage({messages:'manager_messages',team:'hub_team'}[page]||page);
     };});
     fillLiveLeaders(box);
   }
@@ -1457,35 +1469,6 @@ var openClubEmail;
   };
   var css=document.createElement('style');css.id='mksk-player-season-center-live-style-20261105';
   css.textContent='.profile-center-player-menu .mksk-season-center{margin:12px 0;padding:13px;border:1px solid #c5d6e8;border-radius:17px;background:#f7fbff;color:#173a60}.season-center-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 11px;border-radius:12px;background:linear-gradient(120deg,#173f6f,#2b6fa5 62%,#65458e);color:#fff}.season-center-title strong,.season-center-title small{display:block}.season-center-title strong{font-size:15px;font-weight:900}.season-center-title small{margin-top:3px;font-size:10px;font-weight:800;color:#edf5ff}.season-center-title img{width:39px;height:39px;object-fit:contain;border-radius:10px;background:#fff;border:2px solid #edcc50}.season-center-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}.season-center-grid>div{min-height:61px;padding:8px 4px;border-radius:11px;background:#fff;text-align:center;border:1px solid #d2dfed}.season-center-grid>div:nth-child(1){background:#fff2bf}.season-center-grid>div:nth-child(2){background:#dcf1e7}.season-center-grid>div:nth-child(3){background:#dceefa}.season-center-grid>div:nth-child(4){background:#eee2fa}.season-center-grid>div:nth-child(5){background:#f9e2e5}.season-center-grid>div:nth-child(6){background:#e1ebf8}.season-center-grid b,.season-center-grid span{display:block}.season-center-grid b{font-size:18px;line-height:1.05;font-weight:900;color:#173d69}.season-center-grid span{margin-top:5px;font-size:9px;line-height:1.1;font-weight:900;color:#35516d}.season-center-form{display:grid;grid-template-columns:25px minmax(0,1fr) 15px;align-items:center;gap:7px;width:100%;margin-top:10px;padding:10px;border:1px solid #c3d4e7;border-radius:12px;background:#fff;color:#1b568f;text-align:left;font:inherit}.season-center-form>span{font-size:18px}.season-center-form b,.season-center-form small{display:block}.season-center-form b{font-size:13px;color:#183e67}.season-center-form small{margin-top:3px;font-size:9px;font-weight:800;color:#61758b}.season-center-form svg{width:90px;height:45px;color:#2774ad}.season-center-form em{font-size:22px;font-style:normal}.season-center-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.season-center-links button{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:8px;align-items:center;min-height:68px;padding:10px;border:1px solid #cad9e8;border-radius:12px;background:#fff;color:#183e67;text-align:left;font:inherit}.season-center-links span{grid-row:span 2;font-size:18px}.season-center-links b,.season-center-links small{display:block;min-width:0}.season-center-links b{font-size:12px;font-weight:900}.season-center-links small{margin-top:3px;font-size:9px;line-height:1.2;color:#60758d;font-weight:800}.season-center-leaders{margin-top:13px;padding-top:11px;border-top:1px solid #d8e4ef}.season-center-leaders>strong{font-size:13px;color:#173c67}.season-center-leader{display:grid;grid-template-columns:27px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e0eaf3}.season-center-leader>span{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:#e5f0fa}.season-center-leader b,.season-center-leader small{display:block}.season-center-leader b{font-size:11px}.season-center-leader small{margin-top:2px;font-size:9px;color:#60758d}.season-center-leader em{font-style:normal;font-weight:900;font-size:16px;color:#225f99}.season-center-live-leaders{background:#edf5fc;border-radius:13px;padding:11px}.season-center-live-leaders>strong{display:block;margin-bottom:3px}.season-center-live-leaders .season-center-leader:last-child{border-bottom:0}.season-center-leader-note{margin:7px 0;font-size:11px;color:#60758d}.discipline-panel-note{margin:8px 0 14px;color:#47617c;font-size:13px;font-weight:700}@media(max-width:390px){.season-center-form{grid-template-columns:23px minmax(0,1fr) 12px}.season-center-form svg{display:none}.season-center-links{grid-template-columns:1fr}.season-center-grid{gap:5px}.season-center-grid>div{min-height:58px}}';
-  document.head.appendChild(css);
-})();
-
-/* mksk-admin-summary-team-metrics-20261105 */
-(function(){
-  if(window.__mkskAdminSummaryTeamMetrics)return;
-  window.__mkskAdminSummaryTeamMetrics=true;
-  var prior=window.renderAdminQuickOverview;
-  if(typeof prior!=='function')return;
-  window.renderAdminQuickOverview=function(rows){
-    prior(rows);
-    try{
-      var box=el('admin-quick-overview'),o=window.autoSuccessOverview||{};
-      if(!box)return;
-      var grid=box.querySelector('.admin-quick-grid');if(!grid)return;
-      var metrics=[
-        ['MAÇ',o.matches,'team'],
-        ['GALİBİYET',o.wins,'team'],
-        ['MAĞLUBİYET',o.losses,'team'],
-        ['ATILAN GOL',o.goals,'team'],
-        ['YENİLEN GOL',o.conceded,'team'],
-        ['BAŞARI',o.success==null?'—':Math.round(Number(o.success||0))+'%','team']
-      ];
-      grid.innerHTML=metrics.map(function(x){return '<button type="button" data-go="'+x[2]+'"'+(x[0]==='MAĞLUBİYET'?' data-loss-total="1"':'')+'><b>'+x[1]+'</b><span>'+x[0]+'</span></button>';}).join('');
-      grid.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){el('team-summary')?.scrollIntoView({behavior:'smooth',block:'start'});};});
-    }catch(e){console.warn('Yönetici takım metrikleri düzenlenemedi',e);}
-  };
-  var css=document.createElement('style');css.id='mksk-admin-summary-team-metrics-style-20261105';
-  css.textContent='.admin-quick-overview .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-quick-overview .admin-quick-grid button:nth-child(1){background:#e6eff9}.admin-quick-overview .admin-quick-grid button:nth-child(2){background:#def0e7}.admin-quick-overview .admin-quick-grid button:nth-child(3){background:#fde8ea}.admin-quick-overview .admin-quick-grid button:nth-child(4){background:#e7f2fc}.admin-quick-overview .admin-quick-grid button:nth-child(5){background:#f0e7fa}.admin-quick-overview .admin-quick-grid button:nth-child(6){background:#fff2bf}@media(max-width:460px){.admin-quick-overview .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.admin-quick-overview .admin-quick-grid button{min-height:58px!important}.admin-quick-overview .admin-quick-grid b{font-size:16px!important}.admin-quick-overview .admin-quick-grid span{font-size:8px!important}}';
   document.head.appendChild(css);
 })();
 
@@ -1507,6 +1490,7 @@ var openClubEmail;
       var metrics=[
         ['MAÇ',numberValue(o.matches)],
         ['GALİBİYET',numberValue(o.wins)],
+        ['BERABERLİK',numberValue(o.draws)],
         ['MAĞLUBİYET',numberValue(o.losses)],
         ['ATILAN GOL',numberValue(o.goals)],
         ['YENİLEN GOL',numberValue(o.conceded)],
@@ -1692,7 +1676,7 @@ var openClubEmail;
       '<div class="mksk-ps-core">'+
         '<div class="mksk-ps-section-title">MAÇ VE HÜCUM</div>'+
         '<div class="mksk-ps-cards">'+statCard('⚽','MAÇ',played,'gold')+statCard('🥅','GOL',goals,'blue')+statCard('🎯','ASİST',assists,'purple')+statCard('🏅','MAÇIN ADAMI',motm,'pink')+'</div>'+
-        '<section class="mksk-ps-form"><button type="button">📈 FORM GRAFİĞİM · KAYITLI MAÇ PUANLARI</button></section>'+
+        '<section class="mksk-ps-form"><button type="button">📈 MAÇLARIM VE FORM</button></section>'+
         '<div class="mksk-ps-foot"><div><span>📅 KAÇIRDIĞIM MAÇ</span><strong data-mksk-missed>'+missed+'</strong></div><div><span>🏃 ANTRENMAN</span><strong>'+training+'</strong></div><div><span>⭐ BAŞARI</span><strong>'+pct+'</strong></div></div>'+
       '</div></section>';
     host.querySelector('.mksk-ps-form button').onclick=()=>setPlayerPage('form_graph');
