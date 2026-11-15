@@ -228,7 +228,7 @@ async function refreshClubMetadata(){var r=await supabase.from('players').select
 function drawBirthdayNotice(){var root=el('admin-view'),menu=el('simple-admin-menu');if(!root||!menu)return;var box=el('birthday-notice');if(!box){box=document.createElement('aside');box.id='birthday-notice';box.className='birthday-notice';}menu.after(box);var visible=staffCan('roster')&&['roster','hub_home'].includes(dashboardPage);box.hidden=!visible;box.classList.remove('simple-context-hidden','hub-menu-hidden','hidden');if(!visible)return;var eligible=clubMetadataRows.filter(clubActive),list=eligible.map(p=>clubNextBirthday(p,clubToday())).filter(x=>x&&x.days<=30).sort((a,b)=>a.days-b.days||a.player.full_name.localeCompare(b.player.full_name,'tr'));box.innerHTML='<h3>YAKLAŞAN DOĞUM GÜNLERİ</h3><p class="birthday-period">ÖNÜMÜZDEKİ 30 GÜN · TÜRKİYE TARİHİ</p>'+(list.length?'<ul>'+list.map(x=>'<li><strong>'+safe(x.player.full_name)+'</strong><span>'+safe(clubDate(x.date))+' · '+(x.days===0?'BUGÜN 🎂':x.days+' GÜN KALDI')+'</span></li>').join(''):'<p>'+(clubMetadataRows.length?'Önümüzdeki 30 günde doğum günü kayıtlı oyuncu yok.':'Doğum günü bilgileri yükleniyor…')+'</p>')+(eligible.some(p=>!p.birth_date)?'<p class="birthday-period">'+eligible.filter(p=>!p.birth_date).length+' oyuncunun doğum tarihi eksik.</p>':'')+'<button type="button">TÜM DOĞUM TARİHLERİ / DÜZENLE</button>';box.querySelector('button').onclick=()=>setDashboardPage('player_info');}
 function drawClubInfo(){var box=el('player-info-panel');if(!box){box=document.createElement('section');box.id='player-info-panel';box.className='card';box.hidden=true;el('admin-view').appendChild(box);box.innerHTML='<h3>Oyuncu bilgileri / takımda kalma süresi</h3><div class="birthday-list" role="status"></div><div class="club-info-controls"><label>Oyuncu ara<input class="club-info-search" type="search" placeholder="Ad soyad"></label><label>Durum<select class="club-info-status"><option value="">Tümü</option><option value="active">Takımda</option><option value="left">Ayrılmış / erişimi kapalı</option></select></label></div><button type="button" class="refresh-club-info">Bilgileri yenile</button><p class="club-info-message" aria-live="polite"></p><div class="club-info-list"></div>';box.querySelector('.refresh-club-info').onclick=()=>refreshClubMetadata().catch(e=>box.querySelector('.club-info-message').textContent=e.message);box.querySelector('.club-info-search').oninput=drawClubInfo;box.querySelector('.club-info-status').onchange=drawClubInfo;}var upcoming=clubMetadataRows.filter(clubActive).map(p=>clubNextBirthday(p,clubToday())).filter(x=>x&&x.days<=30).sort((a,b)=>a.days-b.days);box.querySelector('.birthday-list').innerHTML='<h4>Doğum günü uyarıları — önümüzdeki 30 gün</h4>'+(upcoming.length?upcoming.map(x=>'<p class="birthday-notice"><strong>'+safe(x.player.full_name)+'</strong> · '+clubDate(x.date)+' · '+(x.days===0?'Bugün':x.days+' gün kaldı')+'</p>').join(''):'<p>Önümüzdeki 30 günde doğum günü yok.</p>')+'<small>Uyarılar uygulama açıkken gösterilir. 29 Şubat doğum günleri artık olmayan yıllarda 28 Şubat kabul edilir.</small>';var query=box.querySelector('.club-info-search').value.trim().toLocaleLowerCase('tr'),filter=box.querySelector('.club-info-status').value,rows=clubMetadataRows.filter(p=>p.full_name.toLocaleLowerCase('tr').includes(query)&&(!filter||clubActive(p)===(filter==='active')));box.querySelector('.club-info-list').innerHTML=rows.map(p=>'<article class="club-info-item" data-player-info="'+p.id+'"><h4>'+safe(p.full_name)+'</h4><div class="summary-grid">'+playerHtml('Doğum tarihi',clubDate(p.birth_date))+playerHtml('Takıma giriş',p.joined_at?clubDate(p.joined_at):safe(p.join_year||'Belirtilmedi'))+playerHtml('Takımda kalma süresi',safe(clubTenure(p)))+'</div>'+(p.team_left_on?'<p>Ayrılış: '+clubDate(p.team_left_on)+'</p>':'')+'<button type="button">Tarihleri düzenle</button></article>').join('')||'<p>Bu filtrede oyuncu yok.</p>';box.querySelectorAll('[data-player-info] button').forEach(b=>b.onclick=()=>editClubDates(clubMetadataRows.find(p=>p.id===b.closest('article').dataset.playerInfo)));}
 function editClubDates(p){var d=document.createElement('dialog');d.style.cssText='width:min(92vw,650px);max-height:90vh;overflow:auto;border:0;border-radius:18px;padding:24px';d.innerHTML='<h3>'+safe(p.full_name)+'</h3><form>'+clubDateFields(p)+'<button type="submit">Tarihleri kaydet</button><p aria-live="polite"></p></form><button type="button" class="close-club-dates">Kapat</button>';d.querySelector('.close-club-dates').onclick=()=>d.close();d.onclose=()=>d.remove();d.querySelector('form').onsubmit=async e=>{e.preventDefault();var f=e.target,data=new FormData(f),joined=data.get('joined_at')||null,left=data.get('team_left_on')||null,birth=data.get('birth_date')||null,year=data.get('join_year')?Number(data.get('join_year')):null,msg=f.querySelector('p'),b=f.querySelector('button');if(left&&joined&&left<joined){msg.textContent='Ayrılış tarihi girişten önce olamaz.';return;}if(birth&&birth>clubToday()){msg.textContent='Doğum tarihi gelecekte olamaz.';return;}b.disabled=true;var r=await supabase.from('players').update({birth_date:birth,joined_at:joined,join_year:joined?Number(joined.slice(0,4)):year,team_left_on:left}).eq('id',p.id);if(r.error){msg.textContent='Kaydedilemedi: '+r.error.message;b.disabled=false;return;}await refreshClubMetadata();d.close();};document.body.appendChild(d);d.showModal();}
-function drawFreeJerseys(){var box=el('jersey-panel');if(!box){box=document.createElement('section');box.id='jersey-panel';box.className='card';box.hidden=true;el('admin-view').appendChild(box);}var active=clubMetadataRows.filter(clubActive),free=freeJerseyNumbers(active);box.innerHTML='<h3>Boş forma numaraları</h3><p>1–99 arası '+free.length+' boş numara. Aynı numarayı birden fazla oyuncuya verebilirsin. Bir numara, onu kullanan hiçbir aktif oyuncu kalmadığında boş olur.</p><form class="jersey-assign"><label>Oyuncu<select name="player_id" required>'+active.map(p=>'<option value="'+p.id+'">'+safe(p.full_name)+' — '+safe(p.jersey_number??'Numarasız')+'</option>').join('')+'</select></label><label>Verilecek forma numarası<input name="jersey_number" type="number" min="1" max="99" step="1" required></label><button type="submit">Forma numarasını kaydet</button><p class="jersey-message" aria-live="polite"></p></form><div class="free-jersey-grid">'+free.map(n=>'<button type="button" data-free-jersey="'+n+'" aria-label="'+n+' numarayı seç">'+n+'</button>').join('')+'</div><button type="button" class="refresh-jerseys">Numaraları yenile</button>';box.querySelectorAll('[data-free-jersey]').forEach(b=>b.onclick=()=>{box.querySelector('[name=jersey_number]').value=b.dataset.freeJersey;box.querySelector('[name=jersey_number]').focus();});box.querySelector('.refresh-jerseys').onclick=()=>refreshClubMetadata().catch(e=>box.querySelector('.jersey-message').textContent=e.message);box.querySelector('form').onsubmit=async e=>{e.preventDefault();var f=e.target,data=new FormData(f),id=data.get('player_id'),n=Number(data.get('jersey_number')),b=f.querySelector('button'),msg=f.querySelector('.jersey-message');if(!Number.isInteger(n)||n<1||n>99)return;b.disabled=true;var r=await supabase.from('players').update({jersey_number:n}).eq('id',id);if(r.error){msg.textContent='Kaydedilemedi: '+r.error.message;b.disabled=false;return;}var old=Array.from(document.querySelectorAll('.player-edit')).find(f=>f.dataset.id===id);if(old){var input=old.querySelector('[name=jersey_number]');if(input.tagName==='SELECT'){syncJerseyPicker(input,free,n);input.value=String(n);}else{input.value=n;input.defaultValue=n;}input.dispatchEvent(new Event('input',{bubbles:true}));applyFilters();}await refreshClubMetadata();el('jersey-panel').querySelector('.jersey-message').textContent='Forma numarası kaydedildi. Boş numaralar güncellendi.';};}
+function drawFreeJerseys(){var box=el('jersey-panel');if(!box){box=document.createElement('section');box.id='jersey-panel';box.className='card';box.hidden=true;el('admin-view').appendChild(box);}var active=clubMetadataRows.filter(clubActive),free=freeJerseyNumbers(active);box.innerHTML='<h3>Boş forma numaraları</h3><button type="button" class="jersey-share-launch">Paylaşım kartını aç</button><p>1–99 arası '+free.length+' boş numara. Aynı numarayı birden fazla oyuncuya verebilirsin. Bir numara, onu kullanan hiçbir aktif oyuncu kalmadığında boş olur.</p><form class="jersey-assign"><label>Oyuncu<select name="player_id" required>'+active.map(p=>'<option value="'+p.id+'">'+safe(p.full_name)+' — '+safe(p.jersey_number??'Numarasız')+'</option>').join('')+'</select></label><label>Verilecek forma numarası<input name="jersey_number" type="number" min="1" max="99" step="1" required></label><button type="submit">Forma numarasını kaydet</button><p class="jersey-message" aria-live="polite"></p></form><div class="free-jersey-grid">'+free.map(n=>'<button type="button" data-free-jersey="'+n+'" aria-label="'+n+' numarayı seç">'+n+'</button>').join('')+'</div><button type="button" class="refresh-jerseys">Numaraları yenile</button>';box.querySelectorAll('[data-free-jersey]').forEach(b=>b.onclick=()=>{box.querySelector('[name=jersey_number]').value=b.dataset.freeJersey;box.querySelector('[name=jersey_number]').focus();});box.querySelector('.jersey-share-launch').onclick=openFreeJerseysReadOnly;box.querySelector('.refresh-jerseys').onclick=()=>refreshClubMetadata().catch(e=>box.querySelector('.jersey-message').textContent=e.message);box.querySelector('form').onsubmit=async e=>{e.preventDefault();var f=e.target,data=new FormData(f),id=data.get('player_id'),n=Number(data.get('jersey_number')),b=f.querySelector('button'),msg=f.querySelector('.jersey-message');if(!Number.isInteger(n)||n<1||n>99)return;b.disabled=true;var r=await supabase.from('players').update({jersey_number:n}).eq('id',id);if(r.error){msg.textContent='Kaydedilemedi: '+r.error.message;b.disabled=false;return;}var old=Array.from(document.querySelectorAll('.player-edit')).find(f=>f.dataset.id===id);if(old){var input=old.querySelector('[name=jersey_number]');if(input.tagName==='SELECT'){syncJerseyPicker(input,free,n);input.value=String(n);}else{input.value=n;input.defaultValue=n;}input.dispatchEvent(new Event('input',{bubbles:true}));applyFilters();}await refreshClubMetadata();el('jersey-panel').querySelector('.jersey-message').textContent='Forma numarası kaydedildi. Boş numaralar güncellendi.';};}
 var beforeClubAdmin=loadAdmin;loadAdmin=async function(){await beforeClubAdmin();setupNewPlayerDates();try{await refreshClubMetadata();}catch(e){el('admin-message').textContent='Oyuncu bilgileri yüklenemedi: '+e.message;}var nav=el('dashboard-nav');[['jerseys','Forma numaraları'],['player_info','Oyuncu bilgileri']].forEach(([key,label])=>{if(nav.querySelector('[data-page='+key+']'))return;var b=document.createElement('button');b.type='button';b.dataset.page=key;b.textContent=label;b.onclick=()=>setDashboardPage(key);nav.appendChild(b);});setDashboardPage(dashboardPage);};
 var beforeClubAdminPage=setDashboardPage;setDashboardPage=function(page){beforeClubAdminPage(page);if(el('jersey-panel'))el('jersey-panel').hidden=page!=='jerseys';if(el('player-info-panel'))el('player-info-panel').hidden=page!=='player_info';if(el('birthday-notice'))drawBirthdayNotice();if(page==='jerseys'||page==='player_info')document.querySelector('.admin-heading h2').textContent=page==='jerseys'?'Forma numaraları':'Oyuncu bilgileri';};
 var beforeClubSave=savePlayer;savePlayer=async function(e){var saved=await beforeClubSave(e);if(saved&&el('jersey-panel')){try{await refreshClubMetadata();}catch(error){console.warn('Oyuncu kaydedildi; ek liste yenilenemedi.');}}return saved;};
@@ -738,21 +738,50 @@ var seasonOverviewShow=show;show=function(id){if(id==='login-view')seasonOvervie
 var seasonOverviewAllowed=staffPageAllowed;staffPageAllowed=function(page){return page==='stat_overview'?!!staffState:seasonOverviewAllowed(page);};
 
 async function openFreeJerseysReadOnly(){
- if(!staffCan('free_jerseys'))return;
+ if(!staffCan('roster')&&!staffCan('free_jerseys'))return;
  const dialog=document.createElement('dialog');
- dialog.className='player-hub-dialog';
- dialog.innerHTML='<header><h2>Boş forma numaraları</h2><form method="dialog"><button>Kapat</button></form></header><p role="status">Yükleniyor…</p><div class="free-jersey-grid"></div>';
+ dialog.className='player-hub-dialog jersey-share-dialog';
+ dialog.setAttribute('aria-labelledby','jersey-share-title');
+ dialog.innerHTML=`<header class="jersey-share-toolbar">
+   <form method="dialog"><button>Kapat</button></form>
+ </header>
+ <article class="jersey-share-card">
+   <div class="jersey-share-brand">
+     <img src="güncel logo.jfif" alt="MKSK logosu" width="48" height="48">
+     <div><p>MKSK 2008</p><h2 id="jersey-share-title">Boş Forma Numaraları</h2></div>
+   </div>
+   <p class="jersey-share-meta"><time></time><span role="status">Numaralar yükleniyor…</span></p>
+   <ul class="jersey-share-grid" aria-label="Müsait forma numaraları" hidden></ul>
+ </article>`;
  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
  document.body.append(dialog);
  dialog.showModal();
- const result=await supabase.rpc('club_free_jerseys');
- if(!dialog.isConnected)return;
- dialog.querySelector('[role=status]').textContent=result.error?result.error.message:result.data.length+' boş numara';
- if(result.error)return;
- for(const number of result.data){
-   const item=document.createElement('strong');
-   item.textContent=number;
-   dialog.querySelector('.free-jersey-grid').append(item);
+
+ const status=dialog.querySelector('[role=status]');
+ try{
+   let numbers;
+   if(staffCan('roster')){
+     await refreshClubMetadata();
+     numbers=freeJerseyNumbers(clubMetadataRows);
+   }else{
+     const result=await supabase.rpc('club_free_jerseys');
+     if(result.error)throw result.error;
+     numbers=result.data;
+   }
+   if(!dialog.isConnected)return;
+   const date=dialog.querySelector('time');
+   date.dateTime=clubToday();
+   date.textContent=clubDate(date.dateTime);
+   status.textContent=numbers.length ? numbers.length+' boş numara' : 'Boş forma numarası kalmadı';
+   const grid=dialog.querySelector('ul');
+   for(const number of numbers){
+     const item=document.createElement('li');
+     item.textContent=number;
+     grid.append(item);
+   }
+   grid.hidden=!numbers.length;
+ }catch(error){
+   status.textContent='Numaralar yüklenemedi. Kapatıp tekrar aç.';
  }
 }
 
@@ -791,7 +820,15 @@ function openTransferEntry(){
 }
 function openShareMenu(){
  var d=document.createElement('dialog');d.className='player-hub-dialog';d.innerHTML='<header><h2>GÖRSEL VE ANALİZ PAYLAŞIMLARI</h2><button type="button">KAPAT ×</button></header><div class="hub-person-list"></div>';
- d.querySelector('button').onclick=()=>d.close();[['team','TAKIM LİSTESİ'],['goals','GOL KRALLIĞI'],['assists','ASİST KRALLIĞI'],['most','EN ÇOK MAÇA ÇIKANLAR'],['least','EN AZ MAÇA ÇIKANLAR']].forEach(([kind,label])=>{var b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{d.close();simpleActivate(simplePick('statistics'));void shareStats(kind);};d.querySelector('.hub-person-list').appendChild(b);});d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
+ d.querySelector('button').onclick=()=>d.close();[['team','TAKIM LİSTESİ'],['goals','GOL KRALLIĞI'],['assists','ASİST KRALLIĞI'],['most','EN ÇOK MAÇA ÇIKANLAR'],['least','EN AZ MAÇA ÇIKANLAR']].forEach(([kind,label])=>{var b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{d.close();simpleActivate(simplePick('statistics'));void shareStats(kind);};d.querySelector('.hub-person-list').appendChild(b);});
+ if(staffCan('roster')||staffCan('free_jerseys')){
+   const button=document.createElement('button');
+   button.type='button';
+   button.textContent='BOŞ FORMA NUMARALARI';
+   button.onclick=()=>{d.close();void openFreeJerseysReadOnly();};
+   d.querySelector('.hub-person-list').append(button);
+ }
+ d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
 }
 function arrangeHome(){var admin=el('admin-view');if(!admin||admin.classList.contains('hidden'))return;var home=el('admin-home-panel'),birthday=el('birthday-notice'),menu=el('simple-admin-menu'),leave=el('easy-leave-home');if(dashboardPage==='hub_home'){if(birthday&&menu)menu.after(birthday);if(leave&&birthday)birthday.after(leave);if(home)admin.appendChild(home);}}
 var listAdminShell=simpleAdminShell;simpleAdminShell=function(){listAdminShell();var box=el('simple-admin-menu'),grid=box?.querySelector('.simple-fast-grid');if(!grid)return;grid.classList.add('list-navigation');grid.replaceChildren();var defs=[['files','OYUNCU DOSYALARI','Oyuncuyu seç, işlemlerini aç','roster'],['transfer','TRANSFER GİRİŞİ','Yeni oyuncu ekle','roster'],['entry','MAÇ İŞLE','Maç bilgisi, oyuncu ve kartlar',null],['overview','OYUNCU İSTATİSTİK ÖZETİ','Kompakt kartlar ve sezon liderleri',null],['lineup','KADRO OLUŞTUR','Kadro hazırla ve yayınla','lineup'],['shares','GÖRSEL VE ANALİZ PAYLAŞIMLARI','Takım listesi ve istatistik görselleri','statistics'],['penalties','DİSİPLİN KURULU','Disiplin sevk ve cezalar','penalties'],['messages','MESAJLAR','Gelen, gönderilen ve toplu mesajlar','messages']];
