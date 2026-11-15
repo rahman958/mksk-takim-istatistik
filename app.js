@@ -195,7 +195,7 @@ function syncJerseyPicker(field,free,currentValue){
  const selected=field.value;
  const current=String(currentValue??'');
  const picker=field.tagName==='SELECT'?field:document.createElement('select');
- const options=[new Option('Numarasız','',!current)];
+ const options=[new Option('Forma numarası belirle','',!current)];
  if(current)options.push(new Option(current+' · Mevcut numara',current,true));
  for(const number of free){
    if(String(number)!==current)options.push(new Option(String(number),String(number)));
