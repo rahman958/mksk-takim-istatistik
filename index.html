@@ -270,7 +270,18 @@ html[data-theme="dark"] .manager-role-slot,html[data-theme="dark"] .manager-acti
 #player-view #player-stat-extras .metric {padding:10px}
 #player-view #player-profile-extra .summary-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px}
 #player-view #player-profile-extra .metric {padding:8px!important}
-#player-view #player-profile-extra .metric strong {overflow-wrap:anywhere!important}
+#player-view #player-profile-extra h3 {margin-bottom:8px;line-height:1.25}
+#player-view #player-profile-extra .metric :is(span,strong) {
+  white-space:normal;
+  overflow-wrap:anywhere!important;
+  line-height:1.25!important;
+}
+#player-view #player-profile-extra .metric span {font-size:12px!important;letter-spacing:0}
+#player-view #player-profile-extra .metric strong {font-size:clamp(14px,3.5vw,17px)!important;margin-top:5px}
+@media(max-width:380px){
+  #player-view #player-profile-extra .summary-grid {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #player-view #player-profile-extra .metric:last-child {grid-column:1/-1}
+}
 #player-view #player-personal-info .metric {padding:9px}
 #player-view .latest-match-line {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:8px 0}
 #player-view .latest-match-line small {display:block;color:#405974}
