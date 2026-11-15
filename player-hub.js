@@ -14,18 +14,82 @@ export function initPlayerHub(api){
   if(!allowed('roster'))return;
   const d=modal('OYUNCU DOSYASI'),box=d.querySelector('.hub-content');box.textContent='YÜKLENİYOR…';
   try{const r=await db.from('players').select('id,full_name,jersey_number,position,group_name,status,management_role,birth_date,joined_at,join_year,performance_label,development_goal').eq('id',id).is('archived_at',null).single();if(r.error)throw r.error;if(!d.isConnected||!allowed('roster'))return d.close();const p=r.data;
-   d.querySelector('h2').textContent=p.full_name.toLocaleUpperCase('tr-TR');
-   box.innerHTML=fields([['FORMA',p.jersey_number],['MEVKİ',p.position],['OYUNCU GRUBU',p.group_name],['DURUM',p.status],['YÖNETİM GÖREVİ',p.management_role],['DOĞUM TARİHİ',p.birth_date],['TAKIMA GİRİŞ',p.joined_at||p.join_year]])+'<div class="hub-actions"><button type="button" class="hub-edit">BİLGİLERİ DÜZENLE</button></div><div class="hub-extras"><details class="hub-stats-group" open><summary>İstatistik ve Puan</summary><div class="hub-actions"></div><label>SEZON<select class="hub-season"></select></label><div class="hub-season-data"></div></details><details class="hub-invite-group"><summary>Davet ve Hesap</summary><div class="hub-actions"></div></details><details class="hub-discipline-group"><summary>İzin ve Disiplin</summary><div class="hub-actions"></div></details></div>';
+   d.classList.add('hub-dossier');
+   d.querySelector('h2').textContent='Oyuncu dosyası';
+   box.innerHTML=`<div class="hub-dossier-identity">
+     <h3>${esc(p.full_name)}</h3>
+     <p>${[p.jersey_number,p.position].filter(value=>value!=null&&value!=='').map(esc).join(' · ')}</p>
+   </div>
+   <section class="hub-season-overview">
+     <label>Sezon<select class="hub-season"></select></label>
+     <h3>Sezon özeti</h3><div class="hub-season-data" aria-live="polite"></div>
+     <h3>Maç geçmişi</h3><div class="hub-season-matches" aria-live="polite"></div>
+   </section>
+   <details class="hub-profile-details"><summary>Oyuncu bilgileri</summary>
+     ${fields([['OYUNCU GRUBU',p.group_name],['DURUM',p.status],['YÖNETİM GÖREVİ',p.management_role],['DOĞUM TARİHİ',formatClubDate(p.birth_date)],['TAKIMA GİRİŞ',p.joined_at?formatClubDate(p.joined_at):p.join_year]])}
+   </details>
+   <div class="hub-actions"><button type="button" class="hub-edit">BİLGİLERİ DÜZENLE</button></div>
+   <div class="hub-extras">
+     <details class="hub-stats-group"><summary>İstatistik ayrıntıları ve düzenleme</summary><div class="hub-actions"></div><div class="hub-season-detail"></div></details>
+     <details class="hub-invite-group"><summary>Davet ve Hesap</summary><div class="hub-actions"></div></details>
+     <details class="hub-discipline-group"><summary>İzin ve Disiplin</summary><div class="hub-actions"></div></details>
+   </div>`;
    const actions=box.querySelector('.hub-actions');for(const [key,label,area] of [['match','İstatistik ve Puanı Düzenle','statistics'],['penalties','Ceza / Uyarı Ekle','penalties'],['discipline','Disiplin Sevki','penalties'],['leave','İzin Ver','leaves'],['messages','Mesaj Gönder','messages']]){if(!(allowed(area)||(key==='match'&&allowed('matches'))))continue;const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.hubAction=key;b.onclick=()=>{d.close();api.action?.(key,id,p.full_name);};const group=key==='match'?'.hub-stats-group':['penalties','discipline','leave'].includes(key)?'.hub-discipline-group':null;(group?box.querySelector(group+' .hub-actions'):actions).appendChild(b);}
    const invite=box.querySelector('.hub-invite-group'),discipline=box.querySelector('.hub-discipline-group');
    invite.hidden=!api.owner();
    if(api.owner())api.mountInvite?.(invite.querySelector('.hub-actions'),id);
    discipline.hidden=!allowed('leaves')&&!allowed('penalties');
    box.querySelector('.hub-edit').onclick=()=>{d.close();api.edit(id);};
-   let stats=[];if(allowed('statistics')){const q=await db.from('player_season_stats').select('season,matches,goals,assists,goals_conceded,man_of_match,points,attendance_matches,attendance_goals,attendance_points').eq('player_id',id);if(q.error)throw q.error;stats=q.data||[];}
-   const season=box.querySelector('.hub-season'),seasons=[...new Set([api.season(),...stats.map(s=>s.season)])].sort().reverse();season.innerHTML=seasons.map(s=>'<option>'+esc(s)+'</option>').join('');season.value=api.season();
-   function drawStats(){const area=box.querySelector('.hub-season-data');if(!allowed('statistics')){area.textContent='İstatistik alanı için yetkin yok.';return;}const s=stats.find(s=>s.season===season.value);area.innerHTML=s?fields([['MAÇ',s.matches],['TOPLAM MAÇ PUANI',s.points],['ATTIĞI GOL',s.goals],['ASİST',s.assists],['YEDİĞİ GOL',s.goals_conceded],['MAÇIN ADAMI',s.man_of_match],['ANTRENMAN',s.attendance_matches],['ANTRENMAN GOLÜ',s.attendance_goals],['ANTRENMAN PUANI',s.attendance_points]]):'<p>Bu sezonda istatistik kaydı yok.</p>';}
-   season.onchange=drawStats;drawStats();
+   const overview=box.querySelector('.hub-season-overview');
+   const detail=box.querySelector('.hub-season-detail');
+   overview.hidden=!allowed('statistics');
+   detail.closest('details').hidden=!allowed('statistics')&&!allowed('matches');
+   if(allowed('statistics')){
+     const season=overview.querySelector('select');
+     const totals=overview.querySelector('.hub-season-data');
+     const history=overview.querySelector('.hub-season-matches');
+     season.disabled=true;
+     totals.textContent='Sezon istatistikleri yükleniyor…';
+     try{
+       const q=await db.from('player_season_stats')
+         .select('season,matches,goals,assists,goals_conceded,man_of_match,points,attendance_matches,attendance_goals,attendance_points')
+         .eq('player_id',id);
+       if(q.error)throw q.error;
+       const bySeason=new Map((q.data||[]).map(row=>[row.season,row]));
+       const current=api.season();
+       const seasons=[...new Set([current,...bySeason.keys()])].filter(Boolean).sort().reverse();
+       season.replaceChildren(...seasons.map(value=>new Option(value+(value===current?' · Güncel sezon':''),value)));
+       season.value=current;
+       season.disabled=false;
+       let request=0;
+       async function drawSeason(){
+         const version=++request,selected=season.value;
+         const row=bySeason.get(selected);
+         totals.innerHTML=row?fields([['Maç',row.matches],['Gol',row.goals],['Asist',row.assists],['Puan',row.points]]):'<p>Bu sezonda istatistik kaydı yok.</p>';
+         detail.innerHTML=row?fields([['Yediği gol',row.goals_conceded],['Maçın adamı',row.man_of_match],['Antrenman',row.attendance_matches],['Antrenman golü',row.attendance_goals],['Antrenman puanı',row.attendance_points]]):'';
+         history.textContent='Maç geçmişi yükleniyor…';
+         try{
+           const cards=await db.from('club_match_entries')
+             .select('match_date,opponent,our_score,opponent_score,player_entries')
+             .eq('season',selected).is('cancelled_at',null)
+             .order('match_date',{ascending:false});
+           if(cards.error)throw cards.error;
+           if(version!==request||!d.open||!allowed('statistics'))return;
+           const matches=cards.data.filter(match=>Array.isArray(match.player_entries)&&match.player_entries.some(entry=>entry.player_id===id&&entry.played!==false));
+           history.innerHTML=matches.length?matches.map(match=>`<article class="hub-season-match">
+             <div><strong>${esc(match.opponent)}</strong><small>${esc(formatClubDate(match.match_date))} · Oynadı</small></div>
+             <strong>${esc(match.our_score)}–${esc(match.opponent_score)}</strong>
+           </article>`).join(''):'<p>Bu sezonda oyuncuya ait maç kartı yok.</p>';
+         }catch(error){
+           if(version===request&&d.open)history.textContent='Maç geçmişi yüklenemedi.';
+         }
+       }
+       season.onchange=drawSeason;
+       void drawSeason();
+     }catch(error){
+       totals.textContent='Sezon istatistikleri yüklenemedi.';
+     }
+   }
    const extra=box.querySelector('.hub-extras');
    async function section(title,area,load,render){if(!allowed(area))return;const part=document.createElement('details');part.innerHTML='<summary>'+esc(title)+'</summary><div>Yükleniyor…</div>';((area==='leaves'||area==='penalties')?discipline:extra).appendChild(part);part.ontoggle=async()=>{if(!part.open||part.dataset.loaded)return;part.dataset.loaded='1';try{if(!allowed(area))throw Error('Bu alanın yetkisi kapalı.');const data=await load();if(!d.isConnected||!allowed(area))return;part.querySelector('div').innerHTML=render(data)||'<p>Kayıt yok.</p>';}catch(e){part.dataset.loaded='';part.querySelector('div').textContent='Açılamadı: '+e.message;}};}
    await section('GELİŞİM / YÖNETİM RAPORLARI','reports',async()=>{const q=await db.from('player_report_history').select('body,created_at,author_name').eq('player_id',id).is('deleted_at',null).order('created_at',{ascending:false}).limit(100);if(q.error)throw q.error;return q.data;},rows=>'<p>GELİŞİM HEDEFİ: '+esc(p.development_goal)+'</p>'+rows.map(x=>'<article><small>'+esc(date(x.created_at))+' · '+esc(x.author_name)+'</small><p>'+esc(x.body)+'</p></article>').join(''));
