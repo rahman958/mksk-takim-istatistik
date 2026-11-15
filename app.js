@@ -737,12 +737,55 @@ var seasonOverviewPlayerPage=setPlayerPage;setPlayerPage=function(p){seasonOverv
 var seasonOverviewShow=show;show=function(id){if(id==='login-view')seasonOverviewInstance?.clear();return seasonOverviewShow(id);};
 var seasonOverviewAllowed=staffPageAllowed;staffPageAllowed=function(page){return page==='stat_overview'?!!staffState:seasonOverviewAllowed(page);};
 
+async function downloadFreeJerseyCard(numbers,date){
+ const logo=await loadClubLogo();
+ const canvas=document.createElement('canvas');
+ const columns=9, tileWidth=104, tileHeight=72, gap=8, left=40, top=232;
+ canvas.width=1080;
+ canvas.height=top+Math.ceil(numbers.length/columns)*(tileHeight+gap)+32;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#10294b';
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(logo,40,36,120,120);
+ ctx.fillStyle='#c5ddf8';
+ ctx.font='bold 26px Arial';
+ ctx.fillText('MKSK 2008',184,76);
+ ctx.fillStyle='#fff';
+ ctx.font='bold 47px Arial';
+ ctx.fillText('BOŞ FORMA NUMARALARI',184,134);
+ ctx.fillStyle='#d9e9ff';
+ ctx.font='28px Arial';
+ ctx.fillText(clubDate(date)+'  ·  '+numbers.length+' boş numara',left,194);
+ ctx.textAlign='center';
+ ctx.textBaseline='middle';
+ ctx.font='bold 34px Arial';
+ numbers.forEach((number,index)=>{
+   const x=left+(index%columns)*(tileWidth+gap);
+   const y=top+Math.floor(index/columns)*(tileHeight+gap);
+   ctx.fillStyle='#e1edfc';
+   ctx.fillRect(x,y,tileWidth,tileHeight);
+   ctx.fillStyle='#10294b';
+   ctx.fillText(String(number),x+tileWidth/2,y+tileHeight/2);
+ });
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+ if(!blob)throw new Error('Görsel oluşturulamadı.');
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');
+ link.href=url;
+ link.download='mksk-bos-forma-numaralari-'+date+'.png';
+ document.body.append(link);
+ link.click();
+ link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+
 async function openFreeJerseysReadOnly(){
  if(!staffCan('roster')&&!staffCan('free_jerseys'))return;
  const dialog=document.createElement('dialog');
  dialog.className='player-hub-dialog jersey-share-dialog';
  dialog.setAttribute('aria-labelledby','jersey-share-title');
  dialog.innerHTML=`<header class="jersey-share-toolbar">
+   <button type="button" class="jersey-share-download" disabled>Görseli indir</button>
    <form method="dialog"><button>Kapat</button></form>
  </header>
  <article class="jersey-share-card">
@@ -752,7 +795,7 @@ async function openFreeJerseysReadOnly(){
    </div>
    <p class="jersey-share-meta"><time></time><span role="status">Numaralar yükleniyor…</span></p>
    <ul class="jersey-share-grid" aria-label="Müsait forma numaraları" hidden></ul>
- </article>`;
+ </article><p class="jersey-share-feedback" role="status" hidden></p>`;
  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
  document.body.append(dialog);
  dialog.showModal();
@@ -780,6 +823,16 @@ async function openFreeJerseysReadOnly(){
      grid.append(item);
    }
    grid.hidden=!numbers.length;
+   const download=dialog.querySelector('.jersey-share-download');
+   const feedback=dialog.querySelector('.jersey-share-feedback');
+   download.disabled=!numbers.length;
+   download.onclick=async()=>{
+     download.disabled=true;
+     feedback.hidden=true;
+     try{await downloadFreeJerseyCard(numbers,date.dateTime);}
+     catch(error){feedback.textContent='Görsel indirilemedi. Tekrar dene.';feedback.hidden=false;}
+     finally{download.disabled=false;}
+   };
  }catch(error){
    status.textContent='Numaralar yüklenemedi. Kapatıp tekrar aç.';
  }
