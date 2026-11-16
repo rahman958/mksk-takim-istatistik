@@ -191,6 +191,7 @@ export function openTactics(lineup,findPlayer){
     <div class="tactics-row"><label>Adım<select data-field="step"></select></label><button type="button" data-action="add">Adım ekle</button><button type="button" data-action="remove">Adımı sil</button></div>
     <label>Adım açıklaması<input data-field="title" maxlength="80" placeholder="Örn. Arka direğe koşu"></label>
     <label>Sahada yapılacak işlem<select data-field="mode"><option value="run">Koşu oku çiz</option><option value="press">Pres oku çiz</option><option value="pass">Pas oku çiz</option><option value="shot">Şut oku çiz</option><option value="dribble">Top sürme oku çiz</option><option value="ball">Topu yerleştir</option><option value="opponent">Rakip oyuncu ekle</option><option value="zone">Alan işaretle</option><option value="move">Oyuncuyu taşı</option><option value="note">Oyuncu görevini aç</option></select></label>
+    <div class="tactics-row"><button type="button" data-action="play">▶ Taktiği Oynat</button></div>
     <p class="tactics-hint"></p><p data-step-guide></p><canvas width="600" height="690" role="img" aria-label="Forma numaraları ve taktik okları"></canvas>
     <div class="tactics-row"><button type="button" data-action="undo">Geri al</button><button type="button" data-action="clear">Çizimleri temizle</button><button type="button" data-action="share">Görseli paylaş</button><button type="button" data-action="download">PNG indir</button></div>
     <details class="tactics-notes"><summary>Oyuncu görevleri</summary><label>Oyuncu<select data-field="player"></select></label><label>Görev notu<textarea data-field="note" maxlength="120" rows="2"></textarea></label></details>
@@ -212,7 +213,8 @@ export function openTactics(lineup,findPlayer){
   const status=text=>{q('.tactics-status').textContent=text;};
   const checkpoint=()=>{undo.push({plan:copy(plan),phase,step});if(undo.length>40)undo.shift();action('undo').disabled=false;};
   const playerLabel=i=>slots[i].player?.full_name||slots[i].role;
-  function draw(){
+  function draw(ctxOverride=ctx, item=frame(), players=positions(), cursor=start){
+    const ctx=ctxOverride;
     ctx.fillStyle='#15375b';ctx.fillRect(0,0,600,690);
     ctx.fillStyle='#193e65';
     for(let i=0;i<6;i+=2)ctx.fillRect(30,30+i*105,540,105);
@@ -222,7 +224,7 @@ export function openTactics(lineup,findPlayer){
     ctx.beginPath();ctx.arc(300,345,61,0,Math.PI*2);ctx.stroke();
     for(const y of [30,562])ctx.strokeRect(173,y,254,98);
     for(const y of [30,618])ctx.strokeRect(234,y,132,42);
-    for(const {at,type,to} of frame().markers){
+    for(const {at,type,to} of item.markers){
       const a=point(at);
       if(type==='zone'){
         const b=point(to);
@@ -234,7 +236,7 @@ export function openTactics(lineup,findPlayer){
         ctx.beginPath();ctx.arc(a.x,a.y,type==='ball'?8:15,0,Math.PI*2);ctx.fill();ctx.stroke();
       }
     }
-    for(const {from,to,type} of frame().arrows){
+    for(const {from,to,type} of item.arrows){
       const a=point(from),b=point(to),angle=Math.atan2(b.y-a.y,b.x-a.x);
       ctx.strokeStyle=colors[type];ctx.lineWidth=5;ctx.setLineDash(type==='press'?[12,8]:type==='dribble'?[4,6]:[]);
       ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([]);
@@ -242,7 +244,7 @@ export function openTactics(lineup,findPlayer){
       ctx.lineTo(b.x-20*Math.cos(angle-.45),b.y-20*Math.sin(angle-.45));
       ctx.lineTo(b.x-20*Math.cos(angle+.45),b.y-20*Math.sin(angle+.45));ctx.closePath();ctx.fill();
     }
-    positions().forEach((pos,i)=>{
+    players.forEach((pos,i)=>{
       const {x,y}=point(pos),slot=slots[i];
       ctx.fillStyle=plan.notes[i]?'#b3e8fc':'#e6effc';ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fill();
       ctx.textAlign='center';ctx.fillStyle='#10294b';ctx.font='bold 18px Arial';
@@ -250,8 +252,8 @@ export function openTactics(lineup,findPlayer){
       ctx.fillStyle='#fff';ctx.font='bold 13px Arial';
       ctx.fillText(shrink(ctx,playerLabel(i),100),x,y+37);
     });
-    if(start?.point){
-      const a=point(start.point);ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(a.x,a.y,7,0,Math.PI*2);ctx.stroke();
+    if(cursor?.point){
+      const a=point(cursor.point);ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(a.x,a.y,7,0,Math.PI*2);ctx.stroke();
     }
   }
   function update(){
@@ -407,6 +409,100 @@ export function openTactics(lineup,findPlayer){
     }catch(error){if(error.name!=='AbortError')status('Görsel paylaşılamadı. PNG indir seçeneğini dene.');}
     finally{button.disabled=false;}
   }
+  action('play').onclick=()=>{
+    const sequence=current().steps;
+    const basePositions=current().positions;
+    const preview=document.createElement('dialog');
+    preview.className='player-hub-dialog mksk-tactics mksk-tactics-player';
+    preview.setAttribute('aria-labelledby','tactics-player-title');
+    preview.innerHTML=`<header><div><small>MKSK 2008</small><h2 id="tactics-player-title">Taktiği Oynat</h2><p data-playing-plan></p></div>
+      <form method="dialog"><button>Kapat</button></form></header>
+      <canvas width="600" height="690" role="img" aria-label="Oynatılan taktiğin saha çizimi"></canvas>
+      <div class="tactics-player-step" aria-live="polite"><small data-playing-count></small><strong data-playing-title></strong><p data-playing-note></p></div>
+      <div class="tactics-row"><button type="button" data-previous>Önceki</button><button type="button" data-toggle>▶ Oynat</button><button type="button" data-next>Sonraki</button></div>`;
+    const el=selector=>preview.querySelector(selector);
+    const view=el('canvas').getContext('2d');
+    const previous=el('[data-previous]'), toggle=el('[data-toggle]'), next=el('[data-next]');
+    const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lerp=(from,to,t)=>({x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t});
+    const arrowMs=720;
+    let selected=0, elapsed=0, lastTick=null, animation=null, playing=false, ended=false;
+    el('[data-playing-plan]').textContent=(field('name').value.trim()||'Maç planı')+' · '+phases[phase];
+
+    function duration(){
+      return Math.max(1800,sequence[selected].arrows.length*arrowMs+420);
+    }
+    function paint(){
+      const item=sequence[selected];
+      const layout=copy(item.positions||basePositions);
+      const markers=item.markers.filter(marker=>marker.type!=='ball');
+      let ball=item.markers.find(marker=>marker.type==='ball');
+      const arrows=[];
+      item.arrows.forEach((arrow,i)=>{
+        const progress=Math.max(0,Math.min(1,(elapsed-i*arrowMs)/arrowMs));
+        if(progress===0)return;
+        const at=lerp(arrow.from,arrow.to,progress);
+        arrows.push({...arrow,to:at});
+        if(arrow.type==='pass'||arrow.type==='shot'||arrow.type==='dribble'){
+          ball={type:'ball',at};
+        }
+        if(arrow.type==='run'||arrow.type==='press'||arrow.type==='dribble'){
+          const runner=layout.findIndex(pos=>Math.hypot(pos.x-arrow.from.x,pos.y-arrow.from.y)<=5);
+          if(runner!==-1)layout[runner]=lerp(layout[runner],arrow.to,progress);
+        }
+      });
+      draw(view,{...item,markers,arrows:elapsed===0||reducedMotion?item.arrows:arrows},layout,null);
+      if(ball){
+        const at=point(ball.at);
+        view.fillStyle='#fff';view.strokeStyle='#143759';view.lineWidth=2;
+        view.beginPath();view.arc(at.x,at.y,8,0,Math.PI*2);view.fill();view.stroke();
+      }
+    }
+    function controls(){
+      previous.disabled=selected===0;
+      next.disabled=selected===sequence.length-1;
+      toggle.textContent=playing?'Duraklat':ended?'↻ Tekrar oynat':'▶ Oynat';
+    }
+    function showStep(){
+      const item=sequence[selected];
+      el('[data-playing-count]').textContent='Adım '+(selected+1)+' / '+sequence.length;
+      el('[data-playing-title]').textContent=item.title||'Adım '+(selected+1);
+      el('[data-playing-note]').textContent=item.note||current().note||'';
+      controls();paint();
+    }
+    function pause(){
+      playing=false;lastTick=null;
+      if(animation!==null)cancelAnimationFrame(animation);
+      animation=null;controls();
+    }
+    function tick(now){
+      if(!playing||!preview.open)return;
+      if(lastTick!==null)elapsed+=now-lastTick;
+      lastTick=now;
+      const total=duration();
+      if(elapsed>=total){
+        if(selected===sequence.length-1){
+          elapsed=total;ended=true;pause();paint();return;
+        }
+        elapsed=0;selected++;showStep();
+      }else if(!reducedMotion){
+        paint();
+      }
+      animation=requestAnimationFrame(tick);
+    }
+    function jump(offset){
+      pause();selected+=offset;elapsed=0;ended=false;showStep();
+    }
+    previous.onclick=()=>jump(-1);
+    next.onclick=()=>jump(1);
+    toggle.onclick=()=>{
+      if(playing){pause();return;}
+      if(ended){selected=0;elapsed=0;ended=false;showStep();}
+      playing=true;controls();animation=requestAnimationFrame(tick);
+    };
+    preview.addEventListener('close',()=>{pause();preview.remove();},{once:true});
+    document.body.append(preview);preview.showModal();showStep();
+  };
   action('share').onclick=()=>exportBoard(true);
   action('download').onclick=()=>exportBoard(false);
   dlg.addEventListener('close',()=>dlg.remove(),{once:true});
