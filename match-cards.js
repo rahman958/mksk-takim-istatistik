@@ -23,15 +23,14 @@ async function loadData(){
   const [players,cards,record]=await Promise.all([
     db().from('players').select('id,full_name,jersey_number,position').is('archived_at',null).eq('access_disabled',false).is('team_left_on',null).order('full_name'),
     db().from('club_match_entries').select('id,match_date,match_time,opponent,our_score,opponent_score,player_entries,count_team_match,created_at').eq('season',season()).is('cancelled_at',null).order('match_date',{ascending:false}).order('created_at',{ascending:false}),
-    db().from('club_season_summary').select('matches,historical_wins,historical_draws,historical_losses,wins_adjustment,draws_adjustment,losses_adjustment').eq('season',season()).maybeSingle()
+    db().rpc('club_dashboard_totals',{p_season:season()})
   ]);
   if(players.error) throw players.error;
   if(cards.error) throw cards.error;
   people=players.data||[];
-  if(!record.error && record.data){
-    const x=record.data;
-    teamRecord={matches:Number(x.matches||0),wins:Number(x.historical_wins||0)+Number(x.wins_adjustment||0),draws:Number(x.historical_draws||0)+Number(x.draws_adjustment||0),losses:Number(x.historical_losses||0)+Number(x.losses_adjustment||0)};
-  } else { teamRecord={matches:0,wins:0,draws:0,losses:0}; }
+  if(record.error) throw record.error;
+  const {matches,wins,draws,losses}=record.data;
+  teamRecord={matches,wins,draws,losses};
   return cards.data||[];
 }
 function playerCard(p){
