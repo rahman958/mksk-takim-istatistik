@@ -2,7 +2,7 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261114-date-format-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage } from './roster-export.js?v=20261113-roster-final-1';
-import { initPlayerHub } from './player-hub.js?v=20261116-match-performance-1';
+import { initPlayerHub } from './player-hub.js?v=20261116-dossier-form-1';
 import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
 import { matchCards } from './match-cards.js?v=20261116-season-record-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
