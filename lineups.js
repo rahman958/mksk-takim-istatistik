@@ -1,3 +1,4 @@
+import {openTactics} from './tactic-board.js?v=20261116-tactics-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {chooseLineupPlayer,wireLineupInteraction} from './lineup-interaction.js?v=20261026-lineup-touch-1';
 // Reuse the application's authenticated client; do not create a second session.
@@ -35,7 +36,11 @@ function form(){panel.innerHTML='<div class="lineup-screen-heading"><span>MAÇ K
  const preview=panel.querySelector('.lineup-preview');panel.querySelector('.lineup-written').before(preview);slots();publicationControls();tidyLineupScreen();panel.querySelector('.saved-lineups').onchange=e=>{if(!e.target.value)return;if(dirty&&!confirm('KAYDEDİLMEMİŞ DEĞİŞİKLİKLER BIRAKILSIN MI?')){e.target.value=draft.id||'';return;}draft=structuredClone(saved.find(s=>s.id===e.target.value));dirty=false;form();};
  panel.querySelector('.lineup-editor').oninput=e=>{const n=e.target.name;if(['title','match_date','match_time','venue','opponent'].includes(n)){draft[n]=e.target.value;dirty=true;draw();}};
  panel.querySelector('[name=size]').onchange=e=>{const size=Number(e.target.value);if(/^\d+ KİŞİLİK KADRO$/.test(upper(draft.title).trim())){draft.title=size+' KİŞİLİK KADRO';panel.querySelector('[name=title]').value=draft.title;}const old=draft.positions;draft.positions=layouts[size].map(([role,x,y],i)=>({role,x,y,player_id:old[i]?.player_id||''}));old.slice(size).forEach(p=>{if(p.player_id&&!draft.bench.includes(p.player_id))draft.bench.push(p.player_id);});draft.size=size;dirty=true;slots();};
- panel.querySelector('form').onsubmit=save;panel.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action));const canvas=$('#lineup-canvas');lineupPointerController?.cancel();lineupPointerController=wireLineupInteraction(canvas,{draft:()=>draft,roster:()=>roster,pick:openLineupPicker,changed:()=>{dirty=true;slots();}});draw();}
+ panel.querySelector('form').onsubmit=save;panel.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action));const canvas=$('#lineup-canvas');
+ const tactics=document.createElement('button');
+ tactics.type='button';tactics.className='lineup-tactics-launch';tactics.textContent='TAKTİK TAHTASI';
+ tactics.onclick=()=>openTactics(draft,who);canvas.before(tactics);
+ lineupPointerController?.cancel();lineupPointerController=wireLineupInteraction(canvas,{draft:()=>draft,roster:()=>roster,pick:openLineupPicker,changed:()=>{dirty=true;slots();}});draw();}
 function openLineupPlayer(id){if(roster.some(p=>p.id===id))window.dispatchEvent(new CustomEvent('mksk-open-lineup-player',{detail:{id}}));}
 function openLineupPicker(source){
  const snapshot=draft,current=source.kind==='field'?draft.positions[source.index]?.player_id:draft.bench[source.index];
