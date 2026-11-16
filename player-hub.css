@@ -26,3 +26,13 @@
 .hub-profile-details{margin:18px 0 12px}
 .hub-profile-details summary{cursor:pointer;font-weight:700}
 html[data-theme=dark] .hub-season-data .hub-fields>div{background:#22334e}
+
+.hub-season-chart{display:flex;gap:6px;padding:7px;background:#edf4fc;border-radius:10px;color:#10294b}
+.hub-chart-scale{display:flex;flex-direction:column;justify-content:space-between;height:84px;font-size:10px;padding:5px 0 0}
+.hub-chart-bars{display:flex;gap:4px;flex:1;min-width:0}
+.hub-season-chart .hub-chart-bars button{flex:1;min-width:0;padding:4px 2px;background:#fff!important;color:#10294b!important;-webkit-text-fill-color:#10294b!important;border:1px solid #c1d2e8;display:grid;gap:2px;text-align:center}
+.hub-chart-track{display:flex;height:84px;align-items:end;justify-content:center;background:linear-gradient(to top,#c1d2e8 1px,transparent 1px) 0 0 / 100% 50%}
+.hub-chart-bar{display:block;min-height:2px;width:55%;max-width:30px;background:#315f8b;border-radius:4px 4px 0 0}
+.hub-chart-value{font-size:15px;font-weight:800}
+.hub-chart-date{font-size:10px}
+.hub-season-match:focus{outline:2px solid #4f80bd;outline-offset:2px}
