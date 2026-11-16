@@ -1,4 +1,4 @@
-import {openTactics} from './tactic-board.js?v=20261116-tactics-1';
+import {openTactics} from './tactic-board.js?v=20261116-tactics-2';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {chooseLineupPlayer,wireLineupInteraction} from './lineup-interaction.js?v=20261026-lineup-touch-1';
 // Reuse the application's authenticated client; do not create a second session.
