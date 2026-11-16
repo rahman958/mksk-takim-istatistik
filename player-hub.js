@@ -23,6 +23,7 @@ export function initPlayerHub(api){
    <section class="hub-season-overview">
      <label>Sezon<select class="hub-season"></select></label>
      <h3>Sezon özeti</h3><div class="hub-season-data" aria-live="polite"></div>
+     <h3>Son 5 maçın puanı</h3><div class="hub-season-chart" aria-live="polite"></div>
      <h3>Maç geçmişi</h3><div class="hub-season-matches" aria-live="polite"></div>
    </section>
    <details class="hub-profile-details"><summary>Oyuncu bilgileri</summary>
@@ -47,6 +48,7 @@ export function initPlayerHub(api){
    if(allowed('statistics')){
      const season=overview.querySelector('select');
      const totals=overview.querySelector('.hub-season-data');
+     const chart=overview.querySelector('.hub-season-chart');
      const history=overview.querySelector('.hub-season-matches');
      season.disabled=true;
      totals.textContent='Sezon istatistikleri yükleniyor…';
@@ -67,6 +69,7 @@ export function initPlayerHub(api){
          const row=bySeason.get(selected);
          totals.innerHTML=row?fields([['Maç',row.matches],['Gol',row.goals],['Asist',row.assists],['Puan',row.points]]):'<p>Bu sezonda istatistik kaydı yok.</p>';
          detail.innerHTML=row?fields([['Yediği gol',row.goals_conceded],['Maçın adamı',row.man_of_match],['Antrenman',row.attendance_matches],['Antrenman golü',row.attendance_goals],['Antrenman puanı',row.attendance_points]]):'';
+         chart.textContent='Puan grafiği yükleniyor…';
          history.textContent='Maç geçmişi yükleniyor…';
          try{
            const cards=await db.from('club_match_entries')
@@ -80,7 +83,7 @@ export function initPlayerHub(api){
              const entry=Array.isArray(match.player_entries)&&match.player_entries.find(item=>item?.player_id===id&&item.played!==false);
              if(entry)matches.push({match,entry});
            }
-           history.innerHTML=matches.length?matches.map(({match,entry})=>`<article class="hub-season-match">
+           history.innerHTML=matches.length?matches.map(({match,entry})=>`<article class="hub-season-match" tabindex="-1">
              <div class="hub-season-match-head">
                <div><strong>${esc(match.opponent)}</strong><small>${esc(formatClubDate(match.match_date))} · Oynadı</small></div>
                <strong class="hub-season-match-score" aria-label="Takım skoru ${esc(match.our_score)}–${esc(match.opponent_score)}">${esc(match.our_score)}–${esc(match.opponent_score)}</strong>
@@ -91,14 +94,40 @@ export function initPlayerHub(api){
                <div><dt>Puan</dt><dd>${entry.points==null||entry.points===''?'—':esc(entry.points)+' / 10'}</dd></div>
              </dl>
            </article>`).join(''):'<p>Bu sezonda oyuncuya ait maç kartı yok.</p>';
+           if(matches.length){
+             const recent=matches.slice(0,5).reverse();
+             chart.innerHTML='<div class="hub-chart-scale" aria-hidden="true"><span>10</span><span>5</span><span>0</span></div><div class="hub-chart-bars">'+recent.map(({match,entry},index)=>{
+               const score=entry.points==null||entry.points===''?NaN:Number(entry.points);
+               const rated=Number.isFinite(score)&&score>=0&&score<=10;
+               const date=formatClubDate(match.match_date);
+               const detail=rated?score.toLocaleString('tr-TR')+' / 10':'Puan girilmedi';
+               return `<button type="button" data-match-index="${recent.length-1-index}" aria-label="${esc(match.opponent)} · ${esc(date)} · ${esc(detail)}">
+                 <span class="hub-chart-track" aria-hidden="true">${rated?`<span class="hub-chart-bar" style="height:${score*10}%"></span>`:''}</span>
+                 <span class="hub-chart-value">${rated?esc(score.toLocaleString('tr-TR')):'—'}</span>
+                 <span class="hub-chart-date">${esc(date.slice(0,5))}</span>
+               </button>`;
+             }).join('')+'</div>';
+             const cards=history.querySelectorAll('.hub-season-match');
+             chart.querySelectorAll('button').forEach(button=>button.onclick=()=>{
+               const card=cards[Number(button.dataset.matchIndex)];
+               card.focus({preventScroll:true});
+               card.scrollIntoView({block:'center'});
+             });
+           }else{
+             chart.textContent='Bu sezonda grafik için maç kaydı yok.';
+           }
          }catch(error){
-           if(version===request&&d.open)history.textContent='Maç geçmişi yüklenemedi.';
+           if(version===request&&d.open){
+             chart.textContent='Puan grafiği yüklenemedi.';
+             history.textContent='Maç geçmişi yüklenemedi.';
+           }
          }
        }
        season.onchange=drawSeason;
        void drawSeason();
      }catch(error){
        totals.textContent='Sezon istatistikleri yüklenemedi.';
+       chart.textContent='Puan grafiği yüklenemedi.';
      }
    }
    const extra=box.querySelector('.hub-extras');
