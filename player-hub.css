@@ -12,9 +12,17 @@
 .hub-season-data .hub-fields>div{padding:8px 4px;background:#e1edfc;text-align:center;margin:0}
 .hub-season-data .hub-fields small{font-size:12px}
 .hub-season-data .hub-fields strong{font-size:clamp(17px,5vw,25px);margin-top:4px}
-.hub-season-match{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;margin:6px 0;background:rgba(122,163,213,.14);border-radius:10px}
+.hub-season-match{padding:12px;margin:6px 0;background:rgba(122,163,213,.14);border-radius:10px}
 .hub-season-match small{margin-top:3px}
-.hub-season-match>strong{white-space:nowrap}
+.hub-season-match-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.hub-season-match-head>div{min-width:0;overflow-wrap:anywhere}
+.hub-season-match .hub-season-match-score{white-space:nowrap;background:#10294b;color:#fff;padding:6px 9px;border-radius:7px}
+.hub-match-performance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:9px 0 0;color:#10294b}
+.hub-match-performance>div{background:#def2e7;border-radius:7px;padding:6px 8px}
+.hub-match-performance>div:nth-child(2){background:#dcebf9}
+.hub-match-performance>div:nth-child(3){background:#eee5f9}
+.hub-match-performance dt{font-size:11px;font-weight:700}
+.hub-match-performance dd{font-size:15px;font-weight:800;margin:2px 0 0;white-space:nowrap}
 .hub-profile-details{margin:18px 0 12px}
 .hub-profile-details summary{cursor:pointer;font-weight:700}
 html[data-theme=dark] .hub-season-data .hub-fields>div{background:#22334e}
