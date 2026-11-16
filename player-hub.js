@@ -75,10 +75,21 @@ export function initPlayerHub(api){
              .order('match_date',{ascending:false});
            if(cards.error)throw cards.error;
            if(version!==request||!d.open||!allowed('statistics'))return;
-           const matches=cards.data.filter(match=>Array.isArray(match.player_entries)&&match.player_entries.some(entry=>entry.player_id===id&&entry.played!==false));
-           history.innerHTML=matches.length?matches.map(match=>`<article class="hub-season-match">
-             <div><strong>${esc(match.opponent)}</strong><small>${esc(formatClubDate(match.match_date))} · Oynadı</small></div>
-             <strong>${esc(match.our_score)}–${esc(match.opponent_score)}</strong>
+           const matches=[];
+           for(const match of cards.data||[]){
+             const entry=Array.isArray(match.player_entries)&&match.player_entries.find(item=>item?.player_id===id&&item.played!==false);
+             if(entry)matches.push({match,entry});
+           }
+           history.innerHTML=matches.length?matches.map(({match,entry})=>`<article class="hub-season-match">
+             <div class="hub-season-match-head">
+               <div><strong>${esc(match.opponent)}</strong><small>${esc(formatClubDate(match.match_date))} · Oynadı</small></div>
+               <strong class="hub-season-match-score" aria-label="Takım skoru ${esc(match.our_score)}–${esc(match.opponent_score)}">${esc(match.our_score)}–${esc(match.opponent_score)}</strong>
+             </div>
+             <dl class="hub-match-performance">
+               <div><dt>Gol</dt><dd>${esc(entry.goals)}</dd></div>
+               <div><dt>Asist</dt><dd>${esc(entry.assists)}</dd></div>
+               <div><dt>Puan</dt><dd>${entry.points==null||entry.points===''?'—':esc(entry.points)+' / 10'}</dd></div>
+             </dl>
            </article>`).join(''):'<p>Bu sezonda oyuncuya ait maç kartı yok.</p>';
          }catch(error){
            if(version===request&&d.open)history.textContent='Maç geçmişi yüklenemedi.';
