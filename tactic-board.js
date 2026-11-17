@@ -1,3 +1,4 @@
+import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 const storageKey='mksk-tactic-templates-v1';
 const phases=['Top bizde','Top rakipte','Hücuma geçiş','Savunmaya geçiş','Duran toplarımız','Rakibin duran topları','Maç içi senaryolar'];
 const presets=[
@@ -164,7 +165,7 @@ function shrink(ctx,value,width){
   while(text.length>1&&ctx.measureText(text).width>width)text=text.slice(0,-2)+'…';
   return text;
 }
-export function openTactics(lineup,findPlayer){
+export function openTactics(lineup,findPlayer,onDutyChange){
   if(document.querySelector('.mksk-tactics[open]'))return;
   const slots=lineup.positions.map(slot=>({...slot,player:findPlayer(slot.player_id)}));
   const initial=()=>slots.map(({x,y})=>({x,y}));
@@ -194,7 +195,7 @@ export function openTactics(lineup,findPlayer){
     <div class="tactics-row"><button type="button" data-action="play">▶ Taktiği Oynat</button></div>
     <p class="tactics-hint"></p><p data-step-guide></p><canvas width="600" height="690" role="img" aria-label="Forma numaraları ve taktik okları"></canvas>
     <div class="tactics-row"><button type="button" data-action="undo">Geri al</button><button type="button" data-action="clear">Çizimleri temizle</button><button type="button" data-action="share">Görseli paylaş</button><button type="button" data-action="download">PNG indir</button></div>
-    <details class="tactics-notes"><summary>Oyuncu görevleri</summary><label>Oyuncu<select data-field="player"></select></label><label>Görev notu<textarea data-field="note" maxlength="120" rows="2"></textarea></label></details>
+    <details class="tactics-notes"><summary>Oyuncu görevleri</summary><label>Oyuncu<select data-field="player"></select></label><label>Görev notu<textarea data-field="note" maxlength="120" rows="2"></textarea></label><label>Bu adımdaki hareket<select data-field="duty-arrow"></select></label><button type="button" data-action="assign">Oyuncunun kadro görevine ekle</button><button type="button" data-action="detach">Bu bölümün hareketini kaldır</button><p data-duty-status role="status"></p></details>
     <details><summary>Taktik şablonları</summary><label>Şablon seç<select data-field="template"></select></label><div class="tactics-row"><button type="button" data-action="load">Uygula</button><button type="button" data-action="save">Plan adıyla kaydet</button><button type="button" data-action="delete">Şablonu sil</button></div></details>
     <p role="status" class="tactics-status"></p>`;
   const q=selector=>dlg.querySelector(selector);
@@ -269,7 +270,7 @@ export function openTactics(lineup,findPlayer){
     field('note').value=plan.notes[field('player').value]||'';
     q('[data-step-guide]').textContent=frame().note||'';
     q('[data-step-guide]').hidden=!frame().note;
-    hint();draw();
+    refreshAssignment();hint();draw();
   }
   function hint(){
     const mode=field('mode').value;
@@ -314,7 +315,7 @@ export function openTactics(lineup,findPlayer){
       }
       start=null;
     }
-    hint();draw();
+    refreshAssignment();hint();draw();
   };
   field('phase').onchange=()=>{phase=Number(field('phase').value);step=0;update();};
   field('phase-note').onchange=()=>{checkpoint();current().note=field('phase-note').value.trim();};
@@ -338,8 +339,42 @@ export function openTactics(lineup,findPlayer){
   };
   action('undo').onclick=()=>{({plan,phase,step}=undo.pop());update();};
   field('player').replaceChildren(...slots.map((_,i)=>new Option(playerLabel(i),String(i))));
-  field('player').onchange=()=>{field('note').value=plan.notes[field('player').value]||'';};
+  field('player').onchange=()=>{field('note').value=plan.notes[field('player').value]||'';refreshAssignment();};
   field('note').onchange=()=>{checkpoint();plan.notes[field('player').value]=field('note').value.trim();draw();};
+  function assignmentPlayer(){
+    return slots[Number(field('player').value)]?.player_id;
+  }
+  function refreshAssignment(){
+    const id=assignmentPlayer(), picker=field('duty-arrow');
+    picker.replaceChildren(new Option('Hareket seç',''),...frame().arrows.map((arrow,i)=>new Option((i+1)+'. '+labels[arrow.type],String(i))));
+    const assigned=readTacticDuty(lineup.player_tasks?.[id]).moves;
+    picker.disabled=!id||!frame().arrows.length;
+    action('assign').disabled=picker.disabled;
+    action('detach').disabled=!id||!assigned.some(move=>move.phase===phases[phase]);
+    q('[data-duty-status]').textContent=id?'Oyuncu, kadroyu kaydedip yayımladığında hareketi görür.':'Önce kadroya bir oyuncu yerleştir.';
+  }
+  function saveAssignment(remove){
+    const id=assignmentPlayer();
+    if(!id)return;
+    const duty=readTacticDuty(lineup.player_tasks?.[id]);
+    const moves=duty.moves.filter(move=>move.phase!==phases[phase]);
+    if(!remove){
+      const arrow=frame().arrows[field('duty-arrow').value];
+      if(!arrow){q('[data-duty-status]').textContent='Önce bir hareket seç.';return;}
+      moves.push({phase:phases[phase],title:frame().title,type:arrow.type,
+        points:[arrow.from.x,arrow.from.y,arrow.to.x,arrow.to.y].map(n=>Math.round(n*10)/10)});
+    }
+    const note=remove?duty.note:field('note').value.trim()||duty.note;
+    const value=moves.length?{kind:'mksk-tactic-v1',note,moves}:note;
+    if(JSON.stringify(value).length>2000){q('[data-duty-status]').textContent='Görev metni ve hareketler 2000 karakteri aşıyor. Notu kısalt.';return;}
+    lineup.player_tasks??={};
+    lineup.player_tasks[id]=value;
+    onDutyChange?.();
+    refreshAssignment();
+    q('[data-duty-status]').textContent='Kadro taslağı güncellendi. Oyuncuya göstermek için kaydet ve yayımla.';
+  }
+  action('assign').onclick=()=>saveAssignment(false);
+  action('detach').onclick=()=>saveAssignment(true);
   function templates(selected=''){
     const names=Object.keys(loadTemplates()).sort((a,b)=>a.localeCompare(b,'tr'));
     field('template').replaceChildren(new Option('Şablon seç',''),...names.map(name=>new Option(name,name)));
