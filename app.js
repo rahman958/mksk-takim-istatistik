@@ -1,6 +1,6 @@
 import {readTacticDuty,renderTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
-import { installPlayerNotifications } from './player-notifications.js?v=20261114-date-format-1';
+import { installPlayerNotifications } from './player-notifications.js?v=20261117-unified-bell-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage, drawPlayerListImage } from './roster-export.js?v=20261117-player-list-images-1';
 import { initPlayerHub } from './player-hub.js?v=20261116-dossier-form-1';
@@ -1923,16 +1923,29 @@ var openClubEmail;
 
 window.addEventListener('mksk-match-changed',()=>{if(activeRole==='admin')void loadAdmin().catch(console.error);});
 
+function personalNotificationPage(page){
+  return async()=>{await openOwnPlayerProfile();setPlayerPage(page);};
+}
 const refreshPlayerNotifications = installPlayerNotifications({
   db: () => supabase,
   active: () => !window.MKSK_PLAYER_PREVIEW && el('player-view')?.classList.contains('hidden') === false,
-  openMessage: () => setPlayerPage('manager_messages')
+  openMessage: () => setPlayerPage('manager_messages'),
+  destinations: {lineup:['Kadro görevimi aç',()=>setPlayerPage('my_lineup')],stats:['İstatistiklerimi aç',()=>setPlayerPage('stats')],profile:['Profilimi aç',()=>setPlayerPage('hub_profile')]}
 });
 const refreshAdminNotifications = installPlayerNotifications({
   db: () => supabase,
   active: () => !window.MKSK_PLAYER_PREVIEW && el('admin-view')?.classList.contains('hidden') === false,
   tableName: 'club_admin_notifications',
   scope: 'admin',
+  extraSources: [{
+    tableName:'club_player_notifications',label:'Oyuncu Profilim',
+    destinations:{
+      message:['Kişisel mesajlarımı aç',personalNotificationPage('manager_messages')],
+      lineup:['Kadro görevimi aç',personalNotificationPage('my_lineup')],
+      stats:['İstatistiklerimi aç',personalNotificationPage('stats')],
+      profile:['Profilimi aç',personalNotificationPage('hub_profile')]
+    }
+  }],
   destinations: {
     task: ['Görevleri aç', () => void openStaffPanel()],
     message: ['Mesajları aç', () => setDashboardPage('messages')],
