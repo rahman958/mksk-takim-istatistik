@@ -54,12 +54,13 @@ function entriesFrom(box){
 function showDetail(card,notice){
   const names=new Map(people.map(p=>[p.id,p.full_name]));
   const rows=Array.isArray(card.player_entries)?card.player_entries:[];
+  const visibleRows=rows.filter(row=>names.get(row?.player_id)?.trim());
   const d=document.createElement('dialog');d.className='mcc-detail-dialog';
-  d.innerHTML='<h3>'+esc(card.opponent)+' · '+esc(fmtDate(card.match_date))+'</h3><p class="mcc-detail">SKOR: '+esc(card.our_score)+'–'+esc(card.opponent_score)+' · '+esc(scoreText(card))+'\nSAAT: '+esc(card.match_time||'BELİRTİLMEDİ')+'\nOYUNCU SAYISI: '+rows.length+'\n\n'+(rows.length?rows.map(r=>names.get(r.player_id)||'BİLİNMEYEN OYUNCU').join('\n'):'BU KARTA HENÜZ OYUNCU İŞLENMEDİ.')+'</p><button>KAPAT</button>';
-  if(rows.length){
+  d.innerHTML='<h3>'+esc(card.opponent)+' · '+esc(fmtDate(card.match_date))+'</h3><p class="mcc-detail">SKOR: '+esc(card.our_score)+'–'+esc(card.opponent_score)+' · '+esc(scoreText(card))+'\nSAAT: '+esc(card.match_time||'BELİRTİLMEDİ')+'\nOYUNCU SAYISI: '+rows.length+'\n\n'+(visibleRows.length?visibleRows.map(r=>esc(names.get(r.player_id))).join('\n'):rows.length?'GÖSTERİLEBİLEN OYUNCU YOK.':'BU KARTA HENÜZ OYUNCU İŞLENMEDİ.')+'</p><button>KAPAT</button>';
+  if(visibleRows.length){
     const form=document.createElement('form');
     form.innerHTML='<h4>MAÇ PUANI DÜZELT</h4><p>Bu maçta oynayanların puanını 0–10 arasında güncelleyebilirsin.</p>'+
-      rows.map(r=>'<label style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0">'+esc(names.get(r.player_id)||'BİLİNMEYEN OYUNCU')+
+      visibleRows.map(r=>'<label style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0">'+esc(names.get(r.player_id))+
       '<input style="width:5em" type="number" min="0" max="10" step="1" inputmode="numeric" value="'+esc(r.points??'')+'"></label>').join('')+
       '<button type="submit">PUANLARI KAYDET</button><p role="status"></p>';
     d.append(form);
@@ -67,7 +68,7 @@ function showDetail(card,notice){
     const save=form.querySelector('button'), status=form.querySelector('[role=status]');
     form.onsubmit=async event=>{
       event.preventDefault();
-      const ratings=rows.flatMap((row,index)=>{
+      const ratings=visibleRows.flatMap((row,index)=>{
         const raw=inputs[index].value;
         return raw===''||Number(raw)===row.points?[]:[{player_id:row.player_id,points:Number(raw),expected:row.points??null}];
       });
