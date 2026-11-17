@@ -2,7 +2,7 @@ import {readTacticDuty,renderTacticDuty} from './tactic-duty.js?v=20261117-playe
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261114-date-format-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { drawRosterImage } from './roster-export.js?v=20261113-roster-final-1';
+import { drawRosterImage, drawPlayerListImage } from './roster-export.js?v=20261117-player-list-images-1';
 import { initPlayerHub } from './player-hub.js?v=20261116-dossier-form-1';
 import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
 import { matchCards } from './match-cards.js?v=20261117-match-player-list-1';
@@ -882,6 +882,16 @@ function openShareMenu(){
    button.onclick=()=>{d.close();void openFreeJerseysReadOnly();};
    d.querySelector('.hub-person-list').append(button);
  }
+ const status=document.createElement('p');
+ status.setAttribute('role','status');
+ for(const [kind,label,allowed] of [['archived','SİLİNEN OYUNCULAR',staffPageAllowed('deleted')],['dates','OYUNCU TARİHLERİ',staffCan('roster')]]){
+   if(!allowed)continue;
+   const button=document.createElement('button');
+   button.type='button';button.textContent=label;
+   button.onclick=async()=>{button.disabled=true;try{await sharePlayerList(kind,status);}finally{button.disabled=false;}};
+   d.querySelector('.hub-person-list').append(button);
+ }
+ d.append(status);
  d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();
 }
 function arrangeHome(){var admin=el('admin-view');if(!admin||admin.classList.contains('hidden'))return;var home=el('admin-home-panel'),birthday=el('birthday-notice'),menu=el('simple-admin-menu'),leave=el('easy-leave-home');if(dashboardPage==='hub_home'){if(birthday&&menu)menu.after(birthday);if(leave&&birthday)birthday.after(leave);if(home)admin.appendChild(home);}}
@@ -936,13 +946,46 @@ async function shareMobileRoster(){
     var rosterOrder=await supabase.rpc('club_roster_order',{p_action:'get'});if(rosterOrder.error)throw rosterOrder.error;
     drawRosterImage(canvas,players,{orderIds:rosterOrder.data.ids||[],season:selectedSeason,date:new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),team,logo,portrait});
     var blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Görsel oluşturulamadı.');
-    var file=new File([blob],'mksk-takim-listesi-tek-gorsel.png',{type:'image/png'}),url=URL.createObjectURL(blob),d=document.createElement('dialog');
-    d.className='share-preview mobile-roster-preview';d.innerHTML='<h3>TAKIM LİSTESİ · TEK GÖRSEL</h3><p>Tüm oyuncular ve 17 sütun tek PNG dosyasında. Tam boy açıp yakınlaştırabilirsin.</p><a class="full-roster-image" target="_blank" rel="noopener">TAM BOY AÇ / YAKINLAŞTIR</a><img alt="Mevkilere ayrılmış tek sayfalık takım listesi"><div class="mobile-roster-actions"><a class="download-roster-image">PNG GÖRSELİ İNDİR</a><button type="button" class="send-roster-image">PAYLAŞ</button><button type="button" class="close-roster-image">KAPAT</button></div><p class="mobile-roster-status" role="status"></p>';
-    d.querySelector('img').src=url;d.querySelector('.full-roster-image').href=url;var download=d.querySelector('.download-roster-image');download.href=url;download.download=file.name;
-    d.querySelector('.close-roster-image').onclick=()=>d.close();d.querySelector('.send-roster-image').onclick=async()=>{try{if(navigator.share&&navigator.canShare?.({files:[file]}))await navigator.share({title:'MKSK Takım Listesi',files:[file]});else d.querySelector('[role=status]').textContent='Bu tarayıcıda doğrudan paylaşım yok. PNG görselini indirip gönderebilirsin.';}catch(error){if(error.name!=='AbortError')d.querySelector('[role=status]').textContent='Paylaşım açılamadı. PNG görselini indirip gönderebilirsin.';}};
-    d.onclose=()=>{URL.revokeObjectURL(url);d.remove();};document.body.appendChild(d);d.showModal();if(message)message.textContent='Tek PNG takım listesi hazır.';
+    openListImage(blob,'TAKIM LİSTESİ','mksk-takim-listesi-tek-gorsel.png');
+    if(message)message.textContent='Tek PNG takım listesi hazır.';
   }catch(error){if(message)message.textContent='Görsel hazırlanamadı: '+error.message;}
 }
+function openListImage(blob,title,name){
+    var file=new File([blob],name,{type:'image/png'}),url=URL.createObjectURL(blob),d=document.createElement('dialog');
+    d.className='share-preview mobile-roster-preview';d.innerHTML='<h3>'+safe(title)+' · TEK GÖRSEL</h3><p>Tam boy açıp yakınlaştırabilirsin.</p><a class="full-roster-image" target="_blank" rel="noopener">TAM BOY AÇ / YAKINLAŞTIR</a><img alt="'+safe(title)+'"><div class="mobile-roster-actions"><a class="download-roster-image">PNG GÖRSELİ İNDİR</a><button type="button" class="send-roster-image">PAYLAŞ</button><button type="button" class="close-roster-image">KAPAT</button></div><p class="mobile-roster-status" role="status"></p>';
+    d.querySelector('img').src=url;d.querySelector('.full-roster-image').href=url;var download=d.querySelector('.download-roster-image');download.href=url;download.download=file.name;
+    d.querySelector('.close-roster-image').onclick=()=>d.close();d.querySelector('.send-roster-image').onclick=async()=>{try{if(navigator.share&&navigator.canShare?.({files:[file]}))await navigator.share({title:'MKSK '+title,files:[file]});else d.querySelector('[role=status]').textContent='Bu tarayıcıda doğrudan paylaşım yok. PNG görselini indirip gönderebilirsin.';}catch(error){if(error.name!=='AbortError')d.querySelector('[role=status]').textContent='Paylaşım açılamadı. PNG görselini indirip gönderebilirsin.';}};
+    d.onclose=()=>{URL.revokeObjectURL(url);d.remove();};document.body.appendChild(d);d.showModal();
+}
+async function sharePlayerList(kind,status){
+  const archived=kind==='archived';
+  if(archived?!staffPageAllowed('deleted'):!staffCan('roster'))return;
+  const season=selectedSeason,title=archived?'SİLİNEN OYUNCULAR':'OYUNCU TARİHLERİ';
+  status.textContent='Görsel hazırlanıyor…';
+  try{
+    const people=[];
+    for(let offset=0;;offset+=500){
+      let query=supabase.from('players').select(archived?'id,full_name,jersey_number,archived_at':'id,full_name,birth_date,joined_at,join_year,team_left_on,access_disabled');
+      query=archived?query.not('archived_at','is',null).order('archived_at',{ascending:false}):query.is('archived_at',null).order('full_name');
+      const result=await query.order('id').range(offset,offset+499);
+      if(result.error)throw result.error;
+      people.push(...result.data);
+      if(result.data.length<500)break;
+    }
+    if(!people.length){status.textContent=archived?'Silinen oyuncu bulunamadı.':'Oyuncu bulunamadı.';return;}
+    const headers=archived?['AD SOYAD','FORMA NO','SİLİNME TARİHİ']:['AD SOYAD','TAKIMA GİRİŞ','DOĞUM TARİHİ','TAKIMDA KALMA SÜRESİ'];
+    const fmt=value=>value?clubDate(value):'—';
+    const rows=people.map(p=>archived?[p.full_name,p.jersey_number??'—',new Date(p.archived_at).toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'})]:[p.full_name,p.joined_at?fmt(p.joined_at):p.join_year??'—',fmt(p.birth_date),clubTenure(p)]);
+    const canvas=document.createElement('canvas');
+    drawPlayerListImage(canvas,{title,season:archived?'':season,subtitle:archived?'OYUNCU ARŞİVİ':'KADRO',date:fmt(clubToday()),logo:await loadClubLogo(),headers,rows});
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob)throw Error('PNG oluşturulamadı.');
+    if(!status.isConnected||!status.closest('dialog')?.open)return;
+    openListImage(blob,title,archived?'mksk-silinen-oyuncular.png':'mksk-oyuncu-tarihleri.png');
+    status.textContent='Görsel hazır.';
+  }catch(error){status.textContent='Görsel hazırlanamadı. '+error.message;}
+}
+
 var ownLeavePlayer=null,ownLeaveName='',ownLeaveRequest=0,ownLeaveRows=[];
 function syncOwnLeaveVisibility(){var box=el('player-own-leave');if(box)box.hidden=playerDashboardPage!=='hub_profile'||!ownLeaveRows.length;}
 async function refreshOwnLeave(){
