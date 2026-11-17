@@ -909,6 +909,47 @@ var listAdminShell=simpleAdminShell;simpleAdminShell=function(){listAdminShell()
 var listPage=setDashboardPage;setDashboardPage=function(p){listPage(p);arrangeHome();};
 
 // Single-purpose screens: late metadata refreshes must not reopen unrelated cards.
+function openQuickRosterSearch(){
+  const existing=el('quick-roster-search');
+  if(existing?.open)return;
+  const rows=Array.from(el('roster')?.querySelectorAll('.player-edit')||[],form=>{
+    const field=name=>form.elements.namedItem(name)?.value?.trim()||'';
+    return {id:form.dataset.id,name:field('full_name'),number:field('jersey_number'),position:field('position'),group:field('group_name')};
+  });
+  const players=Array.from(new Map(rows.filter(p=>p.name&&p.id).map(p=>[p.id,p])).values());
+  const d=document.createElement('dialog');
+  d.id='quick-roster-search';d.className='player-hub-dialog';
+  d.setAttribute('aria-labelledby','quick-roster-title');
+  d.innerHTML='<header><h2 id="quick-roster-title">OYUNCU ARA / FİLTRELE</h2><button type="button">KAPAT ×</button></header><label>AD SOYAD VEYA FORMA NUMARASI<input type="search" placeholder="Örn. Ali veya 42" autofocus></label><details><summary>FİLTRELER</summary><label>MEVKİ<select data-key="position"></select></label><label>OYUNCU GRUBU<select data-key="group"></select></label></details><p role="status"></p><div class="hub-person-list"></div>';
+  const input=d.querySelector('input'),filters=Array.from(d.querySelectorAll('select')),list=d.querySelector('.hub-person-list');
+  filters.forEach(select=>{
+    const values=[...new Set(players.map(p=>p[select.dataset.key]).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'tr'));
+    select.replaceChildren(new Option('Tümü',''),...values.map(value=>new Option(value,value)));
+    select.onchange=draw;
+  });
+  function draw(){
+    const q=normalizeRosterSearch(input.value).replace(/^#\s*/,'');
+    const matches=players.filter(p=>{
+      if(filters.some(select=>select.value&&p[select.dataset.key]!==select.value))return false;
+      if(!q)return true;
+      if(/^\d+$/.test(q))return p.number!==''&&Number(p.number)===Number(q);
+      const name=normalizeRosterSearch(p.name);
+      return q.split(/\s+/).every(term=>name.includes(term));
+    });
+    d.querySelector('[role=status]').textContent=matches.length?matches.length+' oyuncu':'Eşleşen oyuncu yok.';
+    list.replaceChildren(...matches.map(p=>{
+      const button=document.createElement('button');
+      button.type='button';button.textContent=[p.name,p.number!==''?'#'+p.number:'',p.position].filter(Boolean).join(' · ');
+      button.onclick=()=>{d.close();showPlayerStatistics(p.id);};
+      return button;
+    }));
+  }
+  d.querySelector('header button').onclick=()=>d.close();
+  d.addEventListener('close',()=>d.remove(),{once:true});
+  input.oninput=draw;
+  input.onkeydown=event=>{if(event.key==='Enter'&&list.children.length===1){event.preventDefault();list.firstElementChild.click();}};
+  draw();document.body.appendChild(d);d.showModal();input.focus({preventScroll:true});
+}
 function normalizeRosterSearch(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').trim();}
 function rosterScreenContext(){if(entryMode)return 'entry';var tools=el('club-tools-panel');return tools&&!tools.hidden?'tools':dashboardPage;}
 function syncRosterChrome(){
@@ -918,7 +959,7 @@ function syncRosterChrome(){
   if(details&&search&&!details.contains(search)){var label=document.createElement('label');label.className='roster-search-label';label.textContent='OYUNCU ARA';label.appendChild(search);details.querySelector('summary').after(label);}
   if(search&&['roster','statistics'].includes(context))search.hidden=false;
   if(box&&!box.dataset.mobileFilterBound){box.dataset.mobileFilterBound='1';box.addEventListener('change',applyFilters);}
-  var launch=el('club-search-launch');if(launch&&!launch.querySelector('.roster-search-launch')){var button=document.createElement('button');button.type='button';button.className='roster-search-launch';button.textContent='OYUNCU ARA / FİLTRELE';button.onclick=()=>{simpleActivate(simplePick('roster'));requestAnimationFrame(()=>{var d=el('roster-filters')?.querySelector('details');if(d)d.open=true;var input=el('search');if(input){input.hidden=false;input.scrollIntoView({block:'center'});input.focus({preventScroll:true});}});};launch.prepend(button);}
+  var launch=el('club-search-launch');if(launch&&!launch.querySelector('.roster-search-launch')){var button=document.createElement('button');button.type='button';button.className='roster-search-launch';button.textContent='OYUNCU ARA / FİLTRELE';button.onclick=openQuickRosterSearch;launch.prepend(button);}
   syncOwnLeaveVisibility();
 }
 applyFilters=function(){
