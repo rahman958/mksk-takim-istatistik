@@ -155,3 +155,34 @@ export function drawRosterImage(canvas,players,options={}) {
   });
   return {width:canvas.width,height:canvas.height,players:rows.length,columns:rosterColumns.length,scale};
 }
+
+export function drawPlayerListImage(canvas,{title,subtitle,season,date,logo,headers,rows}){
+  const widths=headers.length===4?[360,200,200,272]:[500,200,332];
+  const margin=24,top=150,rowHeight=52,width=1080,height=top+rowHeight*(rows.length+1)+60;
+  canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#102747';ctx.fillRect(0,0,width,height);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,width,128);
+  ctx.drawImage(logo,margin,18,92,92);
+  ctx.fillStyle='#365575';ctx.font='bold 21px Arial';
+  ctx.fillText('MECİDİYE KARAHİSAR SPOR KULÜBÜ',136,38);
+  ctx.fillStyle='#102747';ctx.font='bold 42px Arial';ctx.fillText(title,136,82,width-160);
+  ctx.fillStyle='#365575';ctx.font='18px Arial';ctx.fillText([subtitle,season,date].filter(Boolean).join(' · '),136,108,width-160);
+  const headerFills=['#235386','#cce3f8','#ded8f2','#cce9e3'];
+  [headers,...rows].forEach((cells,row)=>{
+    let x=margin;
+    const y=top+row*rowHeight;
+    cells.forEach((cell,col)=>{
+      ctx.fillStyle=row===0?headerFills[col]:row%2?'#fff':'#e6eef9';
+      ctx.fillRect(x,y,widths[col]-2,rowHeight-2);
+      ctx.fillStyle=row===0&&col===0?'#fff':'#102747';
+      ctx.font=(row===0||col===0?'bold ':'')+(row===0?19:22)+'px Arial';
+      ctx.textAlign=col===0?'left':'center';
+      ctx.fillText(String(cell),col===0?x+14:x+widths[col]/2,y+33,widths[col]-26);
+      x+=widths[col];
+    });
+  });
+  ctx.textAlign='left';ctx.fillStyle='#dbeaff';ctx.font='bold 21px Arial';
+  ctx.fillText(rows.length+' OYUNCU',margin,height-22);
+  ctx.textAlign='right';ctx.fillText('MKSK 2008',width-margin,height-22);
+}
