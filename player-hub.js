@@ -1,3 +1,4 @@
+import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {rosterGroup,sortRosterPlayers} from './roster-export.js?v=20261026-player-hub-2';
 const esc=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,7 +10,7 @@ export function initPlayerHub(api){
  const db=api.db;let saving=false;
  const check=()=>!document.getElementById('admin-view')?.classList.contains('hidden');
  const allowed=area=>check()&&api.can(area);
- async function people(){const all=[];for(let n=0;;n+=500){const r=await db.from('players').select('id,full_name,jersey_number,position').is('archived_at',null).order('id').range(n,n+499);if(r.error)throw r.error;all.push(...r.data);if(r.data.length<500)return all;}}
+ async function people(){const all=[];for(let n=0;;n+=500){const r=await db.from('players').select('id,full_name,jersey_number,position').is('archived_at',null).order('id').range(n,n+499);if(r.error)throw r.error;all.push(...r.data);if(r.data.length<500)return prioritizeClubPlayers(all);}}
  async function dossier(id){
   if(!allowed('roster'))return;
   const d=modal('OYUNCU DOSYASI'),box=d.querySelector('.hub-content');box.textContent='YÜKLENİYOR…';
@@ -18,7 +19,7 @@ export function initPlayerHub(api){
    d.querySelector('h2').textContent='Oyuncu dosyası';
    box.innerHTML=`<div class="hub-dossier-identity">
      <h3>${esc(p.full_name)}</h3>
-     <p>${[p.jersey_number,p.position].filter(value=>value!=null&&value!=='').map(esc).join(' · ')}</p>
+     <p>${[p.jersey_number,p.position?.toLocaleUpperCase('tr-TR')].filter(value=>value!=null&&value!=='').map(esc).join(' · ')}</p>
    </div>
    <section class="hub-season-overview">
      <label>Sezon<select class="hub-season"></select></label>
