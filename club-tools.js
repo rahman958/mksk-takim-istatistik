@@ -1,3 +1,4 @@
+import { readTacticDuty } from './tactic-duty.js?v=20261117-player-tactic-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 // Club administration: authenticated database policies remain authoritative.
 (() => {
@@ -55,12 +56,31 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
     const changed = record.changed_fields.filter(key => Object.hasOwn(fields,key)).map(key => fields[key]);
     return changed.length ? changed.join(' / ') : labels[record.table_name] || 'KAYIT';
   }
+  function historyValue(key,value) {
+    if(value==null)return '—';
+    if(key==='positions'&&Array.isArray(value)){
+      return value.filter(slot=>slot?.role||slot?.player_id).map(slot=>
+        [slot.role,slot.player_id?(knownName(slot.player_id)||'Oyuncu kaydı bulunamadı'):'Boş mevki'].filter(Boolean).join(' · ')
+      ).join('\n')||'—';
+    }
+    if(key==='bench'&&Array.isArray(value)){
+      return value.filter(Boolean).map(id=>knownName(id)||'Oyuncu kaydı bulunamadı').join('\n')||'—';
+    }
+    if(key==='player_tasks'&&typeof value==='object'&&!Array.isArray(value)){
+      return Object.entries(value).map(([id,task])=>{
+        const {note,moves}=readTacticDuty(task);
+        return [knownName(id)||'Oyuncu kaydı bulunamadı',note,moves.length?moves.length+' taktik hareketi':''].filter(Boolean).join(' · ');
+      }).join('\n')||'Görev yok';
+    }
+    if(typeof value==='string'&&/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))return knownName(value)||'—';
+    return readable(value);
+  }
   function historyValues(record) {
     const keys=record.changed_fields.filter(key=>!['created_at','updated_at','id','player_id'].includes(key));
     if(!keys.length)return '';
     return '<dl class="ct-history-values">'+keys.map(key=>
-      '<div><dt>'+esc(Object.hasOwn(fields,key)?fields[key]:'DİĞER ALAN')+'</dt><dd><span><b>ESKİ</b> '+esc(readable(record.old_data?.[key]))+
-      '</span><span><b>YENİ</b> '+esc(readable(record.new_data?.[key]))+'</span></dd></div>'
+      '<div><dt>'+esc(Object.hasOwn(fields,key)?fields[key]:'DİĞER ALAN')+'</dt><dd><span><b>ESKİ</b> '+esc(historyValue(key,record.old_data?.[key]))+
+      '</span><span><b>YENİ</b> '+esc(historyValue(key,record.new_data?.[key]))+'</span></dd></div>'
     ).join('')+'</dl>';
   }
   function drawHistory(){const query=panel.querySelector('.ct-search').value.toLocaleLowerCase('tr-TR');const rows=history.filter(h=>[knownName(h.player_id),h.actor_name,h.actor_id,historyChangeLabel(h),labels[h.table_name],JSON.stringify(h.old_data),JSON.stringify(h.new_data)].join(' ').toLocaleLowerCase('tr-TR').includes(query));panel.querySelector('.ct-history').innerHTML=rows.map(h=>'<article class="ct-history-item"><div class="ct-tag">'+esc(labels[h.table_name]||h.table_name)+' · '+(h.operation==='INSERT'?'YENİ KAYIT':'DEĞİŞİKLİK')+'</div><h4>'+esc(knownName(h.player_id)||h.new_data?.title||h.season||'TAKIM KAYDI')+'</h4><p>'+esc(dateText(h.created_at))+' · '+esc(h.actor_name||'SİSTEM')+' · <strong>'+esc(historyChangeLabel(h))+'</strong></p>'+historyValues(h)+'<div class="ct-actions">'+(!h.hidden_at&&h.operation==='UPDATE'&&!h.undone_at&&!h.changed_fields.includes('access_disabled')?'<button class="ct-undo" data-undo="'+h.tx+'">BU İŞLEMİ GERİ AL</button>':'')+'<button type="button" class="ct-history-delete" data-history-id="'+h.id+'">'+(h.hidden_at?'GERİ YÜKLE':'KAYDI SİL')+'</button></div>'+(h.undone_at?'<p class="ct-done">GERİ ALINDI · '+esc(dateText(h.undone_at))+'</p>':'')+'</article>').join('')||'<p>BU ARAMADA KAYIT YOK.</p>';panel.querySelectorAll('[data-history-id]').forEach(b=>b.onclick=()=>{const h=history.find(h=>String(h.id)===b.dataset.historyId),hidden=!h.hidden_at;dialog(hidden?'GEÇMİŞ KAYDINI SİL':'GEÇMİŞ KAYDINI GERİ YÜKLE','<p>'+esc(knownName(h.player_id)||'TAKIM KAYDI')+' · '+esc(dateText(h.created_at))+'</p><p>OYUNCU, MAÇ VE İSTATİSTİK DEĞERLERİ DEĞİŞMEZ. YALNIZ BU GEÇMİŞ KAYDI '+(hidden?'SİLİNEN KAYITLARA TAŞINACAK.':'AKTİF LİSTEYE GERİ DÖNECEK.')+'</p>',async()=>{const r=await db().rpc('club_set_history_hidden',{p_id:h.id,p_hidden:hidden});if(r.error)throw r.error;history=[];cursor=null;await loadHistory();message(hidden?'GEÇMİŞ KAYDI SİLİNEN KAYITLARA TAŞINDI.':'GEÇMİŞ KAYDI GERİ YÜKLENDİ.');});});panel.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>dialog('İŞLEMİ GERİ AL','<p>AYNI KAYDETME İŞLEMİNDE DEĞİŞEN TÜM KAYITLAR GERİ ALINIR. BU BİR MAÇ GİRİŞİYSE O MAÇTA İŞLENEN TÜM OYUNCULAR VE TAKIM MAÇ SAYISI BİRLİKTE GERİ ALINIR. SONRADAN DEĞİŞEN DEĞER VARSA İŞLEM DURDURULUR.</p>',async()=>{const r=await db().rpc('club_undo_changes',{p_tx:Number(b.dataset.undo)});if(r.error)throw r.error;history=[];cursor=null;await loadHistory();message(r.data+' KAYIT GERİ ALINDI. ANA LİSTEDE GÜNCEL DEĞERLER İÇİN SAYFAYI YENİLE.');}));}
