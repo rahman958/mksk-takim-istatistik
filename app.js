@@ -8,7 +8,7 @@ import { initQuickEntry } from './quick-entry.js?v=20261119-player-order-1';
 import { matchCards } from './match-cards.js?v=20261119-player-order-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261118-history-open-1';
-import {openMonthlyReport} from './monthly-report.js?v=20261119-report-analysis-1';
+import {openMonthlyReport} from './monthly-report.js?v=20261119-report-layout-2';
 
 function openClubMonthlyReport(personal=false){
   const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
@@ -2141,6 +2141,7 @@ document.addEventListener('click',event=>{
 /* Preserve the pinned player in recipient and manager selectors built by other modules. */
 {
  const pinSelect=select=>{
+  if(select.closest('.monthly-report'))return;
   const options=Array.from(select.options);
   const pinned=options.find(option=>clubPlayerPriority({full_name:option.textContent.split(' · ')[0]}, {})<0);
   const first=options.find(option=>option.value!=='');
