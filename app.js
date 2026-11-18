@@ -11,7 +11,7 @@ import './compact-sections.js?v=20261027-grouped-sections-1';
 import {openMonthlyReport} from './monthly-report.js?v=20261118-monthly-report-1';
 
 function openClubMonthlyReport(personal=false){
-  const season=selectedSeason, id=selfGrowthPlayer;
+  const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
   if(personal ? !id||window.MKSK_PLAYER_PREVIEW : !staffCan('statistics'))return;
   const keeper=position=>['GK','KL','KALECI'].includes(positionGroup({position}));
   async function load(){
