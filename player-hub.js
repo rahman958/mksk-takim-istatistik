@@ -37,8 +37,8 @@ export function initPlayerHub(api){
    </div>`;
    const actions=box.querySelector('.hub-actions');for(const [key,label,area] of [['match','İstatistik ve Puanı Düzenle','statistics'],['penalties','Ceza / Uyarı Ekle','penalties'],['discipline','Disiplin Sevki','penalties'],['leave','İzin Ver','leaves'],['messages','Mesaj Gönder','messages']]){if(!(allowed(area)||(key==='match'&&allowed('matches'))))continue;const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.hubAction=key;b.onclick=()=>{d.close();api.action?.(key,id,p.full_name);};const group=key==='match'?'.hub-stats-group':['penalties','discipline','leave'].includes(key)?'.hub-discipline-group':null;(group?box.querySelector(group+' .hub-actions'):actions).appendChild(b);}
    const invite=box.querySelector('.hub-invite-group'),discipline=box.querySelector('.hub-discipline-group');
-   invite.hidden=!api.owner();
-   if(api.owner())api.mountInvite?.(invite.querySelector('.hub-actions'),id);
+   invite.hidden=!(allowed('roster')||allowed('links'));
+   if(allowed('roster')||allowed('links'))api.mountInvite?.(invite.querySelector('.hub-actions'),id);
    discipline.hidden=!allowed('leaves')&&!allowed('penalties');
    box.querySelector('.hub-edit').onclick=()=>{d.close();api.edit(id);};
    const overview=box.querySelector('.hub-season-overview');
