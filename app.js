@@ -678,7 +678,18 @@ var playerWorkShow=show;show=function(id){if(id==='login-view'){playerWorkOwner=
 (function(){var s=document.createElement('style');s.textContent='.player-message-quick>h3{font-size:16px!important;margin:4px 0 8px}.player-work-private{font-size:11px!important;line-height:1.6;margin:0 0 12px}.player-work-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.player-work-grid>button{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:8px;border:1px solid #7e81a8;border-radius:12px;padding:12px!important;background:linear-gradient(120deg,#285a78,#584981)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;line-height:1.5}.player-work-grid span{font-size:11px!important;font-weight:800;text-align:left}.player-work-grid strong{font-size:23px!important}.player-work-grid small{font-size:10px!important}.player-work-grid>.player-unread-open span{flex:none}.player-work-grid>.player-unread-open{flex-wrap:nowrap}html[data-theme=dark] .player-message-quick>h3,html[data-theme=dark] .player-work-private{color:#f5efff!important;-webkit-text-fill-color:#f5efff!important}@media(max-width:340px){.player-work-grid{grid-template-columns:1fr}}';document.head.appendChild(s);})();
 
 // Keep the player's waiting-work card visible independently of submenu selection.
-function ensurePlayerWorkCard(){var root=el('player-view'),welcome=root?.querySelector('.welcome');if(!welcome)return;var box=el('player-message-quick');if(!box){box=document.createElement('section');box.id='player-message-quick';box.className='player-message-quick';welcome.after(box);if(window.MKSK_PLAYER_PREVIEW)box.innerHTML='<h3>BEKLEYEN İŞLERİM</h3><p>Bu alan oyuncunun kendi girişinde okunmamış mesajlarını, kadro görevini ve bekleyen taleplerini gösterir. Özel mesajlar önizlemede açılmaz.</p>';else{box.innerHTML='<button type="button" class="player-unread-open"><span>OKUNMAMIŞ MESAJLARIM</span><strong>…</strong><small>LİSTEYİ AÇ →</small></button><div class="player-important" hidden></div>';box.querySelector('button').onclick=()=>setPlayerPage('manager_messages');renderPlayerWorkSummary();}}welcome.after(box);box.hidden=false;box.classList.remove('hidden');}
+function ensurePlayerWorkCard(){var root=el('player-view'),welcome=root?.querySelector('.welcome');if(!welcome)return;var box=el('player-message-quick');if(!box){box=document.createElement('section');box.id='player-message-quick';box.className='player-message-quick';welcome.after(box);if(window.MKSK_PLAYER_PREVIEW)box.innerHTML='<h3>BEKLEYEN İŞLERİM</h3><p>Bu alan oyuncunun kendi girişinde okunmamış mesajlarını, kadro görevini ve bekleyen taleplerini gösterir. Özel mesajlar önizlemede açılmaz.</p>';else{box.innerHTML='<button type="button" class="player-unread-open"><span>OKUNMAMIŞ MESAJLARIM</span><strong>…</strong><small>LİSTEYİ AÇ →</small></button><div class="player-important" hidden></div>';box.querySelector('button').onclick=()=>setPlayerPage('manager_messages');renderPlayerWorkSummary();}}welcome.after(box);box.hidden=false;box.classList.remove('hidden');
+  let report=el('player-monthly-report');
+  if(window.MKSK_PLAYER_PREVIEW){report?.remove();return;}
+  if(!report){
+    report=document.createElement('button');
+    report.id='player-monthly-report';
+    report.type='button';
+    report.innerHTML='<span aria-hidden="true">📋</span><span><strong>AYLIK RAPORLARIM</strong><small>Maç performansım ve aylık gelişimim</small></span><span aria-hidden="true">›</span>';
+    report.onclick=()=>openClubMonthlyReport(true);
+  }
+  welcome.after(report);
+}
 var visibleWorkShell=simplePlayerShell;simplePlayerShell=function(){visibleWorkShell();ensurePlayerWorkCard();};
 var visibleWorkPage=setPlayerPage;setPlayerPage=function(page){visibleWorkPage(page);ensurePlayerWorkCard();};
 var visibleWorkShow=show;show=function(id){var r=visibleWorkShow(id);if(id==='player-view'){ensurePlayerWorkCard();if(!window.MKSK_PLAYER_PREVIEW)void playerNoticeRefresh(true);}return r;};
@@ -1443,15 +1454,6 @@ var openClubEmail;
    box.insertAdjacentHTML('beforeend','<div class="profile-center-brand"><img src="güncel logo.jfif" alt="MKSK logosu"><span><strong>OYUNCU PANELİ</strong><small>BANA AİT BİLGİLER</small><em>TAKIM KURULUŞ: 11.06.2008</em></span></div><p class="profile-center-caption">HIZLI ERİŞİM</p>');
    var main=document.createElement('div');main.className='profile-center-main';box.appendChild(main);
    profileCenterButton(main,'PERFORMANSIM','MAÇ, GOL, ASİST VE PUAN','chart-no-axes-combined',function(){setPlayerPage('stats');},true);
-   if(!window.MKSK_PLAYER_PREVIEW){
-     const report=profileCenterButton(main,'AYLIK RAPORLARIM','MAÇ PERFORMANSIM VE AYLIK GELİŞİMİM','calendar-days',()=>openClubMonthlyReport(true),true);
-     report.classList.add('player-monthly-report');
-     const symbol=document.createElement('span');
-     symbol.className='profile-center-symbol';
-     symbol.setAttribute('aria-hidden','true');
-     symbol.textContent='📋';
-     report.firstElementChild.replaceWith(symbol);
-   }
    var mini=document.createElement('div');mini.className='profile-center-mini';box.appendChild(mini);
 
 
@@ -1701,7 +1703,6 @@ var openClubEmail;
       '<div><b>'+played+'</b><span>MAÇ SAYISI</span></div><div><b>'+num(s.goals)+'</b><span>GOL SAYISI</span></div><div><b>'+num(s.assists)+'</b><span>ASİST</span></div>'+
       '<div><b>'+num(s.man_of_match)+'</b><span>MAÇIN ADAMI</span></div><div><b>'+(s.manager_percent!=null?num(s.manager_percent)+'%':(s.manager_rating!=null?num(s.manager_rating)*10+'%':'—'))+'</b><span>BAŞARI YÜZDESİ</span></div><div><b>'+missed+'</b><span>KAÇIRDIĞI MAÇ</span></div></div>'+
       '<button type="button" class="season-center-form" data-season-page="form_graph"><span>📈</span><div><b>MAÇLARIM VE FORM</b><small>MAÇ KARTLARI VE PUAN GRAFİĞİ</small></div><em>›</em></button>'+
-      (window.MKSK_PLAYER_PREVIEW?'':'<button type="button" class="season-center-form" data-season-page="monthly_report"><span aria-hidden="true">📋</span><div><b>AYLIK RAPORLARIM</b><small>MAÇ PERFORMANSIM VE AYLIK GELİŞİMİM</small></div><em aria-hidden="true">›</em></button>')+
       '<div class="season-center-links">'+
       '<button type="button" data-season-page="stats"><span>📊</span><b>PERFORMANSIM</b><small>MAÇ, GOL, ASİST VE PUAN</small></button>'+
       '<button type="button" data-season-page="messages"><span>✉️</span><b>MESAJLARIM</b><small>OKUNMAMIŞ MESAJLAR</small></button>'+
@@ -1712,7 +1713,6 @@ var openClubEmail;
     brand.insertAdjacentHTML('afterend',html);
     box.querySelectorAll('[data-season-page]').forEach(function(b){b.onclick=function(){
       var page=b.dataset.seasonPage;
-      if(page==='monthly_report'){openClubMonthlyReport(true);return;}
       openPage({messages:'manager_messages',team:'hub_team'}[page]||page);
     };});
     fillLiveLeaders(box);
