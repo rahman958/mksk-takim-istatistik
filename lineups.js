@@ -1,3 +1,4 @@
+import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 import {openTactics} from './tactic-board.js?v=20261117-player-tactic-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
@@ -21,7 +22,7 @@ function available(p){return !p.access_disabled&&!p.team_left_on;}
 function warning(id){const p=who(id);if(!p)return '';const remaining=penalties.filter(c=>c.player_id===id&&!c.cancelled).reduce((n,c)=>n+Math.max(0,c.total_matches-c.served_matches.length),0);return [!available(p)?'ERİŞİMİ KAPALI / TAKIMDAN AYRILMIŞ':'',/sakat/i.test(p.status||'')?'SAKAT OYUNCU':'',remaining?remaining+' MAÇ CEZASI VAR':''].filter(Boolean).join(' · ');}
 function options(id){return '<option value="">OYUNCU SEÇ</option>'+roster.filter(p=>available(p)||p.id===id).map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+html(upper(p.full_name))+' · '+html(p.jersey_number??'—')+'</option>').join('');}
 function status(message){$('.lineup-status').textContent=message;}
-async function data(){const p=await db.from('players').select('id,full_name,jersey_number,position,status,access_disabled,team_left_on').is('archived_at',null).order('full_name');if(p.error)throw p.error;roster=p.data;const c=await db.from('player_penalties').select('player_id,total_matches,served_matches,cancelled').eq('season',season());if(c.error)throw c.error;penalties=c.data;const s=await db.from('match_lineups').select('*').eq('season',season()).order('updated_at',{ascending:false}).limit(1000);if(s.error)throw s.error;saved=s.data;}
+async function data(){const p=await db.from('players').select('id,full_name,jersey_number,position,status,access_disabled,team_left_on').is('archived_at',null).order('full_name');if(p.error)throw p.error;roster=prioritizeClubPlayers(p.data);const c=await db.from('player_penalties').select('player_id,total_matches,served_matches,cancelled').eq('season',season());if(c.error)throw c.error;penalties=c.data;const s=await db.from('match_lineups').select('*').eq('season',season()).order('updated_at',{ascending:false}).limit(1000);if(s.error)throw s.error;saved=s.data;}
 async function open(){
   panel.hidden=false;
   window.MKSK_SCROLL_SECTION?.(panel);
