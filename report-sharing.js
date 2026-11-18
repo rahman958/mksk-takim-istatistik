@@ -22,7 +22,7 @@ export function installReportSharing(host,{content,title,subtitle,status}){
  const toolbar=document.createElement('div');toolbar.className='ra-share-tools';toolbar.dataset.shareControls='';
  toolbar.innerHTML='<button type="button" data-export="share">PAYLAŞ</button><button type="button" data-export="image">GÖRSELİ İNDİR</button><button type="button" data-export="print">PDF / YAZDIR</button>';
  const preview=document.createElement('div');preview.className='ra-export-pages';preview.hidden=true;
- host.append(toolbar,preview);
+ content.before(toolbar);content.after(preview);
  let urls=[];
  function clear(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];preview.replaceChildren();preview.hidden=true;}
  toolbar.querySelector('[data-export="print"]').onclick=()=>{
