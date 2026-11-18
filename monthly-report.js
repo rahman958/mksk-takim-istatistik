@@ -25,7 +25,7 @@ function teamMonth(games){
   const draws=scores.filter(g=>Number(g.our_score)===Number(g.opponent_score)).length;
   const goals=scores.reduce((n,g)=>n+Number(g.our_score),0);
   const against=scores.reduce((n,g)=>n+Number(g.opponent_score),0);
-  return {matches:games.length,wins,draws,losses:scores.length-wins-draws,goals: scores.length?goals:null,against:scores.length?against:null,difference:scores.length?goals-against:null,winRate:scores.length?100*wins/scores.length:null,againstRate:scores.length?against/scores.length:null,clean:scores.filter(g=>Number(g.opponent_score)===0).length};
+  return {matches:games.length,scored:scores.length,goalsRate:scores.length?goals/scores.length:null,wins,draws,losses:scores.length-wins-draws,goals: scores.length?goals:null,against:scores.length?against:null,difference:scores.length?goals-against:null,winRate:scores.length?100*wins/scores.length:null,againstRate:scores.length?against/scores.length:null,clean:scores.filter(g=>Number(g.opponent_score)===0).length};
 }
 function table(headers,rows){
   return '<div class="monthly-scroll"><table><thead><tr>'+headers.map(h=>'<th scope="col">'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
@@ -42,11 +42,13 @@ function compare(previous,current,metrics){
   return metrics.map(([label,key])=>[label,display(previous[key]),display(current[key])]);
 }
 
-function metricCard(label,before,after){
+function metricCard(label,before,after,{lowerIsBetter=false,suffix=''}={}){
   const delta=before==null||after==null?null:Math.round((after-before)*100)/100;
   const trend=delta===null?'Karşılaştırma yok':delta>0?'↑ Artış':delta<0?'↓ Düşüş':'→ Aynı';
-  const tone=delta>0?'up':delta<0?'down':'steady';
-  return '<div class="monthly-metric" data-tone="'+tone+'"><b>'+esc(label)+'</b><strong>'+display(before)+' → '+display(after)+'</strong><small>'+trend+'</small></div>';
+  const direction=lowerIsBetter?-delta:delta;
+  const tone=direction>0?'up':direction<0?'down':'steady';
+  const value=n=>display(n)+(n==null?'':suffix);
+  return '<div class="monthly-metric" data-tone="'+tone+'"><b>'+esc(label)+'</b><strong>'+value(before)+' → '+value(after)+'</strong><small>'+trend+'</small></div>';
 }
 function reportCard(title,content){
   return '<section class="monthly-card"><h3>'+esc(title)+'</h3><div>'+content+'</div></section>';
@@ -102,16 +104,32 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
       if(playerLabel)playerLabel.hidden=view!=='player';
       if(view==='team'){
         const old=teamMonth(prev),cur=teamMonth(now);
-        const lines=[change('Galibiyet oranı (%)',old.winRate,cur.winRate),change('Maç başına yenilen gol',old.againstRate,cur.againstRate),change('Gol farkı',old.difference,cur.difference)].filter(Boolean);
         const leaders=players.map(p=>({name:p.full_name,stats:playerMonth(forPlayer(now,p.id))}));
-        const top=key=>{
+        const top=(key,unit)=>{
           const value=Math.max(0,...leaders.map(p=>p.stats[key]??0));
-          return value?leaders.filter(p=>p.stats[key]===value).map(p=>p.name).join(', ')+' · '+value:'—';
+          return value?leaders.filter(p=>p.stats[key]===value).map(p=>p.name).join(', ')+' · '+display(value)+' '+unit:'—';
         };
-        out.innerHTML='<h3>Takım Özeti</h3>'+table(labels,compare(old,cur,[['Maç','matches'],['Galibiyet','wins'],['Beraberlik','draws'],['Mağlubiyet','losses'],['Atılan gol','goals'],['Yenilen gol','against'],['Gol farkı','difference'],['Gol yemeden biten maç','clean']]))+
-          '<h3>Ayın Liderleri</h3>'+table(['Kategori','Oyuncu'],[['Gol',top('goals')],['Asist',top('assists')],['Maçın Adamı',top('awards')]])+
-          '<h3>Takım Yorumu</h3>'+remarks(lines.length?lines:['Önceki ayda karşılaştırılabilir skor kaydı yok.'])+
-          '<h3>Maç Sonuçları</h3>'+table(['Tarih','Rakip','Skor'],now.map(g=>[formatDate(g.match_date),g.opponent,display(number(g.our_score))+'–'+display(number(g.opponent_score))]));
+        const totals=[['Maç',cur.matches],['Galibiyet',cur.wins],['Beraberlik',cur.draws],['Mağlubiyet',cur.losses],['Atılan gol',cur.goals],['Yenilen gol',cur.against]];
+        const summary=cur.scored?'Bu ay skoru kayıtlı '+cur.scored+' maçta maç başına '+display(cur.goalsRate)+' gol attık, '+display(cur.againstRate)+' gol yedik. Galibiyet oranımız %'+display(cur.winRate)+'.':'Bu ay henüz skor kaydı yok.';
+        const changes=old.scored&&cur.scored?[
+          change('Galibiyet oranı (%)',old.winRate,cur.winRate),
+          change('Maç başına atılan gol',old.goalsRate,cur.goalsRate),
+          change('Maç başına yenilen gol',old.againstRate,cur.againstRate)
+        ]:['Önceki ayla karşılaştırmak için iki ayın da skor kaydı gerekiyor.'];
+        const focus=!cur.scored?'Maç skorlarını kaydetmek':
+          old.scored&&cur.againstRate>old.againstRate?'Yenilen golü azaltmak':
+          old.scored&&cur.goalsRate<old.goalsRate?'Maç başına golü artırmak':
+          cur.againstRate>cur.goalsRate?'Gol farkını iyileştirmek':'Gol katkısını ve savunma dengesini sürdürmek';
+        out.innerHTML='<section aria-label="Takım Özeti"><p class="monthly-period">'+esc(monthLabel(previousKey))+' ile karşılaştırma</p>'+
+          '<dl class="monthly-totals">'+totals.map(([label,value])=>'<div><dt>'+esc(label)+'</dt><dd>'+display(value)+'</dd></div>').join('')+'</dl>'+
+          '<div class="monthly-metrics">'+
+          metricCard('Galibiyet oranı',old.winRate,cur.winRate,{suffix:'%'})+
+          metricCard('Maç başına atılan gol',old.goalsRate,cur.goalsRate)+
+          metricCard('Maç başına yenilen gol',old.againstRate,cur.againstRate,{lowerIsBetter:true})+'</div>'+
+          reportCard('Aylık Takım Yorumu','<p>'+esc(summary)+'</p>'+remarks(changes))+
+          reportCard('Ayın Öne Çıkanları',table(['Kategori','Oyuncu'],[['Gol lideri',top('goals','gol')],['Asist lideri',top('assists','asist')],['Maçın Adamı',top('awards','kez')]]))+
+          reportCard('Gelecek Ayın Odağı','<strong>'+esc(focus)+'</strong>')+
+          '<details class="monthly-example"><summary>Maç Sonuçları</summary>'+table(['Tarih','Rakip','Skor'],now.map(g=>[formatDate(g.match_date),g.opponent,number(g.our_score)===null||number(g.opponent_score)===null?'—':display(number(g.our_score))+'–'+display(number(g.opponent_score))]))+'</details></section>';
         return;
       }
       if(!player&&!picker.value){out.textContent='Oyuncu bulunamadı.';return;}
