@@ -279,7 +279,7 @@ start();
 
 import './navigation.js?v=20261118-stable-navigation-1';
 
-import './club-leaves.js?v=20261116-blue-theme-1';
+import './club-leaves.js?v=20261118-section-audit-1';
 
 // Admin-only read-only player preview. Authentication and database roles stay unchanged.
 window.MKSK_OPEN_PLAYER_PREVIEW=async function(id){
@@ -2052,16 +2052,24 @@ const playerSectionStarts={
   hub_profile:['simple-player-menu'],hub_team:['player-team-overview'],stats:['player-stat-order'],
   form_graph:['player-form-chart'],manager_messages:['unified-player-message-center','player-manager-messages'],
   reports:['player-report'],penalties:['player-penalties'],self_growth:['player-self-growth'],
-  my_lineup:['player-own-duty'],staff_tasks:['player-staff-tasks'],team_history:['player-team-history'],
+  season_card:['player-season-card'],corrections:['player-corrections'],my_lineup:['player-own-duty'],staff_tasks:['player-staff-tasks'],team_history:['player-team-history'],
   season_archive:['player-season-archive'],season_awards:['player-season-awards'],my_awards:['player-season-awards']
 };
 let sectionScrollTicket=0;
+window.MKSK_SCROLL_SECTION=function(target){
+  const ticket=++sectionScrollTicket;
+  requestAnimationFrame(()=>{
+    if(ticket===sectionScrollTicket&&target?.getClientRects().length&&!document.querySelector('dialog[open]')){
+      target.scrollIntoView({block:'start',behavior:'instant'});
+    }
+  });
+};
 function showSectionStart(view,page,getPage,starts){
   const ticket=++sectionScrollTicket;
   requestAnimationFrame(()=>{
     const root=el(view);
     if(ticket!==sectionScrollTicket||getPage()!==page||!root?.getClientRects().length||document.querySelector('dialog[open]'))return;
-    const target=(starts[page]||[]).map(el).find(node=>node&&root.contains(node)&&node.getClientRects().length);
+    const target=(starts[page]||[]).map(el).find(node=>node&&(root.contains(node)||node.id==='season-controls')&&node.getClientRects().length);
     (target||root.querySelector('.admin-heading')||root).scrollIntoView({block:'start',behavior:'instant'});
   });
 }
@@ -2069,13 +2077,20 @@ const dashboardPageBeforeStableNavigation=setDashboardPage;
 setDashboardPage=function(page){
   const prior=dashboardPage;
   const result=dashboardPageBeforeStableNavigation.apply(this,arguments);
-  if(prior!==dashboardPage&&dashboardPage===page)showSectionStart('admin-view',page,()=>dashboardPage,adminSectionStarts);
+  if(prior!==dashboardPage&&dashboardPage===page){
+    ['club-tools-panel','club-directory-panel','lineup-panel'].forEach(id=>{if(el(id))el(id).hidden=true;});
+    document.querySelectorAll('#admin-view .leave-panel').forEach(panel=>panel.hidden=true);
+    showSectionStart('admin-view',page,()=>dashboardPage,adminSectionStarts);
+  }
   return result;
 };
 const playerPageBeforeStableNavigation=setPlayerPage;
 setPlayerPage=function(page){
   const prior=playerDashboardPage;
   const result=playerPageBeforeStableNavigation.apply(this,arguments);
-  if(prior!==playerDashboardPage)showSectionStart('player-view',playerDashboardPage,()=>playerDashboardPage,playerSectionStarts);
+  if(prior!==playerDashboardPage){
+    document.querySelectorAll('#player-view .directory-panel').forEach(panel=>panel.hidden=true);
+    showSectionStart('player-view',playerDashboardPage,()=>playerDashboardPage,playerSectionStarts);
+  }
   return result;
 };
