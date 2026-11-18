@@ -301,13 +301,34 @@ function draw(){
     finally{savingMatch=false;form.inert=false;button.disabled=false;}
   };
 }
+let matchOpenRequest=0;
 export const matchCards = {
   async open(){
     if(savingMatch||cardDialog?.open)return;
     addStyle();
     if(!db()) throw new Error('Bağlantı hazırlanıyor. Birkaç saniye sonra tekrar dene.');
-    if(!cardDialog){cardDialog=document.createElement('dialog');cardDialog.className='match-card-centre';cardDialog.onclose=()=>{};document.body.appendChild(cardDialog);}
-    try{people=(await loadData(),people);draw();await refresh();}catch(error){cardDialog.innerHTML='<header class="mcc-head"><h2>MAÇ KARTLARI</h2><button class="mcc-close">KAPAT ×</button></header><main class="mcc-main"><p class="mcc-status">AÇILAMADI: '+esc(error.message)+'</p></main>';cardDialog.querySelector('.mcc-close').onclick=()=>cardDialog.close();}
-    if(!cardDialog.open)cardDialog.showModal();
+    if(!cardDialog){
+      cardDialog=document.createElement('dialog');
+      cardDialog.className='match-card-centre';
+      document.body.appendChild(cardDialog);
+    }
+    const request=++matchOpenRequest;
+    cardDialog.innerHTML='<header class="mcc-head"><h2>Maç İşle</h2><button type="button" class="mcc-close">Kapat ×</button></header><main class="mcc-main"><p class="mcc-status" role="status">Maçlar ve oyuncular yükleniyor…</p><button type="button" class="mcc-load-retry" hidden>Yeniden dene</button></main>';
+    cardDialog.querySelector('.mcc-close').onclick=()=>cardDialog.close();
+    cardDialog.querySelector('.mcc-load-retry').onclick=()=>{cardDialog.close();void matchCards.open();};
+    cardDialog.showModal();
+    try{
+      const cards=await loadData();
+      if(request!==matchOpenRequest||!cardDialog.open)return;
+      draw();
+      cardDialog.scrollTop=0;
+      renderCards(cards);
+      cardDialog.querySelector('.mcc-status').textContent=cards.length+' maç kartı hazır.';
+      cardDialog.querySelector('.mcc-close').focus({preventScroll:true});
+    }catch(error){
+      if(request!==matchOpenRequest||!cardDialog.open)return;
+      cardDialog.querySelector('.mcc-status').textContent='Maç İşle açılamadı. '+error.message;
+      cardDialog.querySelector('.mcc-load-retry').hidden=false;
+    }
   }
 };
