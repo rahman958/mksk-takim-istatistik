@@ -53,7 +53,7 @@ export function rosterStats(p,season) {return (p.player_season_stats||[]).find(s
 export function rosterValues(p,season) {
   const s=rosterStats(p,season),n=k=>Number(s[k]||0);
   const percent=s.manager_percent??(s.manager_rating==null?null:Number(s.manager_rating)*10);
-  return [String(p.full_name||'—').toLocaleUpperCase('tr-TR'),p.jersey_number??'—',p.position||'—',p.management_role||'—',p.group_name||'—',
+  return [String(p.full_name||'—').toLocaleUpperCase('tr-TR'),p.jersey_number??'—',String(p.position||'—').toLocaleUpperCase('tr-TR'),p.management_role||'—',p.group_name||'—',
     n('matches'),n('goals'),n('assists'),n('goals_conceded'),n('man_of_match'),
     percent==null?'—':Number(percent).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%',
     n('discipline_referrals'),n('attendance_matches'),n('attendance_goals'),n('attendance_points'),
@@ -215,4 +215,12 @@ export function drawPlayerListImage(canvas,{title,subtitle,season,date,logo,head
   ctx.textAlign='left';ctx.fillStyle='#dbeaff';ctx.font='bold 21px Arial';
   ctx.fillText(rows.length+' OYUNCU',margin,height-22);
   ctx.textAlign='right';ctx.fillText('MKSK 2008',width-margin,height-22);
+}
+
+export function clubPlayerPriority(a,b){
+ const name=p=>String(p.full_name||p.name||p.player_name||'').trim().toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/İ/g,'I').replace(/\s+/g,' ');
+ return Number(name(b)==='RAHMAN ISMAIL BENEK')-Number(name(a)==='RAHMAN ISMAIL BENEK');
+}
+export function prioritizeClubPlayers(rows){
+ return (rows||[]).map(p=>({...p,...(p.position==null?{}:{position:String(p.position).toLocaleUpperCase('tr-TR')})})).sort(clubPlayerPriority);
 }
