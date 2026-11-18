@@ -2094,3 +2094,9 @@ setPlayerPage=function(page){
   }
   return result;
 };
+
+document.addEventListener('click',event=>{
+  const button=event.target.closest('#dashboard-nav button[data-page="settings"]');
+  const controls=el('season-controls');
+  if(button&&dashboardPage==='settings'&&controls&&!controls.hidden)window.MKSK_SCROLL_SECTION(controls);
+});
