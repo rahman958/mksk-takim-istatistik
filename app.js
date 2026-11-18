@@ -1701,6 +1701,7 @@ var openClubEmail;
       '<div><b>'+played+'</b><span>MAÇ SAYISI</span></div><div><b>'+num(s.goals)+'</b><span>GOL SAYISI</span></div><div><b>'+num(s.assists)+'</b><span>ASİST</span></div>'+
       '<div><b>'+num(s.man_of_match)+'</b><span>MAÇIN ADAMI</span></div><div><b>'+(s.manager_percent!=null?num(s.manager_percent)+'%':(s.manager_rating!=null?num(s.manager_rating)*10+'%':'—'))+'</b><span>BAŞARI YÜZDESİ</span></div><div><b>'+missed+'</b><span>KAÇIRDIĞI MAÇ</span></div></div>'+
       '<button type="button" class="season-center-form" data-season-page="form_graph"><span>📈</span><div><b>MAÇLARIM VE FORM</b><small>MAÇ KARTLARI VE PUAN GRAFİĞİ</small></div><em>›</em></button>'+
+      (window.MKSK_PLAYER_PREVIEW?'':'<button type="button" class="season-center-form" data-season-page="monthly_report"><span aria-hidden="true">📋</span><div><b>AYLIK RAPORLARIM</b><small>MAÇ PERFORMANSIM VE AYLIK GELİŞİMİM</small></div><em aria-hidden="true">›</em></button>')+
       '<div class="season-center-links">'+
       '<button type="button" data-season-page="stats"><span>📊</span><b>PERFORMANSIM</b><small>MAÇ, GOL, ASİST VE PUAN</small></button>'+
       '<button type="button" data-season-page="messages"><span>✉️</span><b>MESAJLARIM</b><small>OKUNMAMIŞ MESAJLAR</small></button>'+
@@ -1711,6 +1712,7 @@ var openClubEmail;
     brand.insertAdjacentHTML('afterend',html);
     box.querySelectorAll('[data-season-page]').forEach(function(b){b.onclick=function(){
       var page=b.dataset.seasonPage;
+      if(page==='monthly_report'){openClubMonthlyReport(true);return;}
       openPage({messages:'manager_messages',team:'hub_team'}[page]||page);
     };});
     fillLiveLeaders(box);
