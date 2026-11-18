@@ -26,13 +26,12 @@ function openClubMonthlyReport(personal=false){
     }
     const [matches,roster]=await Promise.all([
       supabase.from('club_match_entries').select('match_date,opponent,our_score,opponent_score,player_entries').eq('season',season).is('cancelled_at',null).order('match_date',{ascending:false}).order('created_at',{ascending:false}),
-      supabase.from('players').select('id,full_name,position,archived_at').order('full_name')
+      supabase.from('players').select('id,full_name,position,archived_at').is('archived_at',null).order('full_name')
     ]);
     if(matches.error)throw matches.error;
     if(roster.error)throw roster.error;
     const games=matches.data||[];
-    const recorded=new Set(games.flatMap(game=>(game.player_entries||[]).map(entry=>entry.player_id)));
-    return {games,players:(roster.data||[]).filter(p=>!p.archived_at||recorded.has(p.id)).map(p=>({...p,keeper:keeper(p.position)}))};
+    return {games,players:(roster.data||[]).filter(p=>!p.archived_at).map(p=>({...p,keeper:keeper(p.position)}))};
   }
   void openMonthlyReport({load,season,player:personal,formatDate:clubDate});
 }
