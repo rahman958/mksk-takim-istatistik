@@ -65,8 +65,6 @@ function playerFocus(old,cur,keeper){
   if(cur.rated>=2&&number(cur.best.points)-cur.min>=2)return 'Performans istikrarı. Puanların '+display(cur.min)+'–'+display(number(cur.best.points))+' arasında değişti. En iyi maçındaki hazırlık rutinini gelecek maçlarda da uygula.';
   return cur.rated<2?'Performans eğilimini değerlendirmek için en az iki puanlı maç kaydı gerekiyor.':'İyi giden yönlerini sürdür. Gelecek ay maç başına katkını ve puan ortalamanı yeniden karşılaştır.';
 }
-const exampleComment='Gol katkın arttı. Ekimde 3 maçta 2, kasımda 4 maçta 4 gol attın. Maç başına golün 0,67’den 1,00’a, ortalama puanın 7,2’den 8,1’e çıktı. Kasımda dört maçın üçünde 8 ve üzeri puan aldın.';
-
 export async function openMonthlyReport({load,season,player=false,formatDate}){
   if(document.querySelector('.monthly-report[open]'))return;
   const dialog=document.createElement('dialog');
@@ -154,8 +152,9 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
         display(number(best.goals))+' gol · '+display(number(best.assists))+' asist · '+display(number(best.points))+' puan'+
         (keeper?' · '+display(number(best.goals_conceded))+' yediği gol':'')+'</p>'+
         (award(best.man_of_match)>0?'<span class="monthly-award">Maçın Adamı</span>':''):'<p>Öne çıkarmak için puan veya Maçın Adamı kaydı yok.</p>';
+      const contribution=[cur.goals==null?'':display(cur.goals)+' gol',cur.assists==null?'':display(cur.assists)+' asist'].filter(Boolean);
       const intro='Bu ay '+cur.played+' kayıtlı maçta oynadın.'+
-        (cur.goals!=null||cur.assists!=null?' Toplam katkın '+display(cur.goals)+' gol ve '+display(cur.assists)+' asist.':'');
+        (contribution.length?' Bu ayın maç kartlarında '+contribution.join(' ve ')+' kayıtlı.':'');
       out.innerHTML='<div class="monthly-metrics">'+
         metricCard(keeper?'Maç başına yediği gol':'Maç başına gol',enoughMatches?old.rate(keeper?'goals_conceded':'goals'):null,cur.rate(keeper?'goals_conceded':'goals'))+
         metricCard('Ortalama puan',enoughRatings?old.avg:null,cur.avg)+
@@ -163,7 +162,6 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
         reportCard('Aylık Yorum','<p>'+esc(intro)+'</p>'+remarks(comments))+
         reportCard('Öne Çıkan Maç',bestHtml)+
         reportCard('Gelecek Ayın Odağı','<p>'+esc(playerFocus(old,cur,keeper))+'</p>')+
-        '<details class="monthly-example"><summary>Örnek Oyuncu Yorumu</summary><p>Örnek verilerle hazırlanmıştır.</p><p>'+esc(exampleComment)+'</p></details>'+
         '<h3>Oyuncu Karşılaştırması</h3>'+table(labels,data)+
         '<p>Katılım sayısı maç kartlarındaki oyuncu kayıtlarına dayanır. Eksik kayıtlar kaçırılan maç olarak sayılmaz.</p><h3>Maç Maç Performans</h3>'+
         (played.length?table(['Tarih','Rakip','Skor','Gol','Asist','Puan','Maçın Adamı',...(keeper?['Yediği gol']:[])],played.map(g=>[formatDate(g.match_date),g.opponent,display(number(g.our_score))+'–'+display(number(g.opponent_score)),display(number(g.goals)),display(number(g.assists)),display(number(g.points)),award(g.man_of_match)>0?'Evet':award(g.man_of_match)===null?'—':'Hayır',...(keeper?[display(number(g.goals_conceded))]:[])])):'<p>Bu ay oyuncu performans kaydı yok.</p>');
