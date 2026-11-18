@@ -8,30 +8,26 @@ import { initQuickEntry } from './quick-entry.js?v=20261119-player-order-1';
 import { matchCards } from './match-cards.js?v=20261119-player-order-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261118-history-open-1';
-import {openMonthlyReport} from './monthly-report.js?v=20261118-match-awards-1';
+import {openMonthlyReport} from './monthly-report.js?v=20261119-report-analysis-1';
 
 function openClubMonthlyReport(personal=false){
   const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
-  if(personal ? !id||window.MKSK_PLAYER_PREVIEW : !staffCan('statistics'))return;
+  if(personal ? !id||window.MKSK_PLAYER_PREVIEW : !staffCan('analytics'))return;
   const keeper=position=>['GK','KL','KALECI'].includes(positionGroup({position}));
   async function load(){
     if(personal){
-      const [matches,profile]=await Promise.all([
+      const [matches,profile,totals]=await Promise.all([
         supabase.rpc('club_player_match_status',{p_player:id,p_season:season}),
-        supabase.from('players').select('position').eq('id',id).single()
+        supabase.from('players').select('position').eq('id',id).single(),
+        supabase.rpc('club_report_team_totals',{p_season:season})
       ]);
       if(matches.error)throw matches.error;
       if(profile.error)throw profile.error;
-      return {games:matches.data||[],players:[{id,keeper:keeper(profile.data.position)}]};
+      return {games:matches.data||[],players:[{id,full_name:window.__mkskPlayerHomeRecord?.full_name||'Oyuncu',keeper:keeper(profile.data.position)}],teamMonths:totals.error?{}:totals.data||{}};
     }
-    const [matches,roster]=await Promise.all([
-      supabase.from('club_match_entries').select('match_date,opponent,our_score,opponent_score,player_entries').eq('season',season).is('cancelled_at',null).order('match_date',{ascending:false}).order('created_at',{ascending:false}),
-      supabase.from('players').select('id,full_name,position,archived_at').is('archived_at',null).order('full_name')
-    ]);
-    if(matches.error)throw matches.error;
-    if(roster.error)throw roster.error;
-    const games=matches.data||[];
-    return {games,players:prioritizeClubPlayers((roster.data||[]).filter(p=>!p.archived_at)).map(p=>({...p,keeper:keeper(p.position)}))};
+    const result=await supabase.rpc('club_report_management_data',{p_season:season});
+    if(result.error)throw result.error;
+    return {games:result.data?.games||[],players:prioritizeClubPlayers(result.data?.players||[]).map(p=>({...p,keeper:keeper(p.position)}))};
   }
   void openMonthlyReport({load,season,player:personal,formatDate:clubDate});
 }
@@ -472,9 +468,9 @@ var missingAdminBase=loadAdmin;loadAdmin=async function(){await missingAdminBase
 
 // Owner-managed staff permissions and task approval.
 var staffState=null,staffPoll=null,staffBusy=false;
-var staffLabels={"free_jerseys":"BOŞ FORMA NUMARALARI / PAYLAŞIM KARTI","roster":"TRANSFER GİRİŞİ / OYUNCU DOSYALARI","statistics":"İSTATİSTİK / PUAN DÜZELTME / GENEL RAPOR","training":"ANTRENMAN VERİLERİ","matches":"MAÇ İŞLE / KAYITLI MAÇLARI DÜZENLE","lineup":"KADRO OLUŞTUR / TAKTİK / YAYINLA","penalties":"DİSİPLİN KURULU / SEVK / CEZA / UYARI","reports":"OYUNCU RAPORU / GELİŞİM HEDEFİ","messages":"MESAJ MERKEZİ","notifications":"E-POSTA GÖNDERME / GÖNDERİM GEÇMİŞİ","history":"DEĞİŞİKLİK GEÇMİŞİ","archives":"SEZON ARŞİVİ / ÖDÜLLER","settings":"SEZON / TAKIM AYARLARI","backup":"YEDEK AL","leaves":"İZİN YÖNETİMİ","contacts":"YÖNETİME ULAŞ / İLETİŞİM","visits":"GİRİŞ / SON GÖRÜLME","preview":"OYUNCU EKRANI ÖNİZLEME","links":"KİŞİSEL DAVET BAĞLANTILARI"};
-var staffAreaDescriptions={"roster":"Oyuncu ekleme, bilgi düzenleme ve takımdan çıkarma. Transfer sonrası kişisel davet oluşturma da dahildir.","free_jerseys":"Boş forma numaralarını görme ve paylaşılacak kartı açma.","statistics":"Sezon istatistikleri, puan düzeltme, eksik puanlar, karşılaştırma, aylık takım ve oyuncu raporları, istatistik görselleri.","training":"Antrenman katılımı, golü ve puanını düzenleme.","matches":"Yeni maç kaydı, geçmiş maça oyuncu ekleme, maç puanlarını düzeltme ve maç kartını geri alma.","lineup":"İlk kadro ve yedekler, oyuncu görevleri, taktik çalışmaları ve kadro yayını.","penalties":"Disipline sevk, ceza verme, çekilen ceza ve uyarı kayıtları.","reports":"Oyuncunun gelişim hedefi ve kişisel yönetici raporunu yazma. Aylık Genel Rapor istatistik yetkisindedir.","messages":"Oyunculardan gelen mesajlar, yanıtlama ve yönetim mesajları.","notifications":"E-posta gönderme yetkisidir. Uygulamadaki bildirim zili ayrıca açılmaz, kişinin yetkilerine göre çalışır.","history":"Kim, neyi değiştirdi ve eski / yeni değerler.","archives":"Geçmiş sezon kayıtları, takım geçmişi ve sezon ödülleri.","settings":"Sezon ve takım ayarlarına erişim. Ana yöneticiye özel işlemler bu kutuyla devredilmez.","backup":"Kulüp verilerini yedek olarak dışa aktarma.","leaves":"Oyuncu ve yönetici izin dönemlerini düzenleme.","contacts":"Yönetim iletişim kayıtlarını düzenleme.","visits":"Uygulamaya giriş ve son görülme bilgileri.","preview":"Oyuncu ekranını önizleme.","links":"Mevcut oyuncu için kişisel giriş daveti oluşturma. Transfer yetkisinde de davet oluşturulabilir."};
-var staffAreaGroups=[["OYUNCULAR",["roster","free_jerseys","preview","links"]],["MAÇ / KADRO / PERFORMANS",["matches","lineup","statistics","training","reports"]],["YÖNETİM / İLETİŞİM",["penalties","messages","notifications","leaves","contacts","visits"]],["SEZON / ARŞİV / SİSTEM",["archives","settings","history","backup"]]];
+var staffLabels={"free_jerseys":"BOŞ FORMA NUMARALARI / PAYLAŞIM KARTI","roster":"TRANSFER GİRİŞİ / OYUNCU DOSYALARI","statistics":"İSTATİSTİK / PUAN DÜZELTME","analytics":"GENEL RAPOR / AYLIK ANALİZLER","training":"ANTRENMAN VERİLERİ","matches":"MAÇ İŞLE / KAYITLI MAÇLARI DÜZENLE","lineup":"KADRO OLUŞTUR / TAKTİK / YAYINLA","penalties":"DİSİPLİN KURULU / SEVK / CEZA / UYARI","reports":"OYUNCU RAPORU / GELİŞİM HEDEFİ","messages":"MESAJ MERKEZİ","notifications":"E-POSTA GÖNDERME / GÖNDERİM GEÇMİŞİ","history":"DEĞİŞİKLİK GEÇMİŞİ","archives":"SEZON ARŞİVİ / ÖDÜLLER","settings":"SEZON / TAKIM AYARLARI","backup":"YEDEK AL","leaves":"İZİN YÖNETİMİ","contacts":"YÖNETİME ULAŞ / İLETİŞİM","visits":"GİRİŞ / SON GÖRÜLME","preview":"OYUNCU EKRANI ÖNİZLEME","links":"KİŞİSEL DAVET BAĞLANTILARI"};
+var staffAreaDescriptions={"analytics":"Takım ve oyuncu aylık raporları, katkı dağılımı, istikrar, sonuç karşılaştırması, kaleci ve birlikte oynama analizleri. Raporları paylaşma ve indirme.","roster":"Oyuncu ekleme, bilgi düzenleme ve takımdan çıkarma. Transfer sonrası kişisel davet oluşturma da dahildir.","free_jerseys":"Boş forma numaralarını görme ve paylaşılacak kartı açma.","statistics":"Sezon istatistikleri, puan düzeltme, eksik puanlar, karşılaştırma, istatistik görselleri. Genel Rapor için ayrı Aylık Analizler kutusunu aç.","training":"Antrenman katılımı, golü ve puanını düzenleme.","matches":"Yeni maç kaydı, geçmiş maça oyuncu ekleme, maç puanlarını düzeltme ve maç kartını geri alma.","lineup":"İlk kadro ve yedekler, oyuncu görevleri, taktik çalışmaları ve kadro yayını.","penalties":"Disipline sevk, ceza verme, çekilen ceza ve uyarı kayıtları.","reports":"Oyuncunun gelişim hedefi ve kişisel yönetici raporunu yazma. Aylık Genel Rapor ayrı Aylık Analizler yetkisindedir.","messages":"Oyunculardan gelen mesajlar, yanıtlama ve yönetim mesajları.","notifications":"E-posta gönderme yetkisidir. Uygulamadaki bildirim zili ayrıca açılmaz, kişinin yetkilerine göre çalışır.","history":"Kim, neyi değiştirdi ve eski / yeni değerler.","archives":"Geçmiş sezon kayıtları, takım geçmişi ve sezon ödülleri.","settings":"Sezon ve takım ayarlarına erişim. Ana yöneticiye özel işlemler bu kutuyla devredilmez.","backup":"Kulüp verilerini yedek olarak dışa aktarma.","leaves":"Oyuncu ve yönetici izin dönemlerini düzenleme.","contacts":"Yönetim iletişim kayıtlarını düzenleme.","visits":"Uygulamaya giriş ve son görülme bilgileri.","preview":"Oyuncu ekranını önizleme.","links":"Mevcut oyuncu için kişisel giriş daveti oluşturma. Transfer yetkisinde de davet oluşturulabilir."};
+var staffAreaGroups=[["OYUNCULAR",["roster","free_jerseys","preview","links"]],["MAÇ / KADRO / PERFORMANS",["matches","lineup","statistics","analytics","training","reports"]],["YÖNETİM / İLETİŞİM",["penalties","messages","notifications","leaves","contacts","visits"]],["SEZON / ARŞİV / SİSTEM",["archives","settings","history","backup"]]];
 function staffAreaChoices(areas){return staffAreaGroups.map(([title,keys])=>'<fieldset class="staff-area-group"><legend>'+safe(title)+'</legend>'+keys.map(k=>'<label class="staff-check"><input type="checkbox" data-area="'+k+'" '+(areas?.[k]?'checked':'')+'><span><strong>'+safe(staffLabels[k])+'</strong><small>'+safe(staffAreaDescriptions[k])+'</small></span></label>').join('')+'</fieldset>').join('');}
 
 function staffCan(area){return !!staffState&&(staffState.owner||staffState.enabled&&staffState.areas?.[area]);}
@@ -1384,7 +1380,7 @@ var openClubEmail;
   if(staffCan('lineup'))addMenuButton(quick,'KADRO OLUŞTUR','İLK KADRO VE YEDEKLER','users-round',function(){simpleActivate(simplePick('lineup'));});
   if(staffCan('roster'))addMenuButton(quick,'TRANSFER GİRİŞİ','YENİ OYUNCU EKLE','user-plus',openTransferEntry);
   if(staffCan('statistics'))addMenuButton(quick,'GÖRSEL VE ANALİZ PAYLAŞIMLARI','TAKIM LİSTESİ VE İSTATİSTİK GÖRSELLERİ','chart-column',openShareMenu);
-  if(staffCan('statistics'))addMenuButton(quick,'GENEL RAPOR','AYLIK TAKIM VE OYUNCU RAPORLARI','calendar-days',()=>openClubMonthlyReport());
+  if(staffCan('analytics'))addMenuButton(quick,'GENEL RAPOR','AYLIK TAKIM VE OYUNCU RAPORLARI','calendar-days',()=>openClubMonthlyReport());
   var players=section(box,'OYUNCULAR','folder-user');
   if(staffCanEnterPlayerData())addMenuButton(players,'OYUNCU / ANTRENMAN VERİLERİ','YETKİLİ OLDUĞUN ALANLARI DÜZENLE','chart-line',function(){void quickEntryApp?.open();});
   if(staffCan('roster'))addMenuButton(players,'OYUNCU DOSYALARI','OYUNCU SEÇ, İŞLEMLERİNİ AÇ','contact-round',function(){playerHubInstance?.openDirectory();});
