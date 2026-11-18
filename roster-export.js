@@ -76,6 +76,35 @@ export function wrapRosterText(ctx,value,width,fontSize,bold=false) {
   if(line)lines.push(line);
   return lines.length?lines:['—'];
 }
+
+export function managementBadge(role){
+  const text=String(role||'').trim();
+  if(!text||text==='—'||text==='-')return null;
+  const key=text.toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/İ/g,'I');
+  const colors=/BASKAN.*YARDIMCI/.test(key)?['#eadcff','#51267b','#c6a9e5']:
+    /GENEL BASKAN|TAKIM BASKAN/.test(key)?['#d3eaff','#153c64','#9fc6e9']:
+    ['#cef1eb','#164e48','#8dcec2'];
+  return {text:text.toLocaleUpperCase('tr-TR'),fill:colors[0],ink:colors[1],border:colors[2]};
+}
+function managementLayout(ctx,role,width){
+  const badge=managementBadge(role);
+  if(!badge)return null;
+  const size=22,lineHeight=27;
+  return {...badge,size,lineHeight,lines:wrapRosterText(ctx,badge.text,width-40,size,true)};
+}
+function drawManagementBadge(ctx,badge,x,y,width,height){
+  const bx=x+8,by=y+8,bw=width-16,bh=height-16,r=10;
+  ctx.beginPath();ctx.moveTo(bx+r,by);ctx.lineTo(bx+bw-r,by);
+  ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+r);ctx.lineTo(bx+bw,by+bh-r);
+  ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-r,by+bh);ctx.lineTo(bx+r,by+bh);
+  ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-r);ctx.lineTo(bx,by+r);
+  ctx.quadraticCurveTo(bx,by,bx+r,by);ctx.closePath();
+  ctx.fillStyle=badge.fill;ctx.fill();ctx.strokeStyle=badge.border;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=badge.ink;ctx.font='700 '+badge.size+'px Arial';ctx.textAlign='center';
+  const top=y+(height-badge.lines.length*badge.lineHeight)/2+badge.size;
+  badge.lines.forEach((line,i)=>ctx.fillText(line,x+width/2,top+i*badge.lineHeight));
+}
+
 export function sortRosterPlayers(players,orderIds=[]) {
  const ranks=new Map(orderIds.map((id,i)=>[id,i]));
  return players.filter(p=>!p.archived_at&&!p.team_left_on).slice().sort((a,b)=>Number(isRahman(b))-Number(isRahman(a))||groupOrder.indexOf(rosterGroup(a))-groupOrder.indexOf(rosterGroup(b))||(ranks.get(a.id)??999999)-(ranks.get(b.id)??999999)||Number(a.jersey_number??9999)-Number(b.jersey_number??9999)||String(a.full_name).localeCompare(String(b.full_name),'tr'));
@@ -90,7 +119,7 @@ export function drawRosterImage(canvas,players,options={}) {
   const headers=rosterColumns.map(([,text,w])=>{const label=text.toLocaleUpperCase('tr-TR');let size=24;while(size>17&&label.split(/\s+/).some(word=>{ctx.font=`700 ${size}px Arial`;return ctx.measureText(word).width>w-20;}))size--;return {size,lines:wrapRosterText(ctx,label,w-20,size,true)};});
   const headerHeight=Math.max(128,...headers.map(h=>h.lines.length*(h.size+7)+32));
   const width=rosterColumns.reduce((sum,c)=>sum+c[2],0)+margin*2;
-  const prepared=rows.map(p=>({p,values:rosterValues(p,season),height:62}));
+  const prepared=rows.map(p=>{const badge=managementLayout(ctx,p.management_role,rosterColumns[3][2]);return {p,badge,values:rosterValues(p,season),height:Math.max(62,badge?badge.lines.length*badge.lineHeight+32:62)};});
   let height=headerTop+headerHeight+170,last='';
   for(const row of prepared){const group=rowGroup(row.p);if(group!==last){height+=bandHeight;last=group;}height+=row.height;}
   // Keep a single image within a conservative mobile canvas pixel budget.
@@ -125,6 +154,7 @@ export function drawRosterImage(canvas,players,options={}) {
     left=margin;ctx.fillStyle=isRahman(row.p)?'#e0edf9':index%2?'#edf3f8':'#fff';index++;ctx.fillRect(margin,y,width-margin*2,row.height);
     row.values.forEach((value,j)=>{
       const colWidth=rosterColumns[j][2], key=rosterColumns[j][0];
+      if(key==='management_role'&&row.badge){drawManagementBadge(ctx,row.badge,left,y,colWidth,row.height);left+=colWidth;return;}
       const emphasized=['jersey_number','matches','goals','assists','success'].includes(key);
       ctx.fillStyle='#10243b';
       ctx.font=`${j===0||emphasized?'700':'500'} ${emphasized?font+4:font}px Arial`;
