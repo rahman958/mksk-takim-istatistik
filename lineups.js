@@ -22,7 +22,17 @@ function warning(id){const p=who(id);if(!p)return '';const remaining=penalties.f
 function options(id){return '<option value="">OYUNCU SEÇ</option>'+roster.filter(p=>available(p)||p.id===id).map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+html(upper(p.full_name))+' · '+html(p.jersey_number??'—')+'</option>').join('');}
 function status(message){$('.lineup-status').textContent=message;}
 async function data(){const p=await db.from('players').select('id,full_name,jersey_number,position,status,access_disabled,team_left_on').is('archived_at',null).order('full_name');if(p.error)throw p.error;roster=p.data;const c=await db.from('player_penalties').select('player_id,total_matches,served_matches,cancelled').eq('season',season());if(c.error)throw c.error;penalties=c.data;const s=await db.from('match_lineups').select('*').eq('season',season()).order('updated_at',{ascending:false}).limit(1000);if(s.error)throw s.error;saved=s.data;}
-async function open(){if(loading)return;loading=true;try{await data();if(!draft||draft.season!==season()){draft=saved.length?structuredClone(saved[0]):blank();dirty=false;}form();panel.hidden=false;panel.scrollIntoView({block:'start'});}catch(e){panel.hidden=false;status('KADRO YÜKLENEMEDİ: '+e.message);}finally{loading=false;}}
+async function open(){
+  panel.hidden=false;
+  window.MKSK_SCROLL_SECTION?.(panel);
+  if(loading)return;
+  loading=true;
+  if(!panel.querySelector('form'))panel.innerHTML='<h3>KADRO OLUŞTUR</h3><p class="lineup-status" role="status"></p>';
+  status('KADRO YÜKLENİYOR…');
+  try{await data();if(panel.hidden)return;if(!draft||draft.season!==season()){draft=saved.length?structuredClone(saved[0]):blank();dirty=false;}form();}
+  catch(e){if(!panel.hidden)status('KADRO YÜKLENEMEDİ: '+e.message);}
+  finally{loading=false;}
+}
 function tidyLineupScreen(){
  const editor=panel.querySelector('.lineup-editor'),top=panel.querySelector(':scope > .lineup-actions'),preview=panel.querySelector('.lineup-preview');
  if(top){top.classList.add('lineup-top-actions');const library=document.createElement('details');library.className='lineup-library';library.innerHTML='<summary>KAYITLI KADROLAR / KOPYALA</summary>';const saved=top.querySelector('label'),copy=top.querySelector('[data-action=copy]');if(saved)library.appendChild(saved);if(copy)library.appendChild(copy);top.appendChild(library);}
