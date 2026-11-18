@@ -3,10 +3,32 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 (() => {
   const $ = s => document.querySelector(s);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const labels = {players:'OYUNCU BİLGİLERİ',player_season_stats:'SEZON İSTATİSTİKLERİ',club_season_summary:'TAKIM MAÇ SAYISI',player_penalties:'CEZA',player_report_history:'YÖNETİCİ RAPORU',match_lineups:'KADRO',club_management_contacts:'YÖNETİM İLETİŞİM REHBERİ'};
+  const labels = {players:'OYUNCU BİLGİLERİ',player_season_stats:'SEZON İSTATİSTİKLERİ',club_season_summary:'TAKIM SEZON ÖZETİ',player_penalties:'CEZA',player_report_history:'YÖNETİCİ RAPORU',match_lineups:'KADRO',club_management_contacts:'YÖNETİM İLETİŞİM REHBERİ'};
   const fields = {full_name:'AD SOYAD',jersey_number:'FORMA',position:'MEVKİ',status:'DURUM',group_name:'OYUNCU GRUBU',management_role:'YÖNETİM GÖREVİ',performance_label:'PERFORMANS',development_goal:'GELİŞİM HEDEFİ',birth_date:'DOĞUM TARİHİ',joined_at:'TAKIMA GİRİŞ',join_year:'GİRİŞ YILI',team_left_on:'AYRILIŞ',access_disabled:'ERİŞİM KAPALI',matches:'MAÇ',goals:'GOL',assists:'ASİST',points:'PUAN',goals_conceded:'YENİLEN GOL',man_of_match:'MAÇIN ADAMI',success_rate:'BAŞARI YÜZDESİ',attendance_matches:'ANTRENMAN',attendance_goals:'ANT GOL',attendance_points:'ANT PUAN',discipline_referrals:'DİSİPLİN SEVK',reason:'CEZA NEDENİ',note:'NOT',total_matches:'CEZA MAÇ SAYISI',served_matches:'ÇEKİLEN MAÇLAR',cancelled:'SİLİNDİ',body:'RAPOR',deleted_at:'SİLİNME TARİHİ',title:'BAŞLIK',match_date:'MAÇ TARİHİ',match_time:'SAAT',venue:'SAHA',opponent:'RAKİP',positions:'İLK KADRO',bench:'YEDEKLER',size:'KİŞİ SAYISI'};
   let panel, page='', players=[], history=[], cursor=null,historyDeleted=false, requestId=crypto.randomUUID(), saved=false;
   Object.assign(fields,{display_name:'AD SOYAD',title:'GÖREV / BAŞLIK',phone:'TELEFON',enabled:'LİSTEDE GÖRÜNÜR',display_order:'LİSTE SIRASI'});
+  Object.assign(fields,{
+    historical_wins:'GEÇMİŞ GALİBİYET SAYISI',
+    historical_draws:'GEÇMİŞ BERABERLİK SAYISI',
+    historical_losses:'GEÇMİŞ MAĞLUBİYET SAYISI',
+    historical_matches:'GEÇMİŞ MAÇ SAYISI',
+    wins_adjustment:'GALİBİYET DÜZELTMESİ',
+    draws_adjustment:'BERABERLİK DÜZELTMESİ',
+    losses_adjustment:'MAĞLUBİYET DÜZELTMESİ',
+    manager_rating:'YÖNETİCİ PUANI',
+    manager_percent:'YÖNETİCİ BAŞARI YÜZDESİ',
+    season:'SEZON',
+    player_tasks:'OYUNCU GÖREVLERİ',
+    archived_at:'ARŞİV TARİHİ',
+    archived_previous_disabled:'ARŞİV ÖNCESİ ERİŞİM KAPALI',
+    player_note:'OYUNCU NOTU',
+    responsible_manager:'SORUMLU YÖNETİCİ',
+    author_id:'YAZAN KİŞİNİN HESABI',
+    author_name:'YAZAN KİŞİ',
+    given_on:'VERİLDİĞİ TARİH',
+    our_score:'TAKIM SKORU',
+    opponent_score:'RAKİP SKORU'
+  });
   const db = () => window.MKSK_DB;
   const season = () => $('#season-select')?.value || document.querySelector('select[name=season]')?.value || '2026-2027';
   const today = () => new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul'}).format(new Date());
@@ -37,7 +59,7 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
     const keys=record.changed_fields.filter(key=>!['created_at','updated_at','id','player_id'].includes(key));
     if(!keys.length)return '';
     return '<dl class="ct-history-values">'+keys.map(key=>
-      '<div><dt>'+esc(fields[key]||key)+'</dt><dd><span><b>ESKİ</b> '+esc(readable(record.old_data?.[key]))+
+      '<div><dt>'+esc(Object.hasOwn(fields,key)?fields[key]:'DİĞER ALAN')+'</dt><dd><span><b>ESKİ</b> '+esc(readable(record.old_data?.[key]))+
       '</span><span><b>YENİ</b> '+esc(readable(record.new_data?.[key]))+'</span></dd></div>'
     ).join('')+'</dl>';
   }
