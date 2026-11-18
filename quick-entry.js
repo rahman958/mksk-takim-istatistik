@@ -1,3 +1,4 @@
+import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>String(v||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
 export const quickFields=[['matches','MAÇ SAYISI'],['goals','ATTIĞI GOL'],['assists','ASİST'],['goals_conceded','YEDİĞİ GOL'],['man_of_match','MAÇIN ADAMI'],['attendance_matches','ANTRENMAN SAYISI'],['attendance_goals','ANTRENMAN GOLÜ'],['attendance_points','ANTRENMAN PUANI'],['discipline_referrals','DİSİPLİN SEVK SAYISI']];
@@ -10,7 +11,7 @@ export function initQuickEntry(api){
  function canLeave(){return !busy&&(!dirty||confirm('Kaydetmediğin değişikliklerden vazgeçilsin mi?'));}
  function lock(value){busy=value;dialog?.querySelectorAll('input,select,button').forEach(n=>n.disabled=value);}
  function keys(){return quickFields.filter(([key])=>api.can(areaFor(key))).map(([key])=>key);}
- async function activePlayers(){let all=[];for(let offset=0;;offset+=500){const r=await api.db().from('players').select('id,full_name,jersey_number,position').is('archived_at',null).order('full_name').range(offset,offset+499);if(r.error)throw r.error;all.push(...r.data);if(r.data.length<500)return all;}}
+ async function activePlayers(){let all=[];for(let offset=0;;offset+=500){const r=await api.db().from('players').select('id,full_name,jersey_number,position').is('archived_at',null).order('full_name').range(offset,offset+499);if(r.error)throw r.error;all.push(...r.data);if(r.data.length<500)return prioritizeClubPlayers(all);}}
  function picker(query=''){const select=dialog.querySelector('.qe-player'),q=norm(query),rows=people.filter(p=>norm(p.full_name+' '+(p.jersey_number??'')).includes(q));select.innerHTML='<option value="">OYUNCU SEÇ</option>'+rows.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.full_name)+' · '+esc(p.jersey_number??'—')+' · '+esc(p.position||'MEVKİ YOK')+'</option>').join('');if(current&&rows.some(p=>p.id===current.id))select.value=current.id;}
  function input(key,label,value){const rating=key==='manager_rating';return '<label>'+label+'<input name="'+key+'" type="number" inputmode="'+(rating?'decimal':'numeric')+'" min="0" max="'+(rating?10:100000)+'" step="'+(rating?'0.1':'1')+'" '+(rating?'placeholder="HENÜZ PUAN YOK"':'required')+' value="'+esc(value??'')+'"></label>';}
  function values(){const result={};for(const key of mode==='team'?['matches','wins','draws','losses']:keys()){const input=dialog.querySelector('[name="'+key+'"]');result[key]=input.value===''&&key==='manager_rating'?null:Number(input.value);}return result;}
