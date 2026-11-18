@@ -8,7 +8,7 @@ import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
 import { matchCards } from './match-cards.js?v=20261117-match-player-list-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261027-grouped-sections-1';
-import {openMonthlyReport} from './monthly-report.js?v=20261118-monthly-report-1';
+import {openMonthlyReport} from './monthly-report.js?v=20261118-report-cards-1';
 
 function openClubMonthlyReport(personal=false){
   const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
