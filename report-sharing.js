@@ -10,7 +10,7 @@ function blocks(root){
   }
   if(node.tagName==='svg'){out.push({svg:node.cloneNode(true)});return;}
   if(node.matches('h2,h3,h4,summary,p,li,dt,dd,.ra-tag,.ra-share,.ra-duo>div,.monthly-metric,.ra-bar-row')){
-   const text=node.textContent.trim().replace(/\s+/g,' ');
+   const text=(node.innerText||node.textContent).trim().replace(/\s+/g,' ');
    if(text)out.push({text,kind:node.matches('h2,h3,h4,summary')?'heading':'text'});
    return;
   }
