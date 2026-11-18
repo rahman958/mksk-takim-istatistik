@@ -3,7 +3,7 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261117-unified-bell-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage, drawPlayerListImage } from './roster-export.js?v=20261117-player-list-images-1';
-import { initPlayerHub } from './player-hub.js?v=20261116-dossier-form-1';
+import { initPlayerHub } from './player-hub.js?v=20261118-transfer-invite-1';
 import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
 import { matchCards } from './match-cards.js?v=20261118-stable-navigation-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
@@ -94,10 +94,14 @@ tabs.querySelectorAll('button').forEach(t=>t.onclick=()=>mode(t.dataset.loginMod
 
 function mountPlayerInvite(host,id){
  const button=document.createElement('button'),result=document.createElement('div');
- button.type='button';button.textContent='Davet Linki Oluştur';
+ button.type='button';button.textContent='DAVET BAĞLANTISI OLUŞTUR';
+ host.classList.add('transfer-invite-box');
+ const title=document.createElement('h3');title.textContent='OYUNCUNUN GİRİŞ DAVETİ';
+ const note=document.createElement('p');note.textContent='Oyuncunun uygulamaya kayıt olması için kişisel bağlantısını oluşturup kendisine gönder.';
+ host.append(title,note);
  result.setAttribute('role','status');
  button.onclick=async()=>{
-  if(!staffState?.owner)return;
+  if(!(staffCan('roster')||staffCan('links')))return;
   button.disabled=true;result.textContent='Davet hazırlanıyor…';
   try{
    const r=await supabase.rpc('create_player_invite',{target_player:id});
@@ -106,7 +110,7 @@ function mountPlayerInvite(host,id){
    const input=document.createElement('input'),copy=document.createElement('button');
    input.readOnly=true;input.value=location.origin+location.pathname+'#davet='+encodeURIComponent(r.data);
    input.setAttribute('aria-label','Kişisel davet bağlantısı');
-   copy.type='button';copy.textContent='Bağlantıyı Kopyala';
+   copy.type='button';copy.textContent='DAVET BAĞLANTISINI KOPYALA';
    copy.onclick=async()=>{try{await navigator.clipboard.writeText(input.value);copy.textContent='Kopyalandı';}catch(error){input.select();copy.textContent='Seçili bağlantıyı kopyala';}};
    result.append(input,copy);
   }catch(error){result.textContent='Davet oluşturulamadı: '+error.message;}
@@ -115,7 +119,7 @@ function mountPlayerInvite(host,id){
  host.append(button,result);
 }
 async function accountTools(){document.querySelectorAll('.player-edit').forEach(f=>{
- if(!canManageRoles)return;
+ if(!(staffCan('roster')||staffCan('links')))return;
  const host=document.createElement('div');
  f.querySelector('.data-entry-body')?.append(host);
  mountPlayerInvite(host,f.dataset.id);
@@ -146,10 +150,10 @@ async function addPlayer(e){
   }).select('id').single();
   if(r.error)throw r.error;
   form.reset();
-  status.textContent=name+' kaydedildi.';
-  if(staffState?.owner)mountPlayerInvite(feedback,r.data.id);
+  status.textContent='✓ '+name+' KAYDEDİLDİ. Şimdi aşağıdan giriş davetini oluştur.';
+  if(staffCan('roster')||staffCan('links'))mountPlayerInvite(feedback,r.data.id);
   try{await loadAdmin();}catch(error){status.textContent=name+' kaydedildi. Oyuncu listesini yenilemek için sayfayı yenile.';}
- }catch(error){status.textContent='Oyuncu eklenemedi: '+error.message;}
+ }catch(error){status.textContent=error.code==='23505'&&/players_full_name_key/.test(error.message)?'Bu isimde kayıt zaten var. Oyuncu dosyalarını ve Silinen Oyuncular listesini kontrol et. Silinen kaydı geri açabilir veya farklı bir oyuncuysa adını ayırt edecek şekilde yazabilirsin.':'Oyuncu eklenemedi: '+error.message;}
  finally{button.disabled=false;}
 }
 
@@ -2100,3 +2104,5 @@ document.addEventListener('click',event=>{
   const controls=el('season-controls');
   if(button&&dashboardPage==='settings'&&controls&&!controls.hidden)window.MKSK_SCROLL_SECTION(controls);
 });
+
+{const style=document.createElement('style');style.textContent='#transfer-feedback{display:block;padding:18px;border:2px solid #26725b;border-radius:16px;background:#effaf5;color:#123c31;margin:16px 0}#transfer-feedback:empty{display:none}.transfer-invite-box h3{font-size:18px;color:#153859;margin:16px 0 8px}.transfer-invite-box p{font-size:15px;line-height:1.5}.transfer-invite-box button{display:block;width:100%;min-height:48px;margin:10px 0;background:#173d63!important;color:white!important;border-radius:12px;padding:12px;font-weight:700;white-space:normal}.transfer-invite-box input{width:100%;box-sizing:border-box;font-size:14px;margin-top:12px;background:white;color:#183957}.transfer-invite-box [role=status]{overflow-wrap:anywhere}';document.head.append(style);}
