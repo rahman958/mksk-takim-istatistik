@@ -1,4 +1,4 @@
-import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals} from './report-analytics.js?v=20261119-report-layout-2';
+import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals,playerGames} from './report-analytics.js?v=20261119-comeback-report-1';
 import {installReportSharing} from './report-sharing.js?v=20261119-report-layout-2';
 const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
 const monthFmt=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric',timeZone:'UTC'});
@@ -79,7 +79,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
   document.body.append(dialog);dialog.showModal();
   const status=dialog.querySelector('[role=status]'),body=dialog.querySelector('.monthly-body');
   try{
-    const {games,players,teamMonths={}}=await load();
+    let {games,players,teamMonths={},overview=null}=await load();
     if(!dialog.open)return;
     const months=[...new Set(games.map(monthKey).filter(key=>/^\d{4}-\d{2}$/.test(key)))].sort().reverse();
     if(!months.length){status.textContent='Bu sezonda henüz maç kartı yok.';return;}
@@ -93,10 +93,9 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
     let view=player?'player':'team',shareMetric='goals';
     const sharing=installReportSharing(body,{content:out,title:()=>view==='team'?'GENEL RAPOR':'AYLIK OYUNCU RAPORU',subtitle:()=>monthLabel(month.value)+' · '+season+(view==='player'?' · '+(player?players[0]?.full_name:players.find(p=>p.id===picker.value)?.full_name||''):''),status});
     dialog.addEventListener('close',sharing.destroy,{once:true});
-    const forPlayer=(games,id)=>player?games:games.map(game=>{
-      const entry=(Array.isArray(game.player_entries)?game.player_entries:[]).find(e=>e?.player_id===id);
-      return {...game,...entry,status:entry?'OYNADI':'KATILIM KAYDI YOK'};
-    });
+    const forPlayer=(rows,id)=>player?rows:playerGames(rows,id);
+    const refresh=document.createElement('button');refresh.type='button';refresh.textContent='GÜNCEL VERİLERİ YENİLE';refresh.className='report-refresh';body.querySelector('[data-report]').before(refresh);
+    refresh.onclick=async()=>{if(refresh.disabled)return;refresh.disabled=true;status.textContent='Güncel kadro ve maç kayıtları yükleniyor…';try{const next=await load();if(!dialog.open)return;({games,players,teamMonths={},overview=null}=next);const selected=month.value,available=[...new Set(games.map(monthKey))].filter(key=>/^\d{4}-\d{2}$/.test(key)).sort().reverse();month.replaceChildren(...available.map(key=>new Option(monthLabel(key),key)));if(available.includes(selected))month.value=selected;if(!available.length){out.textContent='Bu sezonda maç kaydı yok.';status.textContent='';return;}render();status.textContent='Güncel kadro ve kayıtlarla yenilendi.';}catch(error){status.textContent='Yenilenemedi. '+error.message;}finally{refresh.disabled=false;}};
     function render(){
       sharing.invalidate();status.textContent='';
       const key=month.value,d=new Date(key+'-01T00:00:00Z');
@@ -125,7 +124,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
           old.scored&&cur.againstRate>old.againstRate?'Yenilen golü azaltmak':
           old.scored&&cur.goalsRate<old.goalsRate?'Maç başına golü artırmak':
           cur.againstRate>cur.goalsRate?'Gol farkını iyileştirmek':'Gol katkısını ve savunma dengesini sürdürmek';
-        out.innerHTML=managementAnalytics(now,prev,players,shareMetric)+'<details class="ra-card"><summary>AYLIK TAKIM ÖZETİ VE MAÇLAR</summary><section aria-label="Takım Özeti"><p class="monthly-period">'+esc(monthLabel(previousKey))+' ile karşılaştırma</p>'+
+        out.innerHTML=managementAnalytics(now,prev,players,shareMetric,{history:games,month:key,overview})+'<details class="ra-card"><summary>AYLIK TAKIM ÖZETİ VE MAÇLAR</summary><section aria-label="Takım Özeti"><p class="monthly-period">'+esc(monthLabel(previousKey))+' ile karşılaştırma</p>'+
           '<dl class="monthly-totals">'+totals.map(([label,value])=>'<div><dt>'+esc(label)+'</dt><dd>'+display(value)+'</dd></div>').join('')+'</dl>'+
           '<div class="monthly-metrics">'+
           metricCard('Galibiyet oranı',old.winRate,cur.winRate,{suffix:'%'})+
@@ -163,7 +162,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
       const contribution=[cur.goals==null?'':display(cur.goals)+' gol',cur.assists==null?'':display(cur.assists)+' asist'].filter(Boolean);
       const intro='Bu ay '+cur.played+' kayıtlı maçta oynadın.'+
         (contribution.length?' Bu ayın maç kartlarında '+contribution.join(' ve ')+' kayıtlı.':'');
-      out.innerHTML=personalAnalytics(newGames,oldGames,player?teamMonths[key]:teamTotals(now),keeper)+'<details class="ra-card"><summary>AYLIK GELİŞİM AYRINTILARI</summary><div class="monthly-metrics">'+
+      out.innerHTML=personalAnalytics(newGames,oldGames,player?teamMonths[key]:teamTotals(now),keeper,{history:forPlayer(games,id),month:key,players:player?players:players.filter(p=>p.id===id),overview})+'<details class="ra-card"><summary>AYLIK GELİŞİM AYRINTILARI</summary><div class="monthly-metrics">'+
         metricCard(keeper?'Maç başına yediği gol':'Maç başına gol',enoughMatches?old.rate(keeper?'goals_conceded':'goals'):null,cur.rate(keeper?'goals_conceded':'goals'))+
         metricCard('Ortalama puan',enoughRatings?old.avg:null,cur.avg)+
         metricCard('Maç başına asist',enoughMatches?old.rate('assists'):null,cur.rate('assists'))+'</div>'+
