@@ -1,3 +1,4 @@
+import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 /* Match-card centre: one clear place to add, inspect and remove match cards. */
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Istanbul' }).format(new Date());
@@ -40,7 +41,7 @@ async function loadData(){
   ]);
   if(players.error) throw players.error;
   if(cards.error) throw cards.error;
-  people=players.data||[];
+  people=prioritizeClubPlayers(players.data);
   if(record.error) throw record.error;
   const {matches,wins,draws,losses}=record.data;
   teamRecord={matches,wins,draws,losses};
