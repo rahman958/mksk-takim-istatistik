@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage, drawPlayerListImage } from './roster-export.js?v=20261117-player-list-images-1';
 import { initPlayerHub } from './player-hub.js?v=20261116-dossier-form-1';
 import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
-import { matchCards } from './match-cards.js?v=20261118-match-entry-2';
+import { matchCards } from './match-cards.js?v=20261118-stable-navigation-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261118-history-open-1';
 import {openMonthlyReport} from './monthly-report.js?v=20261118-match-awards-1';
@@ -277,7 +277,7 @@ var beforeEditorSections=compactCards;compactCards=function(){beforeEditorSectio
 setInterval(()=>{if(activeRole==='admin'&&dashboardPage==='visits'&&document.visibilityState==='visible')el('visit-panel')?.querySelector('button')?.click();},30000);
 start();
 
-import './navigation.js?v=20261116-blue-theme-1';
+import './navigation.js?v=20261118-stable-navigation-1';
 
 import './club-leaves.js?v=20261116-blue-theme-1';
 
@@ -1941,8 +1941,7 @@ var openClubEmail;
     if(String(player?.id)===String(id))renderCompactStats(player);
     return result;
   };
-  var priorSetPlayerPage=setPlayerPage;
-  setPlayerPage=function(page){var r=priorSetPlayerPage.apply(this,arguments);if(page==='stats')setTimeout(function(){var h=el('player-stats');if(h)h.scrollIntoView({block:'start',behavior:'smooth'});},0);return r;};
+
   var style=document.createElement('style');style.id='mksk-player-stats-compact-style-20261106';
   style.textContent='#player-stats .mksk-player-stats-compact{max-width:720px;margin:0 auto;border:1px solid #b9cce0;border-radius:20px;overflow:hidden;background:#f8fbff;color:#153a62;box-shadow:0 10px 25px #254b7214}#player-stats .mksk-player-stats-compact header{padding:18px 20px;background:linear-gradient(120deg,#123f70,#60428c);color:#fff}#player-stats .mksk-player-stats-compact header span{display:block;font-size:10px;font-weight:900;letter-spacing:.06em;opacity:.8}#player-stats .mksk-player-stats-compact h3{margin:5px 0 0;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:22px;letter-spacing:.01em}.mksk-ps-core{padding:17px}.mksk-ps-section-title{font-size:12px;font-weight:900;letter-spacing:.07em;color:#446582;margin-bottom:11px}.mksk-ps-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.mksk-ps-card{min-width:0;padding:12px 6px;border:1px solid #cad8e7;border-top:4px solid #6a91bb;border-radius:14px;background:#fff;text-align:center}.mksk-ps-card.gold{border-top-color:#aecbf0}.mksk-ps-card.blue{border-top-color:#4386be}.mksk-ps-card.purple{border-top-color:#8054aa}.mksk-ps-card.pink{border-top-color:#bd6281}.mksk-ps-card i{display:block;font-style:normal;font-size:17px;line-height:1}.mksk-ps-card strong{display:block;margin:4px 0 2px;font-size:24px;color:#143d69}.mksk-ps-card span{display:block;font-size:9px;font-weight:900;line-height:1.2;color:#526f8b}.mksk-ps-form{margin:14px 0;padding:13px 14px 11px;border-radius:15px;background:linear-gradient(135deg,#193f69,#315d8a);color:#fff}.mksk-ps-form>div:first-child{display:flex;justify-content:space-between;align-items:center;font-size:12px}.mksk-ps-form b{font-size:12px}.mksk-ps-form strong{font-size:17px;color:#fff!important;-webkit-text-fill-color:#fff!important}.mksk-ps-bars{display:flex;gap:7px;align-items:flex-end;height:46px;margin-top:9px}.mksk-ps-bars i{display:block;flex:1;min-height:10px;border-radius:5px 5px 2px 2px;background:#83b4db}.mksk-ps-bars i.b1,.mksk-ps-bars i.b3{background:#aecbf0}.mksk-ps-foot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.mksk-ps-foot div{padding:11px 7px;border:1px solid #cbd9e8;border-radius:12px;background:#fff;text-align:center}.mksk-ps-foot span{display:block;font-size:9px;font-weight:900;line-height:1.25;color:#59748d}.mksk-ps-foot strong{display:block;margin-top:4px;font-size:21px;color:#173f6c}@media(max-width:480px){#player-stats .mksk-player-stats-compact{border-radius:16px}.mksk-ps-core{padding:13px}.mksk-ps-cards{gap:7px}.mksk-ps-card{padding:10px 3px}.mksk-ps-card strong{font-size:20px}.mksk-ps-card span{font-size:8px}.mksk-ps-foot{gap:6px}.mksk-ps-foot strong{font-size:18px}}';
   document.head.appendChild(style);
@@ -2038,5 +2037,45 @@ show = function(view) {
   const result = showWithNotifications(view);
   void refreshPlayerNotifications();
   void refreshAdminNotifications();
+  return result;
+};
+
+const adminSectionStarts={
+  hub_home:['simple-admin-menu'],roster:['roster-list'],statistics:['share-actions','roster-list'],
+  messages:['admin-inbox'],visits:['visit-panel'],settings:['season-controls'],penalties:['admin-penalties'],
+  jerseys:['jersey-panel'],player_info:['player-info-panel'],staff:['staff-panel'],
+  corrections:['admin-corrections'],comparison:['club-comparison'],missing_ratings:['missing-ratings-panel'],
+  team_history:['admin-team-history'],season_archive:['admin-season-archive'],
+  season_awards:['admin-season-awards'],season_cards:['club-season-cards']
+};
+const playerSectionStarts={
+  hub_profile:['simple-player-menu'],hub_team:['player-team-overview'],stats:['player-stat-order'],
+  form_graph:['player-form-chart'],manager_messages:['unified-player-message-center','player-manager-messages'],
+  reports:['player-report'],penalties:['player-penalties'],self_growth:['player-self-growth'],
+  my_lineup:['player-own-duty'],staff_tasks:['player-staff-tasks'],team_history:['player-team-history'],
+  season_archive:['player-season-archive'],season_awards:['player-season-awards'],my_awards:['player-season-awards']
+};
+let sectionScrollTicket=0;
+function showSectionStart(view,page,getPage,starts){
+  const ticket=++sectionScrollTicket;
+  requestAnimationFrame(()=>{
+    const root=el(view);
+    if(ticket!==sectionScrollTicket||getPage()!==page||!root?.getClientRects().length||document.querySelector('dialog[open]'))return;
+    const target=(starts[page]||[]).map(el).find(node=>node&&root.contains(node)&&node.getClientRects().length);
+    (target||root.querySelector('.admin-heading')||root).scrollIntoView({block:'start',behavior:'instant'});
+  });
+}
+const dashboardPageBeforeStableNavigation=setDashboardPage;
+setDashboardPage=function(page){
+  const prior=dashboardPage;
+  const result=dashboardPageBeforeStableNavigation.apply(this,arguments);
+  if(prior!==dashboardPage&&dashboardPage===page)showSectionStart('admin-view',page,()=>dashboardPage,adminSectionStarts);
+  return result;
+};
+const playerPageBeforeStableNavigation=setPlayerPage;
+setPlayerPage=function(page){
+  const prior=playerDashboardPage;
+  const result=playerPageBeforeStableNavigation.apply(this,arguments);
+  if(prior!==playerDashboardPage)showSectionStart('player-view',playerDashboardPage,()=>playerDashboardPage,playerSectionStarts);
   return result;
 };
