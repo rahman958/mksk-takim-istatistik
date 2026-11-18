@@ -48,7 +48,7 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
   function readable(value) { if(value===null||value===undefined)return '—';if(typeof value==='boolean')return value?'EVET':'HAYIR';if(Array.isArray(value))return value.map(x=>typeof x==='object'?JSON.stringify(x,formatAuditDate):formatAuditDate('',x)).join(', ')||'—';if(typeof value==='object')return JSON.stringify(value,formatAuditDate);return String(formatAuditDate('',value)); }
   async function open(target) {
     page=target;panel.hidden=false;panel.innerHTML='<h3>'+({history:'DEĞİŞİKLİK GEÇMİŞİ / GERİ AL',backup:'VERİ YEDEĞİ',match:'MAÇI TEK EKRANDAN İŞLE',links:'UYGULAMA LİNKLERİ'}[target])+'</h3><p class="ct-message" role="status">YÜKLENİYOR...</p><div class="ct-body"></div>';
-    try { players=await all('players',q=>q.order('full_name'));if(page!==target)return;if(target==='history'){history=[];cursor=null;historyUI();await loadHistory();}if(target==='backup')backupUI();if(target==='match')await matchUI();if(target==='links')linksUI();message(''); }catch(e){message('AÇILAMADI: '+e.message,true);}
+    try { if(target!=='backup')players=await all('players',q=>q.order('full_name'));if(page!==target||panel.hidden)return;if(target==='history'){history=[];cursor=null;historyUI();await loadHistory();}if(target==='backup')backupUI();if(target==='match')await matchUI();if(target==='links')linksUI();if(target!=='history')message(''); }catch(e){message('AÇILAMADI: '+e.message,true);}
   }
   function historyUI(){panel.querySelector('.ct-body').innerHTML='<p>BU ÖZELLİK DEVREYE GİRDİKTEN SONRAKİ DEĞİŞİKLİKLER KAYDEDİLİR. YENİ KAYITLARI VE ERİŞİM YETKİLERİNİ KENDİ EKRANINDAN DÜZENLE. GERİ ALMA DA GEÇMİŞE YAZILIR.</p><p>BURADAKİ SİLME OYUNCU VERİSİNİ DEĞİŞTİRMEZ. GEÇMİŞ KAYDI SİLİNEN KAYITLARA TAŞINIR VE GERİ ALINABİLİR.</p><label>GÖRÜNÜM<select class="ct-history-mode"><option value="active">AKTİF GEÇMİŞ</option><option value="deleted">SİLİNEN KAYITLAR</option></select></label><label>GEÇMİŞTE ARA<input class="ct-search" type="search" placeholder="OYUNCU, YÖNETİCİ, ALAN VEYA DEĞER"></label><button class="ct-refresh">YENİLE</button><div class="ct-history"></div><button class="ct-more">DAHA ESKİ KAYITLAR</button>';panel.querySelector('.ct-history-mode').value=historyDeleted?'deleted':'active';panel.querySelector('.ct-history-mode').onchange=async e=>{historyDeleted=e.target.value==='deleted';history=[];cursor=null;await loadHistory();};panel.querySelector('.ct-search').oninput=drawHistory;panel.querySelector('.ct-refresh').onclick=async()=>{history=[];cursor=null;await loadHistory();};panel.querySelector('.ct-more').onclick=loadHistory;bulkHistoryUI();}
   async function loadHistory(){const b=panel.querySelector('.ct-more');b.disabled=true;try{let q=db().from('club_change_history').select('*').order('id',{ascending:false}).limit(200);q=historyDeleted?q.not('hidden_at','is',null):q.is('hidden_at',null);if(cursor)q=q.lt('id',cursor);const r=await q;if(r.error)throw r.error;history.push(...r.data);cursor=r.data.at(-1)?.id||cursor;b.hidden=r.data.length<200;drawHistory();message(history.length+' KAYIT YÜKLENDİ.');}catch(e){message(e.message,true);}finally{b.disabled=false;}}
@@ -182,8 +182,9 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
       ['roster-list','roster-filters','roster','add-player-area','share-actions','team-summary','season-controls','birthday-notice','search'].forEach(id=>{const node=document.getElementById(id);if(node)node.hidden=true;});
       const title={match:'MAÇ KARTLARI',history:'DEĞİŞİKLİK GEÇMİŞİ',backup:'YEDEK AL',links:'UYGULAMA LİNKLERİ'}[target]||'ARAÇLAR';
       const heading=$('.admin-heading h2');if(heading)heading.textContent=title;
-      await open(target);
-      panel.scrollIntoView({block:'start',behavior:'auto'});
+      const loaded=open(target);
+      window.MKSK_SCROLL_SECTION?.(panel);
+      await loaded;
     }catch(error){
       if(panel){panel.hidden=false;panel.innerHTML='<h3>ARAÇ AÇILAMADI</h3><p role="alert">'+esc(error.message)+'</p>';}
     }
