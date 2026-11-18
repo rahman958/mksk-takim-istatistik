@@ -8,6 +8,34 @@ import { initQuickEntry } from './quick-entry.js?v=20261116-navigation-audit-1';
 import { matchCards } from './match-cards.js?v=20261117-match-player-list-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261027-grouped-sections-1';
+import {openMonthlyReport} from './monthly-report.js?v=20261118-monthly-report-1';
+
+function openClubMonthlyReport(personal=false){
+  const season=selectedSeason, id=selfGrowthPlayer;
+  if(personal ? !id||window.MKSK_PLAYER_PREVIEW : !staffCan('statistics'))return;
+  const keeper=position=>['GK','KL','KALECI'].includes(positionGroup({position}));
+  async function load(){
+    if(personal){
+      const [matches,profile]=await Promise.all([
+        supabase.rpc('club_player_match_status',{p_player:id,p_season:season}),
+        supabase.from('players').select('position').eq('id',id).single()
+      ]);
+      if(matches.error)throw matches.error;
+      if(profile.error)throw profile.error;
+      return {games:matches.data||[],players:[{id,keeper:keeper(profile.data.position)}]};
+    }
+    const [matches,roster]=await Promise.all([
+      supabase.from('club_match_entries').select('match_date,opponent,our_score,opponent_score,player_entries').eq('season',season).is('cancelled_at',null).order('match_date',{ascending:false}).order('created_at',{ascending:false}),
+      supabase.from('players').select('id,full_name,position,archived_at').order('full_name')
+    ]);
+    if(matches.error)throw matches.error;
+    if(roster.error)throw roster.error;
+    const games=matches.data||[];
+    const recorded=new Set(games.flatMap(game=>(game.player_entries||[]).map(entry=>entry.player_id)));
+    return {games,players:(roster.data||[]).filter(p=>!p.archived_at||recorded.has(p.id)).map(p=>({...p,keeper:keeper(p.position)}))};
+  }
+  void openMonthlyReport({load,season,player:personal,formatDate:clubDate});
+}
 var config=window.MKSK_CONFIG;
 var supabase=null;
 function el(id){return document.getElementById(id);}
@@ -1347,6 +1375,7 @@ var openClubEmail;
   if(staffCan('lineup'))addMenuButton(quick,'KADRO OLUŞTUR','İLK KADRO VE YEDEKLER','users-round',function(){simpleActivate(simplePick('lineup'));});
   if(staffCan('roster'))addMenuButton(quick,'TRANSFER GİRİŞİ','YENİ OYUNCU EKLE','user-plus',openTransferEntry);
   if(staffCan('statistics'))addMenuButton(quick,'GÖRSEL VE ANALİZ PAYLAŞIMLARI','TAKIM LİSTESİ VE İSTATİSTİK GÖRSELLERİ','chart-column',openShareMenu);
+  if(staffCan('statistics'))addMenuButton(quick,'GENEL RAPOR','AYLIK TAKIM VE OYUNCU RAPORLARI','calendar-days',()=>openClubMonthlyReport());
   var players=section(box,'OYUNCULAR','folder-user');
   if(staffCanEnterPlayerData())addMenuButton(players,'OYUNCU / ANTRENMAN VERİLERİ','YETKİLİ OLDUĞUN ALANLARI DÜZENLE','chart-line',function(){void quickEntryApp?.open();});
   if(staffCan('roster'))addMenuButton(players,'OYUNCU DOSYALARI','OYUNCU SEÇ, İŞLEMLERİNİ AÇ','contact-round',function(){playerHubInstance?.openDirectory();});
@@ -1414,6 +1443,15 @@ var openClubEmail;
    box.insertAdjacentHTML('beforeend','<div class="profile-center-brand"><img src="güncel logo.jfif" alt="MKSK logosu"><span><strong>OYUNCU PANELİ</strong><small>BANA AİT BİLGİLER</small><em>TAKIM KURULUŞ: 11.06.2008</em></span></div><p class="profile-center-caption">HIZLI ERİŞİM</p>');
    var main=document.createElement('div');main.className='profile-center-main';box.appendChild(main);
    profileCenterButton(main,'PERFORMANSIM','MAÇ, GOL, ASİST VE PUAN','chart-no-axes-combined',function(){setPlayerPage('stats');},true);
+   if(!window.MKSK_PLAYER_PREVIEW){
+     const report=profileCenterButton(main,'AYLIK RAPORLARIM','MAÇ PERFORMANSIM VE AYLIK GELİŞİMİM','calendar-days',()=>openClubMonthlyReport(true),true);
+     report.classList.add('player-monthly-report');
+     const symbol=document.createElement('span');
+     symbol.className='profile-center-symbol';
+     symbol.setAttribute('aria-hidden','true');
+     symbol.textContent='📋';
+     report.firstElementChild.replaceWith(symbol);
+   }
    var mini=document.createElement('div');mini.className='profile-center-mini';box.appendChild(mini);
 
 
