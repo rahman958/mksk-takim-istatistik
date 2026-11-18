@@ -1,5 +1,5 @@
-import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals} from './report-analytics.js?v=20261119-report-analysis-1';
-import {installReportSharing} from './report-sharing.js?v=20261119-report-analysis-1';
+import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals} from './report-analytics.js?v=20261119-report-layout-2';
+import {installReportSharing} from './report-sharing.js?v=20261119-report-layout-2';
 const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
 const monthFmt=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric',timeZone:'UTC'});
 const monthLabel=key=>monthFmt.format(new Date(key+'-01T00:00:00Z'));
@@ -103,6 +103,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
       d.setUTCMonth(d.getUTCMonth()-1);
       const previousKey=d.toISOString().slice(0,7),labels=['Gösterge',monthLabel(previousKey),monthLabel(key)];
       const prev=games.filter(g=>monthKey(g)===previousKey),now=games.filter(g=>monthKey(g)===key);
+      if(picker){const selected=picker.value,ordered=players.slice().sort((a,b)=>{const pa=playerMonth(forPlayer(now,a.id)),pb=playerMonth(forPlayer(now,b.id));return Number(pb.played>0)-Number(pa.played>0)||(pb.avg??-1)-(pa.avg??-1);});picker.replaceChildren(...ordered.map(p=>new Option(p.full_name,p.id)));if(picker.dataset.userChosen&&ordered.some(p=>p.id===selected))picker.value=selected;}
       body.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
       const playerLabel=body.querySelector('[data-player-label]');
       if(playerLabel)playerLabel.hidden=view!=='player';
@@ -174,7 +175,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
         (played.length?table(['Tarih','Rakip','Skor','Gol','Asist','Puan','Maçın Adamı',...(keeper?['Yediği gol']:[])],played.map(g=>[formatDate(g.match_date),g.opponent,display(number(g.our_score))+'–'+display(number(g.opponent_score)),display(number(g.goals)),display(number(g.assists)),display(number(g.points)),award(g.man_of_match)>0?'Evet':'—',...(keeper?[display(number(g.goals_conceded))]:[])])):'<p>Bu ay oyuncu performans kaydı yok.</p>')+'</details>';
     }
     month.onchange=render;
-    if(picker)picker.onchange=render;
+    if(picker)picker.onchange=()=>{picker.dataset.userChosen='1';render();};
     body.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{view=button.dataset.view;render();});
     render();
   }catch(error){status.textContent='Rapor açılamadı. '+error.message;}
