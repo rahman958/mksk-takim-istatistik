@@ -8,7 +8,7 @@ import { initQuickEntry } from './quick-entry.js?v=20261119-player-order-1';
 import { matchCards } from './match-cards.js?v=20261119-player-order-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261118-history-open-1';
-import {openMonthlyReport} from './monthly-report.js?v=20261119-report-layout-2';
+import {openMonthlyReport} from './monthly-report.js?v=20261119-comeback-report-1';
 
 function openClubMonthlyReport(personal=false){
   const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
@@ -16,18 +16,19 @@ function openClubMonthlyReport(personal=false){
   const keeper=position=>['GK','KL','KALECI'].includes(positionGroup({position}));
   async function load(){
     if(personal){
-      const [matches,profile,totals]=await Promise.all([
+      const [matches,profile,totals,overview]=await Promise.all([
         supabase.rpc('club_player_match_status',{p_player:id,p_season:season}),
-        supabase.from('players').select('position').eq('id',id).single(),
-        supabase.rpc('club_report_team_totals',{p_season:season})
+        supabase.from('players').select('full_name,position,player_season_stats(*)').eq('id',id).single(),
+        supabase.rpc('club_report_team_totals',{p_season:season}),
+        supabase.rpc('club_dashboard_totals',{p_season:season})
       ]);
       if(matches.error)throw matches.error;
       if(profile.error)throw profile.error;
-      return {games:matches.data||[],players:[{id,full_name:window.__mkskPlayerHomeRecord?.full_name||'Oyuncu',keeper:keeper(profile.data.position)}],teamMonths:totals.error?{}:totals.data||{}};
+      return {games:matches.data||[],players:[{id,full_name:profile.data.full_name,season_stats:(profile.data.player_season_stats||[]).find(s=>s.season===season)||{},keeper:keeper(profile.data.position)}],teamMonths:totals.error?{}:totals.data||{},overview:overview.error?null:overview.data};
     }
     const result=await supabase.rpc('club_report_management_data',{p_season:season});
     if(result.error)throw result.error;
-    return {games:result.data?.games||[],players:prioritizeClubPlayers(result.data?.players||[]).map(p=>({...p,keeper:keeper(p.position)}))};
+    return {overview:result.data?.overview||null,games:result.data?.games||[],players:prioritizeClubPlayers(result.data?.players||[]).map(p=>({...p,keeper:keeper(p.position)}))};
   }
   void openMonthlyReport({load,season,player:personal,formatDate:clubDate});
 }
