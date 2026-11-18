@@ -1,7 +1,7 @@
 const n=v=>v==null||String(v).trim()===''||!Number.isFinite(Number(v))?null:Number(v);
 const e=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const f=v=>v==null?'—':Number(v).toLocaleString('tr-TR',{maximumFractionDigits:2});
-export function playerGames(games,id){return games.map(g=>{const entry=(g.player_entries||[]).find(x=>x.player_id===id);return {...g,...entry,status:entry?'OYNADI':'KAYIT YOK'};});}
+export function playerGames(games,id){return games.map(g=>{const entry=(g.player_entries||[]).find(x=>x.player_id===id);const absent=!entry&&Array.isArray(g.match_roster)&&g.match_roster.includes(id);return {...g,...entry,status:entry?'OYNADI':absent?'OYNAMADI':'KAYIT YOK',confirmed_absent:absent};});}
 export function consistency(games){
  const played=games.filter(g=>g.status==='OYNADI');
  const rated=played.filter(g=>n(g.points)!==null&&n(g.points)>=0&&n(g.points)<=10).sort((a,b)=>String(a.match_date).localeCompare(String(b.match_date))||String(a.id||'').localeCompare(String(b.id||''))).slice(-5);
@@ -54,12 +54,12 @@ function shareCard(stats,totals,complete=true){
 }
 function resultCard(rows,personal){return '<details class="ra-card"><summary>GALİBİYET / MAĞLUBİYET'+(personal?' PERFORMANSIM':' KARŞILAŞTIRMASI')+'</summary>'+table(['Sonuç','Maç',...(personal?[]:['Atılan gol / maç','Yenilen gol / maç']),'Ort. puan','Puan kaydı'],rows.map(r=>[r.label,r.matches,...(personal?[]:[f(r.goals),f(r.against)]),f(r.avg),r.rated]))+'<p>Az sayıda maçtan kesin sonuç çıkarılmaz. Beraberlikler ayrı gösterilir.</p></details>';}
 function keeperCard(games,previous){const k=keeperStats(games),old=keeperStats(previous);return card('KALECİ RAPORUM',table(['Gösterge','Önceki ay','Seçilen ay'],[['Yenilen gol',f(old.against),f(k.against)],['Yenilen gol / maç',f(old.avg),f(k.avg)],['Gol yemeden bitirilen',f(old.clean),f(k.clean)],['Ort. puan',f(old.rating),f(k.rating)],['Gol verisi olan maç',old.known+'/'+old.played,k.known+'/'+k.played]])+'<p>Yalnız kalecinin kendi kaydındaki yenilen gol kullanılır. Takımın yediği gol otomatik olarak kaleciye yazılmaz.</p>');}
-export function personalAnalytics(games,previous,totals,keeper){
+export function personalAnalytics(games,previous,totals,keeper,options={}){
  const shares=contribution(games,totals),stable=consistency(games),complete=totals?.games===games.length;
  const cards=[{ready:complete&&(shares.goalShare!==null||shares.assistShare!==null),html:shareCard(shares,totals,complete)},{ready:stable.count>0,html:stabilityCard(stable)}];cards.sort((a,b)=>Number(b.ready)-Number(a.ready));
- return '<div class="ra-analysis">'+cards.map(c=>c.html).join('')+resultCard(outcomes(games,true),true)+(keeper?keeperCard(games,previous):'')+'</div>';
+ return '<div class="ra-analysis">'+cards.map(c=>c.html).join('')+resultCard(outcomes(games,true),true)+(keeper?keeperCard(games,previous):'')+comebackCard(options.history||games,options.month)+(options.players?seasonRosterSnapshot(options.players,options.overview,true):'')+'</div>';
 }
-export function managementAnalytics(games,previous,players,metric='goals'){
+export function managementAnalytics(games,previous,players,metric='goals',options={}){
  const totals=teamTotals(games),scored=players.map(p=>({p,stats:contribution(playerGames(games,p.id),totals),stable:consistency(playerGames(games,p.id))}));
  const key=metric==='assists'?'assistShare':'goalShare';
  const sorted=scored.slice().sort((a,b)=>(b.stats[key]??-1)-(a.stats[key]??-1));
@@ -79,7 +79,7 @@ export function managementAnalytics(games,previous,players,metric='goals'){
  card('İSTİKRAR ANALİZİ',stableRows(rated.slice(0,6))+(rated.length>6?'<details class="ra-more"><summary>Diğer puanlı oyuncular</summary>'+stableRows(rated.slice(6))+'</details>':'')+(firstChart?'<h4>'+e(firstChart.p.full_name)+'</h4>'+chart(firstChart.stable):'<p>Bu ay puanlı maç kaydı yok.</p>')+'<p class="ra-footnote">En az 3 puanı olanlar önce, puanı az olanlar sonra gösterilir. İstikrar, yüksek puanla aynı şey değildir.</p>','ra-blue')+
  resultCard(outcomes(games),false)+'<details class="ra-card"><summary>KALECİ RAPORLARI</summary>'+goalieRows(goalies.filter(r=>r.g.known>0))+'<p>Gol verisi bulunan kaleciler üstte. Eksik veri sıfır sayılmaz.</p>'+(goalies.some(r=>!r.g.known)?'<details class="ra-more"><summary>Gol verisi beklenen kaleciler</summary>'+goalieRows(goalies.filter(r=>!r.g.known))+'</details>':'')+'</details>'+
  '<details class="ra-card"><summary>BİRLİKTE OYNAMA ANALİZİ</summary>'+(pairs.length?table(['Oyuncular','Maç','G','B','M','Durum'],pairs.map(p=>[p.names,p.matches,p.wins,p.draws,p.losses,p.matches<3?'Veri az':p.scored<p.matches?'Skor eksik':'Kayıtlı sonuçlar'])):'<p>Ortak oyuncu kaydı yok.</p>')+'<p>En fazla 12 ikili. En az 3 ortak maçı olanlar üstte. Sonuçlar tek başına uyum veya neden-sonuç kanıtı değildir.</p></details>'+
- '<details class="ra-card ra-waiting"><summary>VERİ BEKLEYEN OYUNCULAR</summary><h4>Katkı oranı hesaplanamayanlar ('+unknown.length+')</h4><p>'+e(unknown.map(r=>r.p.full_name).join(' · ')||'Yok')+'</p><h4>Puan kaydı olmayanlar ('+unrated.length+')</h4><p>'+e(unrated.map(r=>r.p.full_name).join(' · ')||'Yok')+'</p><p>Bu oyuncuların kayıtları eksik olabilir. Başarısız veya oynamadı olarak değerlendirilmezler.</p></details></div>';
+ comebackCard(options.history||games,options.month,players)+seasonRosterSnapshot(players,options.overview)+'<details class="ra-card ra-waiting"><summary>VERİ BEKLEYEN OYUNCULAR</summary><h4>Katkı oranı hesaplanamayanlar ('+unknown.length+')</h4><p>'+e(unknown.map(r=>r.p.full_name).join(' · ')||'Yok')+'</p><h4>Puan kaydı olmayanlar ('+unrated.length+')</h4><p>'+e(unrated.map(r=>r.p.full_name).join(' · ')||'Yok')+'</p><p>Bu oyuncuların kayıtları eksik olabilir. Başarısız veya oynamadı olarak değerlendirilmezler.</p></details></div>';
 }
 export function installAnalyticsStyles(){
  if(document.getElementById('report-analytics-style'))return;
@@ -88,4 +88,40 @@ export function installAnalyticsStyles(){
  style.textContent+=' .monthly-report .monthly-body{padding:4px}.monthly-report .ra-card{box-shadow:none!important;border:1px solid #bcd4e8!important;padding:20px!important;margin:16px 0!important}.monthly-report .ra-card h3{font-size:22px!important;line-height:1.2!important;letter-spacing:.01em!important}.monthly-report .ra-card p{font-size:14px!important;line-height:1.5!important}.monthly-report .ra-subtitle{margin:4px 0 12px!important}.monthly-report .ra-footnote{font-size:12px!important;border-top:1px solid #b9d0e3;padding-top:12px;margin-bottom:0}.monthly-report .ra-more{padding:10px 0;background:transparent!important;border:0!important}.monthly-report .ra-more summary{font-size:13px!important;margin:5px 0!important;color:#305c7f!important}.monthly-report .ra-scroll table{min-width:0!important;table-layout:fixed;font-size:12px!important}.monthly-report .ra-scroll th,.monthly-report .ra-scroll td{padding:9px 7px!important;min-width:0;overflow-wrap:anywhere;word-break:normal!important}.monthly-report .ra-scroll th:first-child{width:40%}.monthly-report .ra-bar-row{grid-template-columns:minmax(110px,1.2fr) 1fr 58px;font-size:14px!important;margin:15px 0!important}.monthly-report .ra-bar-row b{font-weight:700!important;line-height:1.25!important}.monthly-report .ra-bar-row strong{font-size:14px!important;white-space:nowrap}.monthly-report .ra-waiting{background:#f1f5f9!important}.monthly-report .ra-share-tools{position:sticky;top:70px;z-index:2;background:#f5faff;padding:8px 0}.monthly-report .ra-share-tools button{flex:1;font-size:12px!important;padding:9px!important}.monthly-report .ra-tabs button{min-width:100px;font-size:14px!important}.monthly-report .ra-blue{background:linear-gradient(120deg,#eaf4ff,#dceafa)!important}.monthly-report .ra-mint{background:linear-gradient(120deg,#e7f8ee,#d5eee6)!important}@media(max-width:460px){.monthly-report .ra-card{padding:13px!important}.monthly-report .ra-card h3{font-size:19px!important}.monthly-report .ra-bar-row{grid-template-columns:minmax(95px,1.2fr) .9fr 48px;font-size:12px!important}.monthly-report .ra-bar-row strong{font-size:12px!important}.monthly-report .ra-share-tools{top:62px}.monthly-report .ra-scroll th,.monthly-report .ra-scroll td{padding:8px 5px!important;font-size:11px!important}}';
  style.textContent+='.monthly-report .ra-wide table{min-width:600px!important;table-layout:auto!important}.monthly-report .ra-wide th:first-child{width:auto}';
  document.head.append(style);
+}
+
+export function comebackPerformances(games,month){
+ const ordered=games.slice().sort((a,b)=>String(a.match_date).localeCompare(String(b.match_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))||String(a.id||'').localeCompare(String(b.id||'')));
+ const isPlayed=g=>g.status==='OYNADI',isAbsent=g=>g.confirmed_absent===true;
+ const rated=rows=>rows.filter(g=>n(g.points)!==null&&n(g.points)>=0&&n(g.points)<=10);
+ const average=rows=>rows.length?rows.reduce((s,g)=>s+n(g.points),0)/rows.length:null;
+ const results=[];let gap=0,prior=-1;
+ for(let i=0;i<ordered.length;i++){
+  const game=ordered[i];
+  if(isAbsent(game)){if(prior>=0)gap++;continue;}
+  if(!isPlayed(game)){gap=0;prior=-1;continue;}
+  if(gap>=2&&prior>=0&&(!month||String(game.match_date).slice(0,7)===month)){
+   const before=[];for(let j=prior;j>=0&&before.length<3;j--){if(!isPlayed(ordered[j]))break;before.unshift(ordered[j]);}
+   const after=[];for(let j=i;j<ordered.length&&after.length<3;j++){if(!isPlayed(ordered[j]))break;after.push(ordered[j]);}
+   const old=rated(before),now=rated(after),oldAvg=average(old),newAvg=average(now),enough=old.length>=2&&now.length>=2;
+   results.push({returnGame:game,missed:gap,before,after,beforeRated:old.length,afterRated:now.length,beforeAvg:oldAvg,afterAvg:newAvg,delta:enough?newAvg-oldAvg:null,enough});
+  }
+  gap=0;prior=i;
+ }
+ return results;
+}
+function comebackCard(history,month,players){
+ const personal=!players;
+ const rows=personal?comebackPerformances(history,month).map(r=>({...r,name:''})):players.flatMap(p=>comebackPerformances(playerGames(history,p.id),month).map(r=>({...r,name:p.full_name})));
+ rows.sort((a,b)=>Number(b.enough)-Number(a.enough)||String(b.returnGame.match_date).localeCompare(String(a.returnGame.match_date)));
+ return '<details class="ra-card"><summary>GERİ DÖNÜŞ PERFORMANSI'+(personal?'M':'')+'</summary>'+
+ (rows.length?table([...(personal?[]:['Oyuncu']),'Dönüş maçı','Ara','Önce → sonra','Puanlı maç','Değişim'],rows.map(r=>[...(personal?[]:[r.name]),r.returnGame.match_date.split('-').reverse().join('.')+' · '+(r.returnGame.opponent||'—'),r.missed+' maç',f(r.beforeAvg)+' → '+f(r.afterAvg),r.beforeRated+' → '+r.afterRated,r.delta==null?'Veri yetersiz':(r.delta>0?'+':'')+f(r.delta)])):'<p>Seçilen ayda doğrulanmış en az 2 maçlık aradan dönüş kaydı bulunamadı. Katılım bilgisi eksik maçlar ara olarak sayılmaz.</p>')+
+ '<p>Doğrulanmış en az 2 oynamama kaydından sonraki dönüşler gösterilir. Aradan önceki ve dönüşten sonraki en fazla 3 ardışık oynanan maç karşılaştırılır. Yorum için her iki tarafta en az 2 puan gerekir. Sezon içindeki ay geçişleri dikkate alınır.</p><p>Sakatlık veya izin nedeni bu veriden çıkarılmaz. Eksik katılım kaydı olan yerde analiz durur. Yeni maç veya puan kaydı geldikçe sonuç değişebilir.</p></details>';
+}
+export function seasonRosterSnapshot(players,overview,personal=false){
+ const rows=players.map(p=>{const s=p.season_stats||{},rate=overview?.players?.[p.id]?.percent;return [p.full_name,n(s.matches)??0,n(s.goals)??0,n(s.assists)??0,n(s.man_of_match)??0,rate==null?'—':'%'+f(rate)];});
+ return '<details class="ra-card"><summary>GÜNCEL SEZON TOPLAMLARI'+(personal?'M':' / TAKIM LİSTESİ')+'</summary>'+
+ (!personal&&overview?table(['Maç','G','B','M','Atılan gol','Yenilen gol'],[[overview.matches,overview.wins,overview.draws,overview.losses,overview.goals,overview.conceded]]):'')+
+ table(['Oyuncu','Maç','Gol','Asist','Maçın adamı','Başarı'],rows)+
+ '<p>Seçilen sezonun güncel oyuncu ve istatistik kayıtlarıdır. Ay filtresi bu toplamları değiştirmez. Yukarıdaki aylık analizler yalnız tarihli maç kartlarından hesaplanır. Geçmiş toplamların ay bazında kaydı yoksa aylara dağıtılmaz.</p></details>';
 }
