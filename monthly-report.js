@@ -1,4 +1,4 @@
-import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals,playerGames} from './report-analytics.js?v=20261119-comeback-report-1';
+import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals,playerGames} from './report-analytics.js?v=20261123-season-general-1';
 import {installReportSharing} from './report-sharing.js?v=20261119-report-layout-2';
 const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
 const monthFmt=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric',timeZone:'UTC'});
@@ -81,24 +81,27 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
   try{
     let {games,players,teamMonths={},overview=null}=await load();
     if(!dialog.open)return;
-    const months=[...new Set(games.map(monthKey).filter(key=>/^\d{4}-\d{2}$/.test(key)))].sort().reverse();
-    if(!months.length){status.textContent='Bu sezonda henüz maç kartı yok.';return;}
+    let months=[...new Set(games.map(monthKey).filter(key=>/^\d{4}-\d{2}$/.test(key)))].sort().reverse();
+    
     status.textContent='';
-    body.innerHTML='<p>'+esc(season)+' · Ay arşivi</p><label>Rapor ayı <select data-month></select></label>'+
+    body.innerHTML='<p>'+esc(season)+' · Rapor dönemi</p><div class="report-period-controls"><label>Rapor ayı <select data-month></select></label><button type="button" data-season-all aria-pressed="false">SEZON GENELİ</button></div>'+
       (player?'':'<nav aria-label="Rapor türü"><button type="button" data-view="team">Takım Özeti</button> <button type="button" data-view="player">Oyuncu Raporu</button></nav><label data-player-label>Oyuncu <select data-player></select></label>')+
       '<div data-report aria-live="polite"></div>';
     const month=body.querySelector('[data-month]'),picker=body.querySelector('[data-player]'),out=body.querySelector('[data-report]');
-    months.forEach(key=>month.add(new Option(monthLabel(key),key)));
+    months.forEach(key=>month.add(new Option(monthLabel(key),key)));if(!months.length){month.add(new Option('Aylık maç kaydı yok',''));month.disabled=true;}
     players.forEach(p=>picker?.add(new Option(p.full_name,p.id)));
     if(picker&&initialPlayer&&players.some(p=>p.id===initialPlayer)){picker.value=initialPlayer;picker.dataset.userChosen='1';}
-    let view=player||initialPlayer?'player':'team',shareMetric='goals';
-    const sharing=installReportSharing(body,{content:out,title:()=>view==='team'?'GENEL RAPOR':'AYLIK OYUNCU RAPORU',subtitle:()=>monthLabel(month.value)+' · '+season+(view==='player'?' · '+(player?players[0]?.full_name:players.find(p=>p.id===picker.value)?.full_name||''):''),status});
+    let view=player||initialPlayer?'player':'team',shareMetric='goals',allSeason=!months.length;
+    const allButton=body.querySelector('[data-season-all]');
+    if(!document.getElementById('report-period-style')){const style=document.createElement('style');style.id='report-period-style';style.textContent='.report-period-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.report-period-controls label{flex:1;min-width:130px}.report-period-controls button{min-height:46px!important;padding:12px!important;background:#244d76!important;color:#fff!important}.report-period-controls button[aria-pressed=true]{background:#176478!important;box-shadow:inset 0 -3px #9de0e8}.report-season-note{font-size:14px!important;line-height:1.6}';document.head.append(style);}
+    const sharing=installReportSharing(body,{content:out,title:()=>allSeason?(view==='team'?'SEZON GENEL RAPORU':'OYUNCU SEZON RAPORU'):view==='team'?'GENEL RAPOR':'AYLIK OYUNCU RAPORU',subtitle:()=> (allSeason?'Sezonun tamamı':monthLabel(month.value))+' · '+season+(view==='player'?' · '+(player?players[0]?.full_name:players.find(p=>p.id===picker.value)?.full_name||''):''),status});
     dialog.addEventListener('close',sharing.destroy,{once:true});
     const forPlayer=(rows,id)=>player?rows:playerGames(rows,id);
     const refresh=document.createElement('button');refresh.type='button';refresh.textContent='GÜNCEL VERİLERİ YENİLE';refresh.className='report-refresh';body.querySelector('[data-report]').before(refresh);
-    refresh.onclick=async()=>{if(refresh.disabled)return;refresh.disabled=true;status.textContent='Güncel kadro ve maç kayıtları yükleniyor…';try{const next=await load();if(!dialog.open)return;({games,players,teamMonths={},overview=null}=next);const selected=month.value,available=[...new Set(games.map(monthKey))].filter(key=>/^\d{4}-\d{2}$/.test(key)).sort().reverse();month.replaceChildren(...available.map(key=>new Option(monthLabel(key),key)));if(available.includes(selected))month.value=selected;if(!available.length){out.textContent='Bu sezonda maç kaydı yok.';status.textContent='';return;}render();status.textContent='Güncel kadro ve kayıtlarla yenilendi.';}catch(error){status.textContent='Yenilenemedi. '+error.message;}finally{refresh.disabled=false;}};
+    refresh.onclick=async()=>{if(refresh.disabled)return;refresh.disabled=true;status.textContent='Güncel kadro ve maç kayıtları yükleniyor…';try{const next=await load();if(!dialog.open)return;({games,players,teamMonths={},overview=null}=next);const selected=month.value,available=[...new Set(games.map(monthKey))].filter(key=>/^\d{4}-\d{2}$/.test(key)).sort().reverse();months=available;month.replaceChildren(...available.map(key=>new Option(monthLabel(key),key)));if(available.includes(selected))month.value=selected;if(!available.length){month.add(new Option('Aylık maç kaydı yok',''));allSeason=true;}month.disabled=!available.length;render();status.textContent='Güncel kadro ve kayıtlarla yenilendi.';}catch(error){status.textContent='Yenilenemedi. '+error.message;}finally{refresh.disabled=false;}};
     function render(){
-      sharing.invalidate();status.textContent='';
+      sharing.invalidate();status.textContent='';allButton.setAttribute('aria-pressed',String(allSeason));
+      if(allSeason){renderSeason();return;}
       const key=month.value,d=new Date(key+'-01T00:00:00Z');
       d.setUTCMonth(d.getUTCMonth()-1);
       const previousKey=d.toISOString().slice(0,7),labels=['Gösterge',monthLabel(previousKey),monthLabel(key)];
@@ -174,7 +177,38 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
         '<p>Katılım sayısı maç kartlarındaki oyuncu kayıtlarına dayanır. Eksik kayıtlar kaçırılan maç olarak sayılmaz. Maçın Adamı sütununda çizgi, maç kartında ödül kaydı bulunmadığını gösterir.</p><h3>Maç Maç Performans</h3>'+
         (played.length?table(['Tarih','Rakip','Skor','Gol','Asist','Puan','Maçın Adamı',...(keeper?['Yediği gol']:[])],played.map(g=>[formatDate(g.match_date),g.opponent,display(number(g.our_score))+'–'+display(number(g.opponent_score)),display(number(g.goals)),display(number(g.assists)),display(number(g.points)),award(g.man_of_match)>0?'Evet':'—',...(keeper?[display(number(g.goals_conceded))]:[])])):'<p>Bu ay oyuncu performans kaydı yok.</p>')+'</details>';
     }
-    month.onchange=render;
+
+    function seasonPersonalTotals(){const values=Object.values(teamMonths);return values.length?{games:values.reduce((s,v)=>s+Number(v.games||0),0),goals:values.every(v=>number(v.goals)!==null)?values.reduce((s,v)=>s+Number(v.goals),0):null,assists:values.every(v=>number(v.assists)!==null)?values.reduce((s,v)=>s+Number(v.assists),0):null,assists_complete:values.every(v=>v.assists_complete)}:null;}
+    function renderSeason(){
+      if(picker){const selected=picker.value;picker.replaceChildren(...players.map(p=>new Option(p.full_name,p.id)));if(players.some(p=>p.id===selected))picker.value=selected;}
+      body.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+      const playerLabel=body.querySelector('[data-player-label]');if(playerLabel)playerLabel.hidden=view!=='player';
+      const heading='<h3>'+esc(season)+' · SEZONUN GENEL RAPORU</h3>';
+      const note='<p class="report-season-note">Sezon toplamları takım listesindeki güncel kayıtlardır. Katkı, istikrar, birlikte oynama ve maç yorumları kayıtlı maç kartlarına dayanır; eksik geçmiş kayıtlar tahmin edilmez.</p>';
+      if(view==='team'){
+        const cur=teamMonth(games),total=overview||{};
+        const totals=[['Maç',total.matches??cur.matches],['Galibiyet',total.wins??cur.wins],['Beraberlik',total.draws??cur.draws],['Mağlubiyet',total.losses??cur.losses],['Atılan gol',total.goals??cur.goals],['Yenilen gol',total.conceded??cur.against]];
+        const monthRows=months.map(key=>{const m=teamMonth(games.filter(g=>monthKey(g)===key));return[monthLabel(key),m.matches,m.wins,m.draws,m.losses,display(m.goals),display(m.against)];});
+        out.innerHTML=heading+'<dl class="monthly-totals">'+totals.map(([label,value])=>'<div><dt>'+esc(label)+'</dt><dd>'+display(value)+'</dd></div>').join('')+'</dl>'+note+
+          managementAnalytics(games,[],players,shareMetric,{history:games,month:null,overview})+
+          reportCard('Ay Ay Takım Durumu',monthRows.length?table(['Ay','Kayıtlı maç','G','B','M','Gol','Yenilen'],monthRows):'<p>Aylık maç kartı yok.</p>')+
+          reportCard('Sezonun Bütün Maçları',games.length?table(['Tarih','Rakip','Skor'],games.map(g=>[formatDate(g.match_date),g.opponent,number(g.our_score)===null||number(g.opponent_score)===null?'—':display(number(g.our_score))+'–'+display(number(g.opponent_score))])):'<p>Maç kartı yok.</p>');
+        out.querySelectorAll('[data-share-metric]').forEach(b=>b.onclick=()=>{shareMetric=b.dataset.shareMetric;render();});return;
+      }
+      const chosen=player?players[0]:players.find(p=>p.id===picker.value);
+      if(!chosen){out.textContent='Oyuncu bulunamadı.';return;}
+      const id=chosen.id,history=forPlayer(games,id),stats=playerMonth(history),played=history.filter(g=>g.status==='OYNADI');
+      const monthRows=months.map(key=>{const m=playerMonth(history.filter(g=>monthKey(g)===key));return[monthLabel(key),m.played,display(m.goals),display(m.assists),display(m.avg),display(m.awards),...(chosen.keeper?[display(m.against)]:[])];});
+      const rated=history.filter(g=>g.status==='OYNADI'&&number(g.points)!==null);
+      const mid=Math.floor(rated.length/2),ordered=rated.slice().sort((a,b)=>String(a.match_date).localeCompare(String(b.match_date)));
+      const avg=rows=>rows.length?rows.reduce((n,g)=>n+number(g.points),0)/rows.length:null;
+      const earlier=ordered.slice(0,mid),later=ordered.slice(mid),trend=earlier.length>=2&&later.length>=2?change('Puanlı maçların ilk ve ikinci yarısında ortalama puan',avg(earlier),avg(later)):'Gelişim karşılaştırması için en az 4 puanlı maç gerekiyor.';
+      out.innerHTML=heading+'<h4>'+esc(chosen.full_name)+'</h4>'+note+personalAnalytics(history,[],player?seasonPersonalTotals():teamTotals(games),chosen.keeper,{history,month:null,players:[chosen],overview})+
+       reportCard('Sezon Değerlendirmesi','<p>Bu sezonun maç kartlarında '+stats.played+' katılım, '+stats.rated+' puanlı maç kayıtlı.</p><p>'+esc(trend)+'</p>')+
+       reportCard('Ay Ay Oyuncu Gelişimi',monthRows.length?table(['Ay','Kayıtlı maç','Gol','Asist','Ort. puan','Maçın adamı',...(chosen.keeper?['Yediği gol']:[])],monthRows):'<p>Aylık maç kartı yok.</p>')+
+       reportCard('Sezonun Bütün Oyuncu Maçları',played.length?table(['Tarih','Rakip','Gol','Asist','Puan','Maçın adamı',...(chosen.keeper?['Yediği gol']:[])],played.map(g=>[formatDate(g.match_date),g.opponent,display(number(g.goals)),display(number(g.assists)),display(number(g.points)),award(g.man_of_match)>0?'Evet':'—',...(chosen.keeper?[display(number(g.goals_conceded))]:[])])):'<p>Kayıtlı oyuncu maç kartı yok.</p>');
+    }
+    month.onchange=()=>{allSeason=false;render();};allButton.onclick=()=>{allSeason=true;render();};
     if(picker)picker.onchange=()=>{picker.dataset.userChosen='1';render();};
     body.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{view=button.dataset.view;render();});
     render();
