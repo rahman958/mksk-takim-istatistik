@@ -4,7 +4,7 @@ export const rosterColumns = [
   ['management_role','Yönetim görevi',280],['group_name','Oyuncunun grubu',150],
   ['matches','Maç sayısı',105],['goals','Attığı gol sayısı',130],['assists','Asist sayısı',110],
   ['goals_conceded','Yediği gol sayısı',140],['man_of_match','Maçın adamı',140],
-  ['success','Başarı oranı',150],['discipline_referrals','Disiplin sevki',150],
+  ['success','Genel başarı',150],['discipline_referrals','Disiplin sevki',150],
   ['attendance_matches','Antrenman sayısı',155],['attendance_goals','Antrenman golü',155],
   ['attendance_points','Antrenman puanı',155],['status','Oyuncu durumu',240],
   ['performance_label','Performans durumu',270]
