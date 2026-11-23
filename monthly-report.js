@@ -99,7 +99,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
     const forPlayer=(rows,id)=>player?rows:playerGames(rows,id);
     const refresh=document.createElement('button');refresh.type='button';refresh.textContent='GÜNCEL VERİLERİ YENİLE';refresh.className='report-refresh';body.querySelector('[data-report]').before(refresh);
     refresh.onclick=async()=>{if(refresh.disabled)return;refresh.disabled=true;status.textContent='Güncel kadro ve maç kayıtları yükleniyor…';try{const next=await load();if(!dialog.open)return;({games,players,teamMonths={},overview=null}=next);const selected=month.value,available=[...new Set(games.map(monthKey))].filter(key=>/^\d{4}-\d{2}$/.test(key)).sort().reverse();months=available;month.replaceChildren(...available.map(key=>new Option(monthLabel(key),key)));if(available.includes(selected))month.value=selected;if(!available.length){month.add(new Option('Aylık maç kaydı yok',''));allSeason=true;}month.disabled=!available.length;render();status.textContent='Güncel kadro ve kayıtlarla yenilendi.';}catch(error){status.textContent='Yenilenemedi. '+error.message;}finally{refresh.disabled=false;}};
-    function render(){
+    function renderContent(){
       sharing.invalidate();status.textContent='';allButton.setAttribute('aria-pressed',String(allSeason));
       if(allSeason){renderSeason();return;}
       const key=month.value,d=new Date(key+'-01T00:00:00Z');
@@ -208,6 +208,31 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
        reportCard('Ay Ay Oyuncu Gelişimi',monthRows.length?table(['Ay','Kayıtlı maç','Gol','Asist','Ort. puan','Maçın adamı',...(chosen.keeper?['Yediği gol']:[])],monthRows):'<p>Aylık maç kartı yok.</p>')+
        reportCard('Sezonun Bütün Oyuncu Maçları',played.length?table(['Tarih','Rakip','Gol','Asist','Puan','Maçın adamı',...(chosen.keeper?['Yediği gol']:[])],played.map(g=>[formatDate(g.match_date),g.opponent,display(number(g.goals)),display(number(g.assists)),display(number(g.points)),award(g.man_of_match)>0?'Evet':'—',...(chosen.keeper?[display(number(g.goals_conceded))]:[])])):'<p>Kayıtlı oyuncu maç kartı yok.</p>');
     }
+
+    let section='overview';
+    const sectionNames={overview:'GENEL ÖZET',contribution:'KATKI DAĞILIMI',stability:'İSTİKRAR',keeper:'KALECİLER',results:'GALİBİYET / MAĞLUBİYET',partners:'BİRLİKTE OYNAMA',comeback:'GERİ DÖNÜŞ',players:'OYUNCULAR',all:'TÜMÜNÜ GÖSTER'};
+    const sections=document.createElement('nav');sections.className='report-section-tabs';sections.setAttribute('aria-label','Rapor bölümleri');out.before(sections);
+    const sectionStyle=document.createElement('style');sectionStyle.textContent='.report-section-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0}.report-section-tabs button{min-height:42px!important;padding:10px!important;background:#e8eff8!important;color:#173957!important;border:1px solid #b9cadc!important;border-radius:10px!important;font-size:12px!important}.report-section-tabs button[aria-pressed=true]{background:#245578!important;color:white!important}[data-report-section][hidden]{display:none!important}';dialog.append(sectionStyle);
+    function render(){
+      renderContent();
+      const blocks=[...out.children].flatMap(node=>node.classList.contains('ra-analysis')?[...node.children]:[node]).filter(node=>!/^H[1-6]$/.test(node.tagName));
+      for(const node of blocks){
+        const title=(node.querySelector('h3,summary,h4')?.textContent||'').toLocaleUpperCase('tr-TR');
+        node.dataset.reportSection=node.classList.contains('ra-full-roster')||node.classList.contains('ra-waiting')?'players':
+          /KATKI/.test(title)?'contribution':/İSTİKRAR/.test(title)?'stability':/KALECİ/.test(title)?'keeper':/GALİBİYET/.test(title)?'results':/BİRLİKTE OYNAMA/.test(title)?'partners':/GERİ DÖNÜŞ/.test(title)?'comeback':'overview';
+      }
+      const available=new Set(blocks.map(node=>node.dataset.reportSection));
+      if(section!=='all'&&!available.has(section))section=available.has('overview')?'overview':[...available][0];
+      sections.innerHTML=Object.entries(sectionNames).filter(([key])=>key==='all'||available.has(key)).map(([key,label])=>'<button type="button" data-report-tab="'+key+'" aria-pressed="'+(key===section)+'">'+label+'</button>').join('');
+      function apply(){
+        blocks.forEach(node=>{node.hidden=section!=='all'&&node.dataset.reportSection!==section;if(!node.hidden&&node.tagName==='DETAILS')node.open=true;});
+        sections.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.reportTab===section)));
+        sharing.invalidate();
+      }
+      sections.onclick=event=>{const button=event.target.closest('[data-report-tab]');if(!button)return;section=button.dataset.reportTab;apply();};
+      apply();
+    }
+
     month.onchange=()=>{allSeason=false;render();};allButton.onclick=()=>{allSeason=true;render();};
     if(picker)picker.onchange=()=>{picker.dataset.userChosen='1';render();};
     body.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{view=button.dataset.view;render();});
