@@ -1,3 +1,4 @@
+import {openLiveMatch} from './live-match.js?v=20261123-live-match-1';
 import {readTacticDuty,renderTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261117-unified-bell-1';
@@ -1401,6 +1402,7 @@ var openClubEmail;
   if(staffCan('matches'))addMenuButton(quick,'MAÇ İŞLE','YENİ MAÇ, KAYITLI MAÇLAR, SKOR VE PERFORMANS','trophy',function(){void matchCards.open();});
   if(staffCan('lineup'))addMenuButton(quick,'KADRO OLUŞTUR','İLK KADRO VE YEDEKLER','users-round',function(){simpleActivate(simplePick('lineup'));});
   if(staffCan('roster'))addMenuButton(quick,'TRANSFER GİRİŞİ','YENİ OYUNCU EKLE','user-plus',openTransferEntry);
+  addMenuButton(quick,'CANLI MAÇ TAKİBİ','GOL, ASİST, KADRO VE PAYLAŞILACAK MAÇ ÖZETİ','radio',()=>openLiveMatch({db:supabase,season:selectedSeason}));
   if(staffCan('statistics'))addMenuButton(quick,'GÖRSEL VE ANALİZ PAYLAŞIMLARI','TAKIM LİSTESİ VE İSTATİSTİK GÖRSELLERİ','chart-column',openShareMenu);
   if(staffCan('analytics'))addMenuButton(quick,'GENEL RAPOR','AYLIK TAKIM VE OYUNCU RAPORLARI','calendar-days',()=>openClubMonthlyReport());
   var players=section(box,'OYUNCULAR','folder-user');
