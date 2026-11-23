@@ -6,6 +6,23 @@ const date=v=>v?new Date(v).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'})
 const norm=v=>String(v||'').toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
 function modal(title){const d=document.createElement('dialog');d.className='player-hub-dialog';d.innerHTML='<header><h2>'+esc(title)+'</h2><button type="button" class="hub-close">KAPAT ×</button></header><div class="hub-content"></div>';d.querySelector('.hub-close').onclick=()=>d.close();d.onclose=()=>d.remove();document.body.appendChild(d);d.showModal();return d;}
 const fields=(items)=>'<div class="hub-fields">'+items.map(([name,value])=>'<div><small>'+esc(name)+'</small><strong>'+esc(value??'—')+'</strong></div>').join('')+'</div>';
+
+function installDossierActions(d,name){
+ const sheet=document.createElement('dialog');sheet.className='player-hub-dialog hub-dossier-action-sheet';
+ sheet.setAttribute('aria-label','Oyuncu işlemleri');
+ sheet.innerHTML='<div class="hub-sheet-handle"></div><header><div><h2>OYUNCU İŞLEMLERİ</h2><p></p></div><button type="button" class="hub-sheet-close">KAPAT ×</button></header><div class="hub-sheet-buttons"></div>';
+ sheet.querySelector('header p').textContent=name;
+ const list=sheet.querySelector('.hub-sheet-buttons');
+ d.querySelectorAll('.hub-actions > button').forEach(button=>{if(!button.closest('.hub-invite-group')&&!button.hidden&&!button.closest('[hidden]'))list.append(button);});
+ const footer=document.createElement('footer');footer.className='hub-dossier-action-bar';footer.innerHTML='<button type="button" aria-haspopup="dialog" aria-expanded="false">☰ İŞLEMLER</button>';
+ const launch=footer.querySelector('button');launch.onclick=()=>{if(!sheet.open){sheet.showModal();sheet.scrollTop=0;launch.setAttribute('aria-expanded','true');}};
+ sheet.querySelector('.hub-sheet-close').onclick=()=>sheet.close();
+ list.addEventListener('click',event=>{if(event.target.closest('button')&&!event.target.closest('button').disabled)sheet.close();},true);
+ sheet.addEventListener('close',()=>launch.setAttribute('aria-expanded','false'));
+ document.body.append(sheet);d.append(footer);
+ d.addEventListener('close',()=>{if(sheet.open)sheet.close();sheet.remove();},{once:true});
+}
+
 export function initPlayerHub(api){
  const db=api.db;let saving=false;
  const check=()=>!document.getElementById('admin-view')?.classList.contains('hidden');
@@ -50,6 +67,7 @@ export function initPlayerHub(api){
    const note=document.createElement('p');note.className='hub-context-note';note.textContent='Bütün işlemler '+p.full_name+' için açılır. Alt pencereden dönünce bu dosya açık kalır.';actions.before(note);
    const danger=document.createElement('section');danger.className='hub-danger';danger.innerHTML='<h3>Takımdan çıkarma</h3><p>Oyuncu aktif listeden kaldırılır; geçmiş kayıtları korunur.</p><button type="button">TAKIMDAN ÇIKAR</button><p role="status"></p>';danger.hidden=!allowed('roster');box.append(danger);
    danger.querySelector('button').onclick=async event=>{if(!confirm(p.full_name+' takımdan çıkarılsın mı? Aktif listelerde görünmez. Silinen Oyuncular bölümünden geri alınabilir.'))return;const b=event.currentTarget;b.disabled=true;try{if(!allowed('roster'))throw Error('Oyuncu yönetimi yetkin kapalı.');const q=await db.rpc('club_archive_player',{target_player:id,restore_player:false});if(q.error)throw q.error;await api.changed?.();d.close();document.dispatchEvent(new Event('mksk-player-directory-refresh'));}catch(error){danger.querySelector('[role=status]').textContent='Çıkarılamadı: '+error.message;b.disabled=false;}};
+   installDossierActions(d,p.full_name);
    const overview=box.querySelector('.hub-season-overview');
    const detail=box.querySelector('.hub-season-detail');
    overview.hidden=!allowed('statistics');
