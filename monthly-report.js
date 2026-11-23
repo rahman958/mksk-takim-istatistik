@@ -1,5 +1,5 @@
 import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals,playerGames} from './report-analytics.js?v=20261123-season-general-1';
-import {installReportSharing} from './report-sharing.js?v=20261119-report-layout-2';
+import {installReportSharing} from './report-sharing.js?v=20261124-audit-1';
 const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
 const monthFmt=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric',timeZone:'UTC'});
 const monthLabel=key=>monthFmt.format(new Date(key+'-01T00:00:00Z'));
