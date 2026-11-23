@@ -152,6 +152,17 @@ function showDetail(card,notice){
   const visibleRows=rows.filter(row=>names.get(row?.player_id)?.trim());
   const d=document.createElement('dialog');d.className='mcc-detail-dialog';
   d.innerHTML='<h3>'+esc(card.opponent)+' · '+esc(fmtDate(card.match_date))+'</h3><p class="mcc-detail">SKOR: '+esc(card.our_score)+'–'+esc(card.opponent_score)+' · '+esc(scoreText(card))+'\nSAAT: '+esc(card.match_time||'BELİRTİLMEDİ')+'\nOYUNCU SAYISI: '+rows.length+'\n\n'+(visibleRows.length?visibleRows.map(r=>esc(names.get(r.player_id))).join('\n'):rows.length?'GÖSTERİLEBİLEN OYUNCU YOK.':'BU KARTA HENÜZ OYUNCU İŞLENMEDİ.')+'</p><button>KAPAT</button>';
+
+  if(visibleRows.length){
+    const removal=document.createElement('section');removal.innerHTML='<h4>MAÇTAN OYUNCU ÇIKAR</h4><p>Yanlışlıkla eklenen oyuncuyu kaldır. Takımın skoru ve diğer oyuncular değişmez. Bu kartla eklenen sezon istatistikleri geri alınır; geçmişten eklenen kartlarda mevcut sezon toplamı korunur.</p><div class="mcc-remove-players"></div><p role="status"></p>';
+    for(const entry of visibleRows){
+      const button=document.createElement('button');button.type='button';button.className='danger';button.textContent=names.get(entry.player_id)+' · MAÇTAN ÇIKAR';
+      button.onclick=async()=>{if(!confirm(names.get(entry.player_id)+' bu maçtan çıkarılsın mı? Bu kartla eklenen maç, gol, asist, puan ve ödül geri alınır.'))return;button.disabled=true;
+        try{const q=await db().rpc('club_remove_saved_match_player',{p_match:card.id,p_player:entry.player_id,p_expected:entry});if(q.error)throw q.error;await refresh();window.dispatchEvent(new Event('mksk-match-changed'));d.close();}
+        catch(error){removal.querySelector('[role=status]').textContent='Çıkarılamadı: '+error.message;button.disabled=false;}};
+      removal.querySelector('.mcc-remove-players').append(button);
+    }d.append(removal);
+  }
   if(visibleRows.length){
     const form=document.createElement('form');
     form.innerHTML='<h4>MAÇ PUANI DÜZELT</h4><p>Bu maçta oynayanların puanını 0–10 arasında güncelleyebilirsin.</p>'+
