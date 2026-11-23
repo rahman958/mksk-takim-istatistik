@@ -1,4 +1,4 @@
-import {openCenteredSection,installCenteredStyle,positiveLeaders} from './centered-flow.js?v=20261124-centered-1';
+import {openCenteredSection,installCenteredStyle,positiveLeaders} from './centered-flow.js?v=20261124-centered-content-2';
 import {openLiveMatch} from './live-match.js?v=20261123-live-match-1';
 import {readTacticDuty,renderTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
@@ -931,7 +931,7 @@ function openTransferEntry(){
  const area=el('add-player-area');
  if(!area){if(el('admin-message'))el('admin-message').textContent='Transfer formu hazırlanıyor. Birkaç saniye sonra tekrar aç.';return;}
  sectionScrollCleanup();installCenteredStyle();
- return openCenteredSection({id:'transfer-center',title:'TRANSFER GİRİŞİ',nodes:[area],root:el('admin-view')||document.body});
+ return openCenteredSection({id:'transfer-center',title:'TRANSFER GİRİŞİ',nodes:[area],root:el('admin-view')||document.body,isAllowed:()=>staffCan('roster')});
 }
 
 function openShareMenu(){
@@ -2264,7 +2264,7 @@ function centerMappedSection(ids,title,stillValid){
   if(ticket!==centerRouteTicket||!stillValid())return;
   if(document.querySelector('dialog[open]'))return;
   const nodes=(ids||[]).map(el).filter(node=>node&&!node.hidden&&node.getClientRects().length);
-  if(nodes.length){sectionScrollCleanup();openCenteredSection({id:'navigation-center',title,nodes,root:el('admin-view')?.contains(nodes[0])?el('admin-view'):el('player-view')?.contains(nodes[0])?el('player-view'):document.body});return;}
+  if(nodes.length){sectionScrollCleanup();openCenteredSection({id:'navigation-center',title,nodes,isAllowed:()=>typeof activeRole==='undefined'||activeRole!=='admin'||staffPageAllowed(dashboardPage),root:el('admin-view')?.contains(nodes[0])?el('admin-view'):el('player-view')?.contains(nodes[0])?el('player-view'):document.body});return;}
   if(Date.now()-started<6000)setTimeout(attempt,100);
  }
  requestAnimationFrame(attempt);
@@ -2279,8 +2279,8 @@ const oldSectionScroll=window.MKSK_SCROLL_SECTION;
 window.MKSK_SCROLL_SECTION=function(target){
  if(!target?.isConnected)return;
  if(target.closest('dialog[open]')){target.scrollIntoView({block:'nearest'});return;}
- if(target===el('admin-view')||target===el('player-view'))return oldSectionScroll(target);
- sectionScrollCleanup();return openCenteredSection({id:'navigation-center',title:target.querySelector('h2,h3,summary')?.textContent||'BÖLÜM',nodes:[target],root:target.closest('#admin-view,#player-view')||document.body});
+ if(target===el('admin-view')||target===el('player-view')||target.matches('h1,h2,h3,h4,nav,.entry-toolbar,#entry-toolbar'))return oldSectionScroll(target);
+ sectionScrollCleanup();return openCenteredSection({id:'navigation-center',title:target.querySelector('h2,h3,summary')?.textContent||'BÖLÜM',nodes:[target],isAllowed:()=>target.id==='lineup-panel'?staffCan('lineup'):target.id==='add-player-area'?staffCan('roster'):true,root:target.closest('#admin-view,#player-view')||document.body});
 };
 let adminLoadPending=null,adminLoadAgain=false;
 const queuedAdminLoad=loadAdmin;
