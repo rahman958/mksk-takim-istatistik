@@ -26,7 +26,7 @@ function addStyle(){
   .mcc-players{display:grid;grid-template-columns:1fr;max-height:none;overflow:visible}
   .mcc-player.selected{display:grid;grid-template-columns:minmax(155px,1fr) minmax(0,2fr);align-items:center;gap:10px;background:#fff}
   .mcc-player label.mcc-played{display:flex;align-items:center;gap:8px}.mcc-player-top{flex-direction:column;gap:4px}.mcc-fields{margin:0;grid-template-columns:repeat(4,minmax(0,1fr))}
-  .mcc-award{font-size:12px;padding:4px 6px;min-height:34px}.mcc-award[aria-pressed=true]{background:#ffedbf;color:#684607}
+  .mcc-award{font-size:12px;padding:4px 6px;min-height:34px}.mcc-award[aria-pressed=true]{background:#24567d;color:#fff}
   .mcc-check{background:#fff;border:1px solid #9bb6d4;border-radius:12px;margin-top:12px;padding:12px}.mcc-check h3{margin:0}.mcc-goal-check{font-weight:700}
   @media(max-width:620px){.mcc-player.selected{grid-template-columns:1fr}.mcc-player-top{flex-direction:row;justify-content:space-between;align-items:center}.mcc-fields input{font-size:16px}.mcc-fields{gap:5px}.mcc-fields label{overflow-wrap:anywhere}}
 
@@ -63,7 +63,7 @@ function entriesFrom(form){
 }
 function reviewMatch(entries,score){
   const goals=entries.reduce((sum,row)=>sum+row.goals,0);
-  return {goals,missing:score-goals,unrated:entries.filter(row=>row.points===null),award:entries.find(row=>row.man_of_match)};
+  return {goals,missing:score-goals,unrated:entries.filter(row=>row.points===null),awards:entries.filter(row=>row.man_of_match)};
 }
 function bindPlayerRows(form,formSeason){
   const list=form.querySelector('.mcc-players'), query=form.querySelector('.mcc-player-query'), picker=form.querySelector('.mcc-player-pick');
@@ -96,18 +96,21 @@ function bindPlayerRows(form,formSeason){
     button.setAttribute('aria-pressed',String(on));
     button.firstChild.textContent=on?'★ ':'☆ ';
   }
+  const awardTools=document.createElement('div');awardTools.className='mcc-actions';awardTools.innerHTML='<strong>MAÇIN ADAMI · Birden fazla seçebilirsin</strong><button type="button" data-award-all>OYNAYANLARIN TÜMÜNÜ SEÇ</button><button type="button" data-award-clear>SEÇİMLERİ TEMİZLE</button>';list.before(awardTools);
+  awardTools.querySelector('[data-award-all]').onclick=()=>{list.querySelectorAll('.mcc-player').forEach(row=>setAward(row.querySelector('.mcc-award'),row.classList.contains('selected')));preview.hidden=true;};
+  awardTools.querySelector('[data-award-clear]').onclick=()=>{list.querySelectorAll('.mcc-award').forEach(button=>setAward(button,false));preview.hidden=true;};
   list.onchange=e=>{
     if(!e.target.matches('.mcc-played input'))return;
     const row=e.target.closest('.mcc-player'),selected=e.target.checked;
     row.classList.toggle('selected',selected);
     row.querySelectorAll('[data-field],.mcc-award').forEach(input=>input.disabled=!selected);
-    if(!selected)setAward(row.querySelector('.mcc-award'),false);
+    if(!selected)setAward(row.querySelector('.mcc-award'),false);preview.hidden=true;
   };
   list.onclick=e=>{
     const award=e.target.closest('.mcc-award');
     if(!award)return;
     const on=award.getAttribute('aria-pressed')!=='true';
-    list.querySelectorAll('.mcc-award').forEach(button=>setAward(button,on&&button===award));
+    setAward(award,on);
     preview.hidden=true;
   };
   query.oninput=options;
@@ -263,7 +266,7 @@ function draw(){
     const name=id=>people.find(p=>p.id===id)?.full_name||'Oyuncu';
     const goalsText=check.missing===0?'Oyuncu golleri takım skoruyla eşleşiyor.':
       check.missing>0?check.missing+' gol henüz oyuncuya işlenmedi.':'Oyuncu golleri takım skorunu '+Math.abs(check.missing)+' gol aşıyor.';
-    review.querySelector('.mcc-check-content').innerHTML='<p><strong>'+entries.length+' oyuncu oynadı</strong> · Takım skoru '+score+'–'+esc(form.elements.against.value)+' · Oyuncu golleri '+check.goals+'</p><p class="mcc-goal-check">'+esc(goalsText)+'</p><p>Maçın Adamı · '+esc(check.award?name(check.award.player_id):'Seçilmedi')+'</p>'+
+    review.querySelector('.mcc-check-content').innerHTML='<p><strong>'+entries.length+' oyuncu oynadı</strong> · Takım skoru '+score+'–'+esc(form.elements.against.value)+' · Oyuncu golleri '+check.goals+'</p><p class="mcc-goal-check">'+esc(goalsText)+'</p><p>Maçın Adamı · '+esc(check.awards.length?check.awards.map(row=>name(row.player_id)).join(', '):'Seçilmedi')+'</p>'+
       (check.unrated.length?'<p>Puanı eksik · '+esc(check.unrated.map(row=>name(row.player_id)).join(', '))+'</p>':'<p>Tüm oyuncuların puanı girildi.</p>')+
       '<p>'+(form.elements.count.checked?'Oynayanların sezon maç sayısı 1 artacak.':'Geçmiş maç kartı olarak saklanacak.')+'</p>';
     button.disabled=check.missing<0;
