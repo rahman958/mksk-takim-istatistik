@@ -67,7 +67,7 @@ function playerFocus(old,cur,keeper){
   if(cur.rated>=2&&number(cur.best.points)-cur.min>=2)return 'Performans istikrarı. Puanların '+display(cur.min)+'–'+display(number(cur.best.points))+' arasında değişti. En iyi maçındaki hazırlık rutinini gelecek maçlarda da uygula.';
   return cur.rated<2?'Performans eğilimini değerlendirmek için en az iki puanlı maç kaydı gerekiyor.':'İyi giden yönlerini sürdür. Gelecek ay maç başına katkını ve puan ortalamanı yeniden karşılaştır.';
 }
-export async function openMonthlyReport({load,season,player=false,formatDate}){
+export async function openMonthlyReport({load,season,player=false,formatDate,initialPlayer=null}){
   if(document.querySelector('.monthly-report[open]'))return;
   installAnalyticsStyles();
   const dialog=document.createElement('dialog');
@@ -90,7 +90,8 @@ export async function openMonthlyReport({load,season,player=false,formatDate}){
     const month=body.querySelector('[data-month]'),picker=body.querySelector('[data-player]'),out=body.querySelector('[data-report]');
     months.forEach(key=>month.add(new Option(monthLabel(key),key)));
     players.forEach(p=>picker?.add(new Option(p.full_name,p.id)));
-    let view=player?'player':'team',shareMetric='goals';
+    if(picker&&initialPlayer&&players.some(p=>p.id===initialPlayer)){picker.value=initialPlayer;picker.dataset.userChosen='1';}
+    let view=player||initialPlayer?'player':'team',shareMetric='goals';
     const sharing=installReportSharing(body,{content:out,title:()=>view==='team'?'GENEL RAPOR':'AYLIK OYUNCU RAPORU',subtitle:()=>monthLabel(month.value)+' · '+season+(view==='player'?' · '+(player?players[0]?.full_name:players.find(p=>p.id===picker.value)?.full_name||''):''),status});
     dialog.addEventListener('close',sharing.destroy,{once:true});
     const forPlayer=(rows,id)=>player?rows:playerGames(rows,id);
