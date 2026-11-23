@@ -57,7 +57,7 @@ export function rosterValues(p,season) {
     n('matches'),n('goals'),n('assists'),n('goals_conceded'),n('man_of_match'),
     percent==null?'—':Number(percent).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%',
     n('discipline_referrals'),n('attendance_matches'),n('attendance_goals'),n('attendance_points'),
-    p.status||'Aktif',p.performance_label||'Değerlendirilmedi'];
+    p.status||'Aktif',p.performance_label||'Değerlendirilmedi'].map(value=>typeof value==='string'?value.toLocaleUpperCase('tr-TR'):value);
 }
 export function wrapRosterText(ctx,value,width,fontSize,bold=false) {
   ctx.font=`${bold?'700':'400'} ${fontSize}px Arial`;
