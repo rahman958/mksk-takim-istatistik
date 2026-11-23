@@ -59,3 +59,19 @@ html[data-theme=dark] .hub-season-data .hub-fields>div{background:#22334e}
 @media(max-width:500px){.hub-center-toolbar{flex-wrap:wrap}.hub-center-toolbar label{flex-basis:100%}.hub-player-center{padding:12px}.hub-dossier .hub-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-player-child{padding:12px}}
 
 .player-hub-dialog{font-family:Arial,system-ui,sans-serif}.hub-dossier-identity img{float:right;border-radius:8px;margin-left:10px}.hub-player-child .cm-compose h4{font-size:17px}.hub-player-child .awards-filters{grid-template-columns:1fr}
+
+/* Keep dossier actions within reach without covering the dossier. */
+.hub-dossier[open]{display:flex!important;flex-direction:column!important;overflow:hidden!important;padding-bottom:0!important;max-height:90dvh}
+.hub-dossier>header{position:static!important;flex-shrink:0}
+.hub-dossier>.hub-content{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:18px}
+.hub-dossier-action-bar{flex:0 0 auto;padding:12px 0 max(12px,env(safe-area-inset-bottom));border-top:1px solid #b7c9dc;background:#f3f6fc}
+.player-hub-dialog .hub-dossier-action-bar button{width:100%;background:#24577e!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:18px!important;min-height:50px}
+.hub-dossier .hub-actions:empty{display:none}
+.hub-dossier-action-sheet{width:min(520px,calc(100vw - 20px));max-height:82dvh;margin:auto auto 0;padding:18px 20px max(20px,env(safe-area-inset-bottom));border-radius:22px 22px 0 0}
+.hub-sheet-handle{width:42px;height:5px;background:#b5c5d5;border-radius:8px;margin:0 auto 12px}
+.hub-dossier-action-sheet>header{position:static;align-items:flex-start;padding:0 0 12px}
+.hub-dossier-action-sheet h2{margin:0 0 6px!important;font-size:20px!important}
+.hub-dossier-action-sheet header p{font-size:14px!important;line-height:1.5;color:#405b76!important;margin:0}
+.hub-sheet-buttons{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+.player-hub-dialog .hub-sheet-buttons>button{width:100%;min-height:48px;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#e8f0f9!important;color:#193958!important;-webkit-text-fill-color:#193958!important;border:1px solid #b6cbe0!important;font-size:16px!important;line-height:1.4}
+.hub-sheet-buttons>button[hidden]{display:none!important}
