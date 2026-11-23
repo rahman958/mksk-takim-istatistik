@@ -3,6 +3,7 @@ function blocks(root){
  const out=[];
  function visit(node){
   if(node.nodeType!==1)return;
+  if(node.closest('[hidden],.hidden,[aria-hidden="true"]'))return;
   if(node.matches('button,select,input,nav,[data-share-controls]'))return;
   if(node.tagName==='TABLE'){
    const headers=[...node.querySelectorAll('thead th')].map(n=>n.textContent.trim());
@@ -23,8 +24,8 @@ export function installReportSharing(host,{content,title,subtitle,status}){
  toolbar.innerHTML='<button type="button" data-export="share">PAYLAŞ</button><button type="button" data-export="image">GÖRSELİ İNDİR</button><button type="button" data-export="print">PDF / YAZDIR</button>';
  const preview=document.createElement('div');preview.className='ra-export-pages';preview.hidden=true;
  content.before(toolbar);content.after(preview);
- let urls=[];
- function clear(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];preview.replaceChildren();preview.hidden=true;}
+ let urls=[],generation=0,disposed=false;
+ function clear(){generation++;urls.forEach(u=>URL.revokeObjectURL(u));urls=[];preview.replaceChildren();preview.hidden=true;}
  toolbar.querySelector('[data-export="print"]').onclick=()=>{
   const win=window.open('','_blank');if(!win){status.textContent='Yazdırma penceresi açılamadı. Tarayıcıda açılır pencereye izin ver.';return;}
   const styles=[...document.querySelectorAll('#report-analytics-style,style')].map(n=>n.outerHTML).join('');
@@ -53,9 +54,10 @@ export function installReportSharing(host,{content,title,subtitle,status}){
   await finish();return pages;
  }
  async function exportReport(share){
-  const buttons=[...toolbar.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);status.textContent='Rapor görselleri hazırlanıyor…';clear();
+  const buttons=[...toolbar.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);status.textContent='Rapor görselleri hazırlanıyor…';clear();const ticket=generation;
   try{
    const files=await images();
+   if(disposed||ticket!==generation)return;
    if(share&&navigator.canShare?.({files})){try{await navigator.share({files,title:title(),text:subtitle()});status.textContent='Paylaşım penceresi açıldı.';return;}catch(err){if(err.name==='AbortError'){status.textContent='Paylaşım iptal edildi.';return;}}}
    preview.hidden=false;
    files.forEach((file,i)=>{const url=URL.createObjectURL(file);urls.push(url);const img=document.createElement('img');img.src=url;img.alt=title()+' sayfa '+(i+1);const link=document.createElement('a');link.href=url;link.download=file.name;link.textContent=(i+1)+'. SAYFAYI İNDİR';preview.append(img,link);});
@@ -65,5 +67,5 @@ export function installReportSharing(host,{content,title,subtitle,status}){
  }
  toolbar.querySelector('[data-export="share"]').onclick=()=>exportReport(true);
  toolbar.querySelector('[data-export="image"]').onclick=()=>exportReport(false);
- const invalidate=()=>clear();return {invalidate,destroy:clear};
+ const invalidate=()=>clear();return {invalidate,destroy:()=>{disposed=true;clear();}};
 }
