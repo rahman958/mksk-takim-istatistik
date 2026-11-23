@@ -238,7 +238,7 @@ function renderTeamRecord(){
 function draw(){
   const formSeason=season();
   let requestId=crypto.randomUUID();
-  cardDialog.innerHTML='<header class="mcc-head"><div><h2>⚽ MAÇ İŞLE</h2><p class="mcc-score-strip"></p></div><button type="button" class="mcc-close">KAPAT ×</button></header><main class="mcc-main"><nav class="mcc-tabs" aria-label="Maç işlemleri"><button type="button" data-mcc-view="new" aria-pressed="true">Yeni Maç</button><button type="button" data-mcc-view="saved" aria-pressed="false">Kayıtlı Maçlar</button></nav><p class="mcc-intro">Her maç burada tek kart olur. Kartı eklediğinde seçtiğin oyuncularda <strong>OYNADI</strong>, seçmediklerinde <strong>OYNAMADI</strong> görünür. Geçmiş maçlar için “sezon toplamına ekle” seçeneğini kapat; sayıların iki kez artmaz.</p><section class="mcc-team"><h3>Takım Genel Durumu</h3><dl class="mcc-team-grid"></dl><details class="mcc-record"><summary>Takım Durumunu Düzenle</summary><p>Bu sezonun maç, galibiyet, beraberlik ve mağlubiyet toplamını buradan düzenle.</p><div class="mcc-record-grid"><label>MAÇ<input name="team_matches" type="number" min="0" value="'+teamRecord.matches+'"></label><label>GALİBİYET<input name="team_wins" type="number" min="0" value="'+teamRecord.wins+'"></label><label>BERABERLİK<input name="team_draws" type="number" min="0" value="'+teamRecord.draws+'"></label><label>MAĞLUBİYET<input name="team_losses" type="number" min="0" value="'+teamRecord.losses+'"></label></div><button class="mcc-record-save" type="button">TAKIM DURUMUNU KAYDET</button><span class="mcc-record-status" role="status"></span></details></section><details class="mcc-new" open><summary>Maç Bilgileri ve Oyuncular</summary><form><div class="mcc-meta"><label>TARİH<input name="date" type="date" max="'+today()+'" value="'+today()+'" required></label><label>RAKİP<input name="opponent" maxlength="200" required placeholder="ÖRN. DUMLUPINAR SK"></label><label>BİZİM SKOR<input name="our" type="number" min="0" max="200" value="0" required></label><label>RAKİP SKOR<input name="against" type="number" min="0" max="200" value="0" required></label><label>SAAT<input name="time" type="time"></label><label class="mcc-count"><input name="count" type="checkbox" checked><span>TAKIM MAÇ SAYISINA VE İSTATİSTİKLERE EKLE</span></label></div><p class="mcc-info">Geçmiş maç giriyorsan kutuyu kapat. Yeni maçta açık bırak: takım sonucu ve sadece seçtiğin oyuncuların maç/gol/asist/puanı işlenir.</p><div class="mcc-player-tools"><button type="button" class="mcc-lineup">Kadroyu Getir</button><input class="mcc-player-query" type="search" placeholder="Ad veya forma no" aria-label="Oyuncu ara"><select class="mcc-player-pick" aria-label="Eklenecek oyuncu"></select><button type="button" class="mcc-add-player">+ Oyuncu Ekle</button></div><p class="mcc-roster-status" role="status"></p><p class="mcc-no-players">Kadroyu getir veya oyuncuları elle ekle.</p><div class="mcc-players"></div><button class="mcc-save" type="submit">Kaydetmeden Önce Kontrol</button><section class="mcc-check" hidden><h3>Maç Kontrolü</h3><div class="mcc-check-content"></div><button type="button" class="mcc-commit">Maçı Kaydet</button></section></form></details><p class="mcc-status" role="status"></p><section class="mcc-list" aria-label="Kayıtlı maçlar" hidden></section></main>';
+  cardDialog.innerHTML='<header class="mcc-head"><div><h2>⚽ MAÇ İŞLE</h2><p class="mcc-score-strip"></p></div><button type="button" class="mcc-close">KAPAT ×</button></header><main class="mcc-main"><nav class="mcc-tabs" aria-label="Maç işlemleri"><button type="button" data-mcc-view="new" aria-pressed="true">Yeni Maç</button><button type="button" data-mcc-view="saved" aria-pressed="false">Kayıtlı Maçlar</button></nav><p class="mcc-intro">Her maç burada tek kart olur. Kartı eklediğinde seçtiğin oyuncularda <strong>OYNADI</strong>, seçmediklerinde <strong>OYNAMADI</strong> görünür. Geçmiş maçlar için “sezon toplamına ekle” seçeneğini kapat; sayıların iki kez artmaz.</p><section class="mcc-team"><h3>Takım Genel Durumu</h3><dl class="mcc-team-grid"></dl><button class="mcc-record-save" type="button">TAKIM GENEL DURUMUNU DÜZENLE</button></section><details class="mcc-new" open><summary>Maç Bilgileri ve Oyuncular</summary><form><div class="mcc-meta"><label>TARİH<input name="date" type="date" max="'+today()+'" value="'+today()+'" required></label><label>RAKİP<input name="opponent" maxlength="200" required placeholder="ÖRN. DUMLUPINAR SK"></label><label>BİZİM SKOR<input name="our" type="number" min="0" max="200" value="0" required></label><label>RAKİP SKOR<input name="against" type="number" min="0" max="200" value="0" required></label><label>SAAT<input name="time" type="time"></label><label class="mcc-count"><input name="count" type="checkbox" checked><span>TAKIM MAÇ SAYISINA VE İSTATİSTİKLERE EKLE</span></label></div><p class="mcc-info">Geçmiş maç giriyorsan kutuyu kapat. Yeni maçta açık bırak: takım sonucu ve sadece seçtiğin oyuncuların maç/gol/asist/puanı işlenir.</p><div class="mcc-player-tools"><button type="button" class="mcc-lineup">Kadroyu Getir</button><input class="mcc-player-query" type="search" placeholder="Ad veya forma no" aria-label="Oyuncu ara"><select class="mcc-player-pick" aria-label="Eklenecek oyuncu"></select><button type="button" class="mcc-add-player">+ Oyuncu Ekle</button></div><p class="mcc-roster-status" role="status"></p><p class="mcc-no-players">Kadroyu getir veya oyuncuları elle ekle.</p><div class="mcc-players"></div><button class="mcc-save" type="submit">Kaydetmeden Önce Kontrol</button><section class="mcc-check" hidden><h3>Maç Kontrolü</h3><div class="mcc-check-content"></div><button type="button" class="mcc-commit">Maçı Kaydet</button></section></form></details><p class="mcc-status" role="status"></p><section class="mcc-list" aria-label="Kayıtlı maçlar" hidden></section></main>';
   cardDialog.querySelector('.mcc-close').onclick=()=>{if(!savingMatch)cardDialog.close();};
   cardDialog.oncancel=e=>{if(savingMatch)e.preventDefault();};
   renderTeamRecord();
@@ -252,22 +252,7 @@ function draw(){
   const form=cardDialog.querySelector('.mcc-new form');
   const resetPlayers=bindPlayerRows(form,formSeason);
   const review=form.querySelector('.mcc-check'), button=form.querySelector('.mcc-commit'), status=cardDialog.querySelector('.mcc-status');
-  cardDialog.querySelector('.mcc-record-save').onclick=async function(){
-    if(savingMatch)return;
-    const status=cardDialog.querySelector('.mcc-record-status');
-    const matches=Number(cardDialog.querySelector('[name=team_matches]').value);
-    const wins=Number(cardDialog.querySelector('[name=team_wins]').value);
-    const draws=Number(cardDialog.querySelector('[name=team_draws]').value);
-    const losses=Number(cardDialog.querySelector('[name=team_losses]').value);
-    this.disabled=true;status.textContent='KAYDEDİLİYOR…';
-    try{
-      const result=await db().rpc('club_set_season_record',{p_season:season(),p_matches:matches,p_wins:wins,p_draws:draws,p_losses:losses});
-      if(result.error)throw result.error;
-      teamRecord=result.data||{matches,wins,draws,losses};
-      renderTeamRecord();
-      status.textContent='TAKIM DURUMU KAYDEDİLDİ.';
-    }catch(error){status.textContent='KAYDEDİLEMEDİ: '+error.message;}finally{this.disabled=false;}
-  };
+  cardDialog.querySelector('.mcc-record-save').onclick=()=>window.MKSK_OPEN_TEAM_TOTALS?.();
   form.onsubmit=event=>{
     event.preventDefault();
     if(savingMatch||form.querySelector('.mcc-lineup').disabled)return;
@@ -333,3 +318,5 @@ export const matchCards = {
     }
   }
 };
+
+window.addEventListener('mksk-team-totals-changed',()=>{if(cardDialog?.open&&!savingMatch)void refresh();});
