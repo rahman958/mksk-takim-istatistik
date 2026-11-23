@@ -96,7 +96,7 @@ export function initPlayerHub(api){
          const row=bySeason.get(selected);
          let overview=null;try{const o=await db.rpc('club_dashboard_totals',{p_season:selected});if(!o.error)overview=o.data;}catch{}if(version!==request||!d.open)return;
          const rating=overview?.players?.[id],avg=rating?.rated_matches?Number(rating.rated_points)/Number(rating.rated_matches):null;
-         totals.innerHTML=row?fields([['Maç',row.matches],['Gol',row.goals],['Asist',row.assists],['Ortalama puan',avg==null?'—':avg.toLocaleString('tr-TR',{maximumFractionDigits:1})+' / 10'],['Başarı',rating?.percent==null?'—':rating.percent+'%'],['Kaçırdığı maç',overview?Math.max(0,Number(overview.matches||0)-Number(row.matches||0)):'—']]):'<p>Bu sezonda istatistik kaydı yok.</p>';
+         totals.innerHTML=row?fields([['Maç',row.matches],['Gol',row.goals],['Asist',row.assists],['Genel Başarı',rating?.percent==null?'—':rating.percent+'%'],['Kaçırdığı maç',overview?Math.max(0,Number(overview.matches||0)-Number(row.matches||0)):'—']]):'<p>Bu sezonda istatistik kaydı yok.</p>';
          detail.innerHTML=row?fields([['Yediği gol',row.goals_conceded],['Maçın adamı',row.man_of_match],['Antrenman',row.attendance_matches],['Antrenman golü',row.attendance_goals],['Antrenman puanı',row.attendance_points]]):'';
          chart.textContent='Puan grafiği yükleniyor…';
          history.textContent='Maç geçmişi yükleniyor…';
@@ -152,6 +152,7 @@ export function initPlayerHub(api){
            }
          }
        }
+       const refreshScore=async event=>{if(event.detail?.id!==id||!d.open)return;const result=await db.from('player_season_stats').select('*').eq('player_id',id).eq('season',event.detail.season).maybeSingle();if(!result.error&&result.data)bySeason.set(event.detail.season,result.data);if(d.open)void drawSeason();};window.addEventListener('mksk-player-score-changed',refreshScore);d.addEventListener('close',()=>window.removeEventListener('mksk-player-score-changed',refreshScore),{once:true});
        season.onchange=drawSeason;
        void drawSeason();
      }catch(error){
