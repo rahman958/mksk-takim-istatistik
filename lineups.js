@@ -1,6 +1,7 @@
+import {renderLineupPoster} from './lineup-poster.js?v=20261124-lineup-designs-1';
 import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
-import {openTactics} from './tactic-board.js?v=20261124-written-tactics-2';
+import {openTactics} from './tactic-board.js?v=20261124-tactic-visual-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {chooseLineupPlayer,wireLineupInteraction} from './lineup-interaction.js?v=20261026-lineup-touch-1';
 // Reuse the application's authenticated client; do not create a second session.
@@ -22,12 +23,16 @@ const lineupThemes={
  blue:{label:'AÇIK MAVİ',page:'#e9f5ff',header:'#ffffff',ink:'#122755',accent:'#cee9fc',pitch:['#d9efff','#b8ddf5'],line:'#5c85ab',light:'#ffffff',card:'#d1e9fa',cardInk:'#122755',footer:'#183e6d',role:'#193f6b',roleInk:'#ffffff',number:'#ffffff'},
  mint:{label:'AÇIK SAHA',page:'#f2faf6',header:'#ffffff',ink:'#122755',accent:'#d7eee3',pitch:['#dff3e7','#bfe3d0'],line:'#638b7c',light:'#ffffff',card:'#dceee4',cardInk:'#122755',footer:'#183e6d',role:'#193f6b',roleInk:'#ffffff',number:'#ffffff'}
 };
+let lineupLayout='classic';
+try{const k=localStorage.getItem('mksk-lineup-layout-v1');if(['classic','poster','cards','split'].includes(k))lineupLayout=k;}catch{}
 let lineupTheme='navy';
 try{const key=localStorage.getItem('mksk-lineup-color-v1');if(Object.hasOwn(lineupThemes,key))lineupTheme=key;}catch{}
 function colorPreferences(){
  const box=document.createElement('section');box.className='lineup-color-preferences';
  box.innerHTML='<label>KADRO RENK TERCİHLERİ<select class="lineup-color-select">'+Object.entries(lineupThemes).map(([key,t])=>'<option value="'+key+'" '+(key===lineupTheme?'selected':'')+'>'+t.label+'</option>').join('')+'</select></label><p>Renk seçimi önizlemeye ve indirilen görsele uygulanır. Kulüp logosu, formalar ve maç bilgileri bütün seçeneklerde aynıdır.</p>';
- box.querySelector('select').onchange=e=>{lineupTheme=e.target.value;try{localStorage.setItem('mksk-lineup-color-v1',lineupTheme);}catch{}void draw();};
+ const choice=document.createElement('label');choice.textContent='KADRO GÖRSEL TERCİHLERİ';const select=document.createElement('select');select.className='lineup-layout-select';[['classic','MEVCUT TASARIM'],['poster','MAÇ AFİŞİ'],['cards','KARTLI KADRO'],['split','SAHA + LİSTE']].forEach(([key,name])=>select.add(new Option(name,key)));select.value=lineupLayout;choice.append(select);box.prepend(choice);
+ select.onchange=()=>{lineupLayout=select.value;const editor=panel.querySelector('.lineup-position-editor');if(editor)editor.open=lineupLayout==='classic';if(lineupLayout!=='classic'&&lineupTheme==='navy'){lineupTheme='white';box.querySelector('.lineup-color-select').value='white';}try{localStorage.setItem('mksk-lineup-layout-v1',lineupLayout);localStorage.setItem('mksk-lineup-color-v1',lineupTheme);}catch{}void draw();};
+ box.querySelector('.lineup-color-select').onchange=e=>{lineupTheme=e.target.value;try{localStorage.setItem('mksk-lineup-color-v1',lineupTheme);}catch{}void draw();};
  panel.querySelector('.lineup-preview').before(box);
 }
 
@@ -119,7 +124,7 @@ async function draw(){publicationDraftNotice();const version=++renderVersion;try
  pill(x,px-34,roleTop,68,27,theme.role);
  x.fillStyle=theme.roleInk;
  fitText(x,s.role,px,roleTop+20,58,18);});
- x.textAlign='left';x.fillStyle=theme.footer;x.font='bold 31px Arial';x.fillText('YEDEKLER',45,1587);bench.forEach((id,i)=>{const p=who(id),left=45+i%3*335,top=1610+Math.floor(i/3)*105;x.fillStyle=theme.card;x.fillRect(left,top,320,90);x.fillStyle=theme.footer;x.font='bold 24px Arial';x.fillText('#'+(p?.jersey_number??'—'),left+12,top+28);x.fillStyle=theme.cardInk;x.font='bold 21px Arial';textLines(x,p?.full_name||'OYUNCU',290).slice(0,2).forEach((line,j)=>x.fillText(line,left+12,top+55+j*23));});if(!bench.length){x.fillStyle=theme.cardInk;x.font='24px Arial';x.fillText('YEDEK BELİRTİLMEDİ',45,1653);}x.textAlign='center';x.fillStyle=theme.footer;x.font='bold 24px Arial';x.fillText('ŞEREFİNLE OYNA, ŞEREFİNLE KAZAN',540,c.height-35);lineupPlayerLinks();return c;}catch(e){status(e.message);throw e;}}
+ x.textAlign='left';x.fillStyle=theme.footer;x.font='bold 31px Arial';x.fillText('YEDEKLER',45,1587);bench.forEach((id,i)=>{const p=who(id),left=45+i%3*335,top=1610+Math.floor(i/3)*105;x.fillStyle=theme.card;x.fillRect(left,top,320,90);x.fillStyle=theme.footer;x.font='bold 24px Arial';x.fillText('#'+(p?.jersey_number??'—'),left+12,top+28);x.fillStyle=theme.cardInk;x.font='bold 21px Arial';textLines(x,p?.full_name||'OYUNCU',290).slice(0,2).forEach((line,j)=>x.fillText(line,left+12,top+55+j*23));});if(!bench.length){x.fillStyle=theme.cardInk;x.font='24px Arial';x.fillText('YEDEK BELİRTİLMEDİ',45,1653);}x.textAlign='center';x.fillStyle=theme.footer;x.font='bold 24px Arial';x.fillText('ŞEREFİNLE OYNA, ŞEREFİNLE KAZAN',540,c.height-35);lineupPlayerLinks();return showLineupPoster(c);}catch(e){status(e.message);throw e;}}
 function setup(){const admin=$('#admin-view'),nav=$('#dashboard-nav');if(!admin||!nav)return;if(!panel){panel=document.createElement('section');panel.id='lineup-panel';panel.className='card';panel.hidden=true;panel.innerHTML='<p class="lineup-status" role="status"></p>';admin.appendChild(panel);}if(!nav.querySelector('[data-page=lineups]')){navButton=document.createElement('button');navButton.type='button';navButton.dataset.page='lineups';navButton.textContent='KADRO OLUŞTUR';navButton.onclick=()=>{nav.querySelectorAll('button').forEach(b=>{b.classList.toggle('active',b===navButton);b.setAttribute('aria-pressed',String(b===navButton));});$('.admin-heading h2').textContent='KADRO OLUŞTUR';open();};nav.appendChild(navButton);}nav.querySelectorAll('button:not([data-page=lineups])').forEach(b=>{if(b.dataset.lineupHook)return;b.dataset.lineupHook='1';b.addEventListener('click',()=>panel.hidden=true);});}
 new MutationObserver(setup).observe(document.body,{childList:true,subtree:true});setup();
 document.addEventListener('change',e=>{if(e.target.id==='season-select'&&panel){panel.hidden=true;navButton?.classList.remove('active');}});
@@ -140,3 +145,14 @@ window.MKSK_OPEN_TACTICS=async()=>{
 };
 
 {const style=document.createElement('style');style.textContent='.lineup-color-preferences{margin:14px 0;padding:14px;border:1px solid #b8cce0;border-radius:14px;background:#f4f8fd;color:#173859}.lineup-color-preferences label{font-weight:800;color:#173859}.lineup-color-preferences select{display:block;width:100%;margin-top:8px;background:white!important;color:#173859!important;-webkit-text-fill-color:#173859!important;min-height:48px}.lineup-color-preferences p{font-size:13px;line-height:1.5;margin:8px 0 0;color:#36536f}';document.head.append(style);}
+
+function showLineupPoster(editCanvas){
+ const preview=panel.querySelector('.lineup-preview');let output=preview.querySelector('.lineup-share-preview');
+ if(!output){output=document.createElement('section');output.className='lineup-share-preview';preview.prepend(output);}
+ let editor=preview.querySelector('.lineup-position-editor');
+ if(!editor){editor=document.createElement('details');editor.className='lineup-position-editor';editor.innerHTML='<summary>OYUNCU YERLEŞİMİNİ DÜZENLE</summary>';editCanvas.before(editor);editor.append(editCanvas);const tactics=preview.querySelector('.lineup-tactics-launch');if(tactics)editor.prepend(tactics);}
+ if(lineupLayout==='classic'){output.hidden=true;editor.open=true;return editCanvas;}
+ const canvas=renderLineupPoster({draft,findPlayer:who,layout:lineupLayout,theme:lineupThemes[lineupTheme],paintShirt:shirt,paintCrest:crest});
+ canvas.className='lineup-poster-canvas';canvas.setAttribute('aria-label','PAYLAŞILACAK KADRO GÖRSELİ');output.hidden=false;output.replaceChildren(canvas);
+ return canvas;
+}
