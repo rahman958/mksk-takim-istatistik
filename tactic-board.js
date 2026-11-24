@@ -343,7 +343,7 @@ export function openTactics(lineup,findPlayer,onDutyChange){
           ball={type:'ball',at};
         }
         if(arrow.type==='run'||arrow.type==='press'||arrow.type==='dribble'){
-          const runner=layout.findIndex(pos=>Math.hypot(pos.x-arrow.from.x,pos.y-arrow.from.y)<=5);
+          const runner=Number.isInteger(arrow.playerIndex)?arrow.playerIndex:layout.findIndex(pos=>Math.hypot(pos.x-arrow.from.x,pos.y-arrow.from.y)<=5);
           if(runner!==-1)layout[runner]=lerp(layout[runner],arrow.to,progress);
         }
       });
