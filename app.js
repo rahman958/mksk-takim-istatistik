@@ -1,4 +1,4 @@
-import {openVisualCenter} from './visual-center.js?v=20261125-visual-center-2';
+import {openVisualCenter} from './visual-center.js?v=20261125-score-card-1';
 import {openCenteredSection,installCenteredStyle,positiveLeaders} from './centered-flow.js?v=20261124-centered-content-2';
 import {openLiveMatch} from './live-match.js?v=20261123-live-match-1';
 import {readTacticDuty,renderTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
