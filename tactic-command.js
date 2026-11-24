@@ -1,3 +1,4 @@
+
 const norm=s=>String(s||'').toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ç/g,'c');
 const clone=v=>JSON.parse(JSON.stringify(v));
 const clamp=n=>Math.max(5,Math.min(95,n));
@@ -54,8 +55,8 @@ export function compileTactic(text,slots){
       to=clone(layout[target]);
      }
      ball=clone(to);
-    }else {if(dribble)type='dribble';layout[i]=clone(to);}
-    if(Math.hypot(from.x-to.x,from.y-to.y)>.1)arrows.push({from,to,type});
+    }else {if(dribble)type='dribble';if(slots.some((s,j)=>j!==i&&Math.hypot(layout[j].x-to.x,layout[j].y-to.y)<10))to.x=clamp(to.x+(to.x<=50?-11:11));layout[i]=clone(to);}
+    if(Math.hypot(from.x-to.x,from.y-to.y)>.1)arrows.push({from,to,type,playerIndex:i});
    }
   }
   if(arrows.length){
