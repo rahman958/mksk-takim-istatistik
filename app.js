@@ -1,3 +1,4 @@
+import {initSelfPlayerCard} from './player-card.js?v=20261125-player-cards-1';
 import {openVisualCenter} from './visual-center.js?v=20261125-score-card-1';
 import {openCenteredSection,installCenteredStyle,positiveLeaders} from './centered-flow.js?v=20261124-centered-content-2';
 import {openLiveMatch} from './live-match.js?v=20261123-live-match-1';
@@ -6,14 +7,14 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261117-unified-bell-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage, drawPlayerListImage, prioritizeClubPlayers, clubPlayerPriority } from './roster-export.js?v=20261123-general-score-1';
-import { initPlayerHub } from './player-hub.js?v=20261123-general-score-1';
+import { initPlayerHub } from './player-hub.js?v=20261125-player-cards-1';
 import { initQuickEntry } from './quick-entry.js?v=20261123-general-score-1';
 import { matchCards } from './match-cards.js?v=20261123-general-score-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261118-history-open-1';
-import {openMonthlyReport} from './monthly-report.js?v=20261124-audit-1';
+import {openMonthlyReport} from './monthly-report.js?v=20261125-inline-reports-1';
 
-function openClubMonthlyReport(personal=false,initialPlayer=null){
+function openClubMonthlyReport(personal=false,initialPlayer=null,inlineRoot=null,initialMonth=null){
   const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
   if(personal ? !id||window.MKSK_PLAYER_PREVIEW : !staffCan('analytics'))return;
   const keeper=position=>['GK','KL','KALECI'].includes(positionGroup({position}));
@@ -33,7 +34,7 @@ function openClubMonthlyReport(personal=false,initialPlayer=null){
     if(result.error)throw result.error;
     return {overview:result.data?.overview||null,games:result.data?.games||[],players:prioritizeClubPlayers(result.data?.players||[]).map(p=>({...p,keeper:keeper(p.position)}))};
   }
-  return openMonthlyReport({load,season,player:personal,formatDate:clubDate,initialPlayer});
+  return openMonthlyReport({load,season,player:personal,formatDate:clubDate,initialPlayer,inlineRoot,lockedPlayer:!!inlineRoot&&!personal,initialMonth});
 }
 var config=window.MKSK_CONFIG;
 var supabase=null;
@@ -790,7 +791,7 @@ var quickInstallBulk=installBulkStats;installBulkStats=function(){quickInstallBu
 var legacyMetadataSave=savePlayer;savePlayer=async function(e){e.preventDefault();var f=e.target,msg=f.querySelector('.save-message');try{var latest=await supabase.from('player_season_stats').select('*').eq('player_id',f.dataset.id).eq('season',selectedSeason).maybeSingle();if(latest.error)throw latest.error;Object.keys(statLabels).forEach(k=>{var input=f.querySelector('[name="'+k+'"]');if(input)input.value=latest.data?.[k]??0;});return await legacyMetadataSave(e);}catch(error){if(msg)msg.textContent='Kaydedilemedi: '+error.message;return false;}};
 
 var playerHubInstance=null,playerHubLoadAdmin=loadAdmin;
-loadAdmin=async function(){await playerHubLoadAdmin();if(!playerHubInstance)playerHubInstance=initPlayerHub({db:supabase,can:area=>staffCan(area),owner:()=>!!staffState?.owner,season:()=>selectedSeason,edit:hubOpenPlayerEditor,action:hubDossierAction,monthly:id=>openClubMonthlyReport(false,id),changed:async()=>{await loadAdmin();},mountInvite:mountPlayerInvite});};
+loadAdmin=async function(){await playerHubLoadAdmin();if(!playerHubInstance)playerHubInstance=initPlayerHub({db:supabase,can:area=>staffCan(area),owner:()=>!!staffState?.owner,season:()=>selectedSeason,edit:hubOpenPlayerEditor,action:hubDossierAction,monthly:(id,root,month)=>openClubMonthlyReport(false,id,root,month),changed:async()=>{await loadAdmin();},mountInvite:mountPlayerInvite});};
 var hubPageAllowed=staffPageAllowed;staffPageAllowed=function(page){if(page==='player_files')return staffCan('roster');if(page==='roster_order')return !!staffState?.owner;if(page==='match_cards')return staffCan('matches');return hubPageAllowed(page);};
 var matchPlayerShell=simplePlayerShell;simplePlayerShell=function(){matchPlayerShell();const box=el('simple-player-menu');if(box&&!box.querySelector('.player-match-cards')){const b=document.createElement('button');b.type='button';b.className='player-match-cards';b.textContent='MAÇLARIM VE FORM';b.onclick=()=>{setPlayerPage('form_graph');el('player-form-chart')?.querySelector('.form-games')?.scrollIntoView({block:'start'});};box.appendChild(b);}};
 
@@ -2300,3 +2301,14 @@ loadAdmin=function(){
 };
 let fullRefreshPending=null;const singleRefreshBase=refresh;
 refresh=function(){if(fullRefreshPending)return fullRefreshPending;fullRefreshPending=Promise.resolve().then(()=>singleRefreshBase()).finally(()=>fullRefreshPending=null);return fullRefreshPending;};
+
+/* The player's own card reuses their authenticated profile and own-record endpoints. */
+let selfPlayerCard=null;
+const cardOwnLoad=loadPlayer;
+loadPlayer=async function(id){
+ selfPlayerCard?.clear();const root=el('player-view');root?.classList.add('player-card-enabled');let pending=el('own-card-loading');if(!pending){pending=document.createElement('p');pending.id='own-card-loading';pending.setAttribute('role','status');pending.textContent='Oyuncu kartın yükleniyor…';root?.prepend(pending);}try{await cardOwnLoad.apply(this,arguments);}catch(error){pending.remove();throw error;}pending.remove();
+ if(!selfPlayerCard)selfPlayerCard=initSelfPlayerCard({db:supabase,season:()=>selectedSeason,record:()=>window.__mkskPlayerHomeRecord,page:()=>playerDashboardPage,monthly:(root,month)=>openClubMonthlyReport(true,null,root,month)});
+ await selfPlayerCard.refresh();
+};
+const cardOwnPage=setPlayerPage;
+setPlayerPage=function(page){const result=cardOwnPage.apply(this,arguments);selfPlayerCard?.visibility(playerDashboardPage);return result;};
