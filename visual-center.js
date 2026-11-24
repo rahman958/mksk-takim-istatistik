@@ -13,15 +13,23 @@ export function renderVisual({kind,data,playerId,gameId,month,metric='goals',log
  if(kind==='roster')rows=players;
  if(kind==='match'&&game)rows=(game.player_entries||[]).filter(e=>byId.has(e.player_id)&&n(e.goals)>0);
  if(kind==='monthly'&&seasonScope)title='SEZONUN GENEL RAPORU';
- const c=document.createElement('canvas');c.width=1080;c.height=Math.max(1600,kind==='roster'||kind==='leaders'?580+rows.length*96:kind==='match'?1170+rows.length*80:1600);
+ const c=document.createElement('canvas');c.width=1080;c.height=kind==='match'?1440+Math.max(1,rows.length)*90:Math.max(1600,kind==='roster'||kind==='leaders'?580+rows.length*96:1600);
  const g=c.getContext('2d'),ink='#102d51',teal='#148598';
  const gradient=g.createLinearGradient(0,0,1080,c.height);gradient.addColorStop(0,'#ffffff');gradient.addColorStop(.5,'#e9f4fc');gradient.addColorStop(1,'#f8fbff');g.fillStyle=gradient;g.fillRect(0,0,c.width,c.height);
  function slash(x,y,w,h,fill){g.fillStyle=fill;g.beginPath();g.moveTo(x+30,y);g.lineTo(x+w,y);g.lineTo(x+w-30,y+h);g.lineTo(x,y+h);g.closePath();g.fill();}
  slash(775,0,360,30,'#b4dceb');slash(925,34,210,18,teal);slash(-40,c.height-36,370,22,'#c0d9ed');slash(-80,c.height-16,250,16,teal);
+
+ if(kind==='match'){
+  g.save();g.beginPath();g.arc(540,147,100,0,Math.PI*2);g.clip();const crop=Math.min(logo.width,logo.height)*.79;g.drawImage(logo,(logo.width-crop)/2,(logo.height-crop)/2,crop,crop,440,47,200,200);g.restore();
+  label(g,'MECİDİYE KARAHİSAR',540,309,990,49,'center');label(g,'SPOR KULÜBÜ',540,365,990,49,'center');
+  slash(102,402,876,76,'#d6eaf6');slash(74,402,28,76,teal);slash(976,402,28,76,teal);label(g,'MAÇ SONUCU',540,457,820,53,'center');
+ }else{
  // Club badge and full name remain the same in every graphic.
  g.save();g.beginPath();g.arc(136,119,76,0,Math.PI*2);g.clip();const crop=Math.min(logo.width,logo.height)*.79;g.drawImage(logo,(logo.width-crop)/2,(logo.height-crop)/2,crop,crop,60,43,152,152);g.restore();
  label(g,'MECİDİYE KARAHİSAR',242,90,795,44);label(g,'SPOR KULÜBÜ',242,143,795,44);label(g,'MKSK 2008 · '+data.season,242,198,795,27,'left','#4f6c86');
  slash(45,259,990,92,ink);slash(23,259,33,92,teal);slash(1020,259,40,92,'#a1d8e3');label(g,title,540,321,915,45,'center','#fff');
+
+ }
  function shirt(y){g.save();g.translate(365,y);g.scale(350/120,420/146);g.beginPath();g.moveTo(45,0);g.lineTo(27,7);g.lineTo(12,22);g.lineTo(0,59);g.lineTo(24,66);g.lineTo(27,46);g.lineTo(27,142);g.quadraticCurveTo(60,148,95,142);g.lineTo(95,46);g.lineTo(99,66);g.lineTo(120,59);g.lineTo(111,23);g.lineTo(94,8);g.lineTo(76,0);g.quadraticCurveTo(60,20,45,0);g.closePath();g.clip();g.drawImage(kit,14,0,267,325,0,0,120,146);g.restore();}
  function tiles(items,y,h=150){const w=984/items.length;items.forEach(([value,key],i)=>{box(g,48+i*w,y,w-14,h);g.strokeStyle='#c6ddea';g.lineWidth=2;g.strokeRect(48+i*w+10,y+h-2,w-34,1);label(g,value,48+i*w+(w-14)/2,y+72,w-30,57,'center');label(g,key,48+i*w+(w-14)/2,y+120,w-30,25,'center','#486681');});}
  if(kind==='player'||kind==='transfer'){
@@ -40,16 +48,30 @@ export function renderVisual({kind,data,playerId,gameId,month,metric='goals',log
    label(g,n(player.stats?.man_of_match)+' MAÇIN ADAMI · '+n(player.stats?.goals_conceded)+' YENİLEN GOL',540,1500,984,27,'center');
   }else{box(g,48,1060,984,240,teal);label(g,'ARAMIZA HOŞ GELDİN',540,1172,950,53,'center','#fff');label(g,'MECİDİYE KARAHİSAR SPOR KULÜBÜ',540,1238,940,29,'center','#fff');}
  }
+
  if(kind==='match'){
   if(!game)throw Error('Önce kayıtlı maç seç.');
-  const field=g.createLinearGradient(0,390,0,830);field.addColorStop(0,'#eaf2fb');field.addColorStop(.6,'#c9e1f1');field.addColorStop(1,'#c9e9d9');g.fillStyle=field;g.fillRect(36,386,1008,444);
-  g.save();g.globalAlpha=.6;g.strokeStyle='#fff';g.lineWidth=5;g.beginPath();g.moveTo(100,820);g.lineTo(285,677);g.lineTo(795,677);g.lineTo(980,820);g.closePath();g.stroke();g.beginPath();g.ellipse(540,744,118,36,0,0,Math.PI*2);g.stroke();g.restore();
-  label(g,n(game.our_score)+' — '+n(game.opponent_score),540,604,980,153,'center');label(g,'MKSK / '+game.opponent,540,680,980,43,'center');
-  label(g,(game.match_date?.split('-').reverse().join('.')||'TARİH YOK')+' · '+(game.match_time||'SAAT BELİRTİLMEDİ'),540,756,950,27,'center');
-  slash(70,850,470,62,teal);label(g,'GOLLERİMİZ',305,894,420,33,'center','#fff');
-  rows.forEach((e,i)=>{box(g,48,935+i*80,984,68);label(g,'⚽  '+byId.get(e.player_id).full_name,69,980+i*80,820,31);label(g,n(e.goals),998,980+i*80,100,37,'right');});if(!rows.length)label(g,'OYUNCU BAZINDA GOL KAYDI YOK',52,984,980,27);
-  const names=(game.player_entries||[]).filter(e=>n(e.man_of_match)>0&&byId.has(e.player_id)).map(e=>byId.get(e.player_id).full_name),winners=names.length&&names.length===(game.player_entries||[]).length?'TÜM TAKIM':names.join(' · ')||'SEÇİLMEDİ';
-  box(g,48,c.height-239,984,137,ink);label(g,'MAÇIN ADAMI',540,c.height-183,940,31,'center','#fff');label(g,winners,540,c.height-128,940,36,'center','#fff');
+  const scoreGradient=g.createLinearGradient(0,520,0,770);scoreGradient.addColorStop(0,'#193f6a');scoreGradient.addColorStop(1,'#101e40');
+  box(g,75,524,365,260,scoreGradient);box(g,640,524,365,260,scoreGradient);
+  label(g,n(game.our_score),257,724,335,190,'center','#fff');label(g,n(game.opponent_score),822,724,335,190,'center','#fff');
+  slash(477,617,126,84,'#13a9a6');label(g,'—',540,679,105,71,'center','#fff');
+  box(g,75,797,365,72,'#cde5f6');box(g,640,797,365,72,'#cde5f6');
+  label(g,'MKSK',257,848,335,42,'center');label(g,game.opponent||'RAKİP',822,848,335,39,'center');
+  label(g,(game.match_date?.split('-').reverse().join('.')||'TARİH YOK')+' · '+(game.match_time||'SAAT BELİRTİLMEDİ'),540,939,980,31,'center');
+  const count=Math.max(1,rows.length),containerY=1010,containerH=65+count*90;
+  g.save();g.shadowColor='#93b2ce55';g.shadowBlur=18;g.shadowOffsetY=5;box(g,60,containerY,960,containerH,'#ffffff');g.restore();g.strokeStyle='#bad4e6';g.lineWidth=2;g.beginPath();g.roundRect(60,containerY,960,containerH,18);g.stroke();
+  slash(284,982,512,69,'#129a9b');label(g,'GOLLERİMİZ',540,1030,455,37,'center','#fff');
+  rows.forEach((e,i)=>{
+   const y=1070+i*90;box(g,88,y,904,76,'#f1f7fc');g.strokeStyle='#d1e3ef';g.lineWidth=1;g.beginPath();g.roundRect(88,y,904,76,18);g.stroke();
+   label(g,byId.get(e.player_id).full_name,117,y+51,744,35);
+   g.fillStyle='#109c98';g.beginPath();g.arc(942,y+38,29,0,Math.PI*2);g.fill();label(g,n(e.goals),942,y+51,51,38,'center','#fff');
+  });if(!rows.length)label(g,'OYUNCU BAZINDA GOL KAYDI YOK',540,1122,870,30,'center');
+  const entries=game.player_entries||[],names=entries.filter(e=>n(e.man_of_match)>0&&byId.has(e.player_id)).map(e=>byId.get(e.player_id).full_name);
+  const winners=names.length&&names.length===entries.length?'TÜM TAKIM':names.join(' · ')||'SEÇİLMEDİ';
+  const awardTop=1130+count*90;box(g,60,awardTop,960,168,'#119d99');slash(300,awardTop-29,480,66,ink);label(g,'MAÇIN ADAMI',540,awardTop+18,425,37,'center','#fff');
+  const winnerRows=[''];g.font='bold 42px Arial';for(const word of up(winners).split(' ')){const i=winnerRows.length-1,next=(winnerRows[i]+' '+word).trim();if(g.measureText(next).width>875&&winnerRows[i])winnerRows.push(word);else winnerRows[i]=next;}
+  if(winnerRows.length===1)label(g,winners,540,awardTop+117,900,winners==='TÜM TAKIM'?74:54,'center','#fff');
+  else winnerRows.forEach((line,i)=>label(g,line,540,awardTop+65+i*33,900,31,'center','#fff'));
  }
  if(kind==='monthly'){
   const overview=data.overview;if(seasonScope&&!overview)throw Error('Sezon özeti yüklenemedi. Yeniden dene.');
