@@ -228,3 +228,23 @@ dialog.hub-player-center[open]{display:flex!important;flex-direction:column!impo
 .pc-report-heading{display:block;font-size:16px;font-weight:800;color:#17385e;margin-bottom:9px}
 .pc-report-month{display:block;padding:12px;border-radius:8px;background:linear-gradient(90deg,#d9f3ee,#e8f8f4);font-size:14px;font-weight:800;color:#087c7f}
 .pc-inline-matches>h4{margin-top:13px!important}
+
+
+/* Keep player controls reachable while reading an expanded card. */
+.hub-player-center .hub-center-toolbar{position:sticky;top:0;z-index:5;background:#f8fcff;padding:8px 0;margin-top:0!important}
+.hub-player-center .pc-card{scroll-margin-top:65px}
+.pc-scroll-actions{flex:0 0 auto;display:flex;gap:8px;padding:8px 0;background:#f2f8fd;border-top:1px solid #cddfea;min-width:0}
+.pc-scroll-actions[hidden]{display:none!important}
+.player-hub-dialog .pc-scroll-actions>button{min-height:45px!important;font-size:11px!important;min-width:0!important;max-width:100%;padding:8px!important}
+.pc-scroll-actions>button:first-child{flex:0 0 100px}.pc-scroll-actions>button:last-child{flex:1}
+.pc-scroll-actions small{display:block;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.monthly-inline .report-period-controls{position:sticky;top:62px;z-index:3;background:#f4f8fd;padding:8px 0;border-bottom:1px solid #d4e4ee}
+
+/* Full day.month.year labels stay within their own scrollable chart. */
+.hub-season-chart{overflow-x:auto;max-width:100%;box-sizing:border-box}
+.hub-chart-bars{min-width:calc(var(--hub-chart-count,5)*68px)}
+.hub-chart-bars>button{min-width:63px!important}
+.hub-chart-date{font-size:9px!important;white-space:nowrap!important;letter-spacing:0!important}
+.pc-form{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.pc-form>div{flex:1 0 65px;box-sizing:border-box}
+.pc-form small{font-size:9px!important;white-space:nowrap}
