@@ -75,3 +75,156 @@ html[data-theme=dark] .hub-season-data .hub-fields>div{background:#22334e}
 .hub-sheet-buttons{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
 .player-hub-dialog .hub-sheet-buttons>button{width:100%;min-height:48px;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#e8f0f9!important;color:#193958!important;-webkit-text-fill-color:#193958!important;border:1px solid #b6cbe0!important;font-size:16px!important;line-height:1.4}
 .hub-sheet-buttons>button[hidden]{display:none!important}
+
+
+/* Player cards: one vertical list, shared identity and readable inline details. */
+.pc-card{margin:16px 0;padding:14px;background:#fff;color:#173859;border:1px solid #bed3e5;border-left:4px solid #1aa7a5;border-radius:17px;box-shadow:0 5px 15px #193f6810;font-family:Arial,system-ui,sans-serif;min-width:0}
+.pc-identity{display:flex;align-items:center;gap:12px;position:relative;min-width:0}
+.pc-identity canvas{width:76px;height:93px;flex:0 0 76px;object-fit:contain}
+.pc-identity>div{flex:1;min-width:0}.pc-identity h3{font-size:18px!important;line-height:1.35!important;margin:0 0 8px!important;color:#15365a!important;overflow-wrap:anywhere}
+.pc-identity small{display:block;font-size:11px;color:#4e6b84;margin-top:7px}
+.pc-position{display:inline-block!important;margin:0!important;padding:5px 8px;background:#daf2f0;border-radius:7px;font-size:13px!important;font-weight:800;line-height:1.4!important;color:#126b76!important}
+.player-hub-dialog .pc-actions{align-self:flex-start;font-size:11px!important;padding:8px!important;min-height:38px;flex:0 0 auto;background:#1c668b!important;border:0!important}
+.pc-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#cddfeb;border:1px solid #cddfeb;border-radius:10px;overflow:hidden;margin:14px 0 12px}
+.pc-metrics>div{background:#f2f8fd;padding:10px 4px;text-align:center;min-width:0}.pc-metrics dd{font-weight:800;font-size:24px;line-height:1.2;margin:0;color:#14375c}.pc-metrics dt{font-size:10px;line-height:1.45;margin:5px 0 0;color:#466780;font-weight:700}
+.pc-metrics>div:nth-child(5) dd{color:#117d82}.pc-metrics>div:nth-child(7){grid-column:1/-1}.pc-metrics[hidden]{display:none!important}
+.pc-details{border:0!important;padding:0!important;margin:0!important;background:transparent!important}
+.pc-details>summary{padding:12px!important;list-style:none;text-align:center;background:#e6f1f9;color:#173d67;border-radius:9px;font-weight:800;font-size:13px!important;cursor:pointer}
+.pc-details>summary::after{content:' ⌄'}.pc-details[open]>summary::after{content:' ⌃'}
+.pc-details>summary::-webkit-details-marker{display:none}
+.pc-detail-content:empty{display:none}
+section.hub-inline-dossier{width:100%!important;max-width:none!important;max-height:none!important;padding:0!important;border:0!important;overflow:visible!important;box-shadow:none!important;background:transparent!important;display:block!important}
+.hub-inline-dossier>header,.hub-inline-dossier .hub-dossier-identity,.hub-inline-dossier .hub-context-note{display:none!important}
+.hub-inline-dossier>.hub-content{overflow:visible!important;max-height:none!important;padding:0!important}
+.hub-inline-dossier .hub-season-overview{padding:10px 0!important}
+.hub-inline-dossier .hub-dossier-action-bar{position:static!important;margin-top:12px}
+.hub-inline-dossier .hub-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hub-inline-dossier .hub-match-performance{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hub-inline-report{margin:12px 0!important}
+.monthly-inline{position:static!important;display:block!important;width:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:8px!important;border:0!important;background:#f4f8fd!important;overflow:visible!important}
+.monthly-inline>header{position:static!important;top:auto!important;display:flex!important;padding:8px 0!important;gap:8px}
+.monthly-inline>header h2{font-size:16px!important}.monthly-inline>header button{font-size:11px!important;flex:0 0 auto;padding:7px!important}
+.monthly-inline [hidden]{display:none!important}
+.pc-self-details{padding-top:12px}
+.pc-self-details h4{margin:16px 0 10px!important;font-size:16px!important;color:#173859!important}
+.pc-self-details details{padding:10px;border:1px solid #c8dbe9;border-radius:10px;margin:12px 0;background:#f7fbff}
+.pc-self-details details>summary{font-size:14px;font-weight:800;color:#176977;cursor:pointer}
+.pc-self-details .monthly-inline header h2{font-size:16px!important}
+.pc-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.pc-info>div{padding:11px;background:#f1f7fc;border-radius:9px;min-width:0}.pc-info small{display:block;font-size:11px;color:#567084}.pc-info strong{display:block;margin-top:6px;font-size:15px;color:#173859;overflow-wrap:anywhere}
+.pc-history-row{padding:12px;margin:9px 0;border:1px solid #d2e1eb;border-radius:10px;background:#f6faff}.pc-history-row strong{font-size:14px;color:#183e62}.pc-history-row p{font-size:12px!important;line-height:1.5!important}.pc-history-row small{font-size:11px;font-weight:700;color:#177f83}
+.pc-form{display:flex;gap:7px;align-items:stretch}.pc-form>div{flex:1;min-width:0;border-radius:8px;background:#e4f3f5;padding:10px 3px;text-align:center}.pc-form b{display:block;font-size:23px;color:#137d85}.pc-form small{display:block;font-size:10px;color:#45647c;margin-top:5px}
+.pc-help{font-size:12px!important;color:#4f6d83!important}.pc-clear{padding:12px;border-radius:10px;background:#e1f5e9;color:#176447!important;font-weight:700}
+body[data-player-context=hub_profile] #player-view.player-card-enabled #player-stat-order{display:none!important}
+body[data-player-context=hub_profile] #player-view.player-card-enabled>.welcome{background:transparent!important;border:0!important;box-shadow:none!important;padding:7px!important}
+body[data-player-context=hub_profile] #player-view.player-card-enabled>.welcome h2,body[data-player-context=hub_profile] #player-view.player-card-enabled>.welcome .eyebrow{display:none!important}
+.self-player-card[hidden]{display:none!important}
+@media(max-width:400px){.pc-card{padding:10px}.pc-identity{gap:8px}.pc-identity canvas{width:62px;height:76px;flex-basis:62px}.pc-identity h3{font-size:15px!important}.pc-position{font-size:11px!important}.pc-metrics dt{font-size:9px}.pc-identity .pc-actions{font-size:10px!important;padding:6px!important}.pc-metrics dd{font-size:22px}}
+
+
+/* Match the chosen card mockup: branded header, clean search and inline sections. */
+.pc-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.hub-player-center{width:min(760px,calc(100vw - 18px));padding:14px!important;background:#f8fcff!important}
+.hub-player-center>header{top:-14px!important;padding:14px 8px!important;background:linear-gradient(120deg,#f6fbff,#e6f4fb)!important;border-bottom:1px solid #d6e6ef;align-items:center!important}
+.pc-list-brand{display:flex;align-items:center;gap:12px;min-width:0}.pc-list-brand img{width:55px;height:55px;object-fit:cover;border-radius:50%}.pc-list-brand strong{display:block;font-size:23px;color:#17365b;line-height:1.2}.pc-list-brand small{display:block;font-size:17px;font-weight:800;color:#148080;margin-top:4px}
+.hub-player-center>header>.hub-close{min-width:38px;min-height:38px!important;background:transparent!important;color:#173b67!important;-webkit-text-fill-color:#173b67!important;border:0!important;font-size:25px!important;padding:4px!important}
+.hub-player-center .hub-center-toolbar{display:flex!important;flex-wrap:nowrap!important;gap:8px;margin:12px 0 4px;align-items:center}
+.hub-player-center .hub-center-toolbar label{margin:0!important;flex:1;min-width:0}
+.hub-player-center .hub-center-search{margin:0!important;background:#f3f9fe!important;border:1px solid #bcd4e5!important;border-radius:10px!important;font-size:14px!important;min-height:46px!important}
+.hub-player-center .hub-center-refresh{font-size:23px!important;min-width:40px!important;min-height:42px!important;padding:4px!important;background:transparent!important;border:1px solid #c5dceb!important;color:#1a6684!important;-webkit-text-fill-color:#1a6684!important}
+.pc-list-options{border:0!important;padding:0!important;margin:5px 0!important;background:transparent!important}
+.pc-list-options>summary{font-size:11px!important;font-weight:700;color:#4a6d87;text-align:right;cursor:pointer;list-style:none}
+.hub-center-status{font-size:11px!important;color:#4f718b;margin:6px 0!important;text-align:right}
+.pc-inline-matches h4{font-size:16px!important;color:#173a60!important;margin:16px 0 10px!important}
+.hub-inline-dossier .hub-season-matches{display:grid;gap:8px}
+.hub-inline-dossier .hub-season-match{padding:10px!important;margin:0!important;border:1px solid #d2e3ee;border-radius:10px;background:#f5faff!important}
+.hub-inline-dossier .hub-season-match-head{gap:6px!important}
+.hub-inline-dossier .hub-season-match-head strong{font-size:14px!important}.hub-inline-dossier .hub-season-match-head small{font-size:11px!important}
+.hub-inline-dossier .hub-season-match-score{font-size:15px!important;padding:6px!important}
+.hub-inline-dossier .hub-match-performance{gap:5px!important;margin:8px 0 0!important}
+.hub-inline-dossier .hub-match-performance dt{font-size:10px!important}.hub-inline-dossier .hub-match-performance dd{font-size:15px!important}
+.hub-inline-dossier .hub-profile-details,.hub-inline-dossier .hub-discipline-group{border:0!important;padding:0!important;background:transparent!important;margin:14px 0!important}
+.hub-inline-dossier .hub-profile-details>summary,.hub-inline-dossier .hub-discipline-group>summary{font-size:16px!important;font-weight:800;color:#173a60!important;margin-bottom:9px}
+.hub-inline-dossier .hub-inline-report{background:#e1f5f1!important;border:0!important;padding:12px!important}
+.hub-inline-dossier .hub-inline-report>summary{color:#087b7d!important;font-weight:800;font-size:14px!important}
+.hub-inline-dossier .hub-fields>div{background:#f0f7fc!important;border:1px solid #d5e4ef!important;box-shadow:none!important;padding:10px!important}
+.hub-inline-dossier .hub-fields small{font-size:11px!important}.hub-inline-dossier .hub-fields strong{font-size:16px!important}
+.hub-inline-dossier .pc-more-profile{padding:8px!important;margin:10px 0!important;background:#f6faff!important;border:1px solid #dce8f0!important}
+.hub-inline-dossier .pc-more-profile>summary{font-size:12px!important;color:#4e6f85}
+.hub-inline-dossier .hub-dossier-action-bar{border:0!important;padding:8px 0!important;background:transparent!important}
+.hub-inline-dossier .hub-dossier-action-bar button{font-size:17px!important;background:#163d68!important;min-height:51px!important}
+
+
+/* Chosen first mockup: slim four-stat band and compact supplementary facts. */
+.pc-card{padding:14px!important;margin:16px 0!important;border-radius:16px!important;background:linear-gradient(115deg,#ffffff,#fafdff)!important}
+.pc-identity{align-items:center!important;gap:12px!important;min-height:113px}
+.pc-identity canvas{width:90px!important;height:110px!important;flex:0 0 90px!important}
+.pc-identity h3{font-family:'Arial Narrow',Arial,sans-serif;font-size:18px!important;font-weight:800!important;line-height:1.25!important;margin:0 0 9px!important}
+.pc-identity>.pc-actions{position:absolute;right:0;top:4px;min-height:33px!important;border-radius:7px!important;background:#17638b!important;font-size:10px!important;padding:7px 9px!important}
+.pc-identity>div{padding-top:27px;align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.pc-position{font-size:12px!important;padding:5px 8px!important}
+.pc-metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;margin:10px 0 0!important;padding:8px 0!important;border:1px solid #cbdfeE!important;background:#f0f7fd!important;border-radius:11px!important}
+.pc-metrics{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.pc-metrics>div{padding:0 3px!important;background:transparent!important;border-right:1px solid #cfdfeb;min-width:0}
+.pc-metrics>div:last-child{border-right:0}
+.pc-metrics dd{font-size:26px!important;line-height:1.2!important;margin:0!important;font-weight:800}
+.pc-metrics dt{font-size:11px!important;font-weight:500!important;margin-top:5px!important;line-height:1.2!important;white-space:nowrap}
+.pc-metrics>div:last-child dd{color:#108486}
+.pc-additional{display:flex;flex-wrap:wrap;justify-content:center;gap:5px 14px;margin:8px 0 0;padding:0}
+.pc-additional>div{display:flex;align-items:baseline;gap:5px}.pc-additional dt{font-size:9px;font-weight:700;color:#57768d}.pc-additional dd{font-size:14px;font-weight:800;margin:0;color:#173d62}
+.pc-season-caption{display:block;color:#688397;font-size:9px;text-align:center;margin:5px 0 8px}
+.pc-details>summary{padding:10px!important;background:linear-gradient(90deg,#eaf4fa,#dfeef8)!important;font-size:13px!important;border-radius:8px!important;margin-top:8px}
+.hub-inline-dossier .hub-season-match{padding:8px 9px!important;border-radius:8px!important}
+.hub-inline-dossier .hub-season-match-head{display:flex!important;align-items:center!important}
+.hub-inline-dossier .hub-season-match-head>div{display:flex;gap:5px;flex-wrap:wrap;align-items:baseline}
+.hub-inline-dossier .hub-season-match-head strong{font-size:12px!important}
+.hub-inline-dossier .hub-season-match-head small{font-size:10px!important}
+.hub-inline-dossier .hub-season-match-score{font-size:12px!important;white-space:nowrap;padding:4px!important;min-width:35px}
+.hub-inline-dossier .hub-match-performance{display:flex!important;flex-wrap:wrap!important;gap:5px 9px!important;margin:7px 0 0!important}
+.hub-inline-dossier .hub-match-performance>div{display:inline-flex!important;gap:4px!important;align-items:baseline!important;background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important;min-width:0!important}
+.hub-inline-dossier .hub-match-performance dt{font-size:10px!important;text-transform:uppercase!important}
+.hub-inline-dossier .hub-match-performance dd{font-size:12px!important;margin:0!important;color:#0c8282}
+.hub-inline-dossier .hub-match-performance>div:last-child{flex-basis:100%;color:#16817e}
+.pc-inline-matches h4,.hub-inline-dossier .hub-profile-details>summary,.hub-inline-dossier .hub-discipline-group>summary{font-size:15px!important}
+.pc-inline-matches h4::before{content:'▣';color:#088c8b;margin-right:8px;font-size:20px}
+.hub-inline-dossier .hub-inline-report{padding:10px!important;margin:12px 0!important;border-radius:8px!important}
+.hub-inline-dossier .hub-inline-report>summary{font-size:13px!important}
+.hub-inline-dossier .hub-fields>div{border-radius:8px!important;padding:9px!important}.hub-inline-dossier .hub-fields strong{font-size:15px!important}
+.pc-self-details .pc-info{gap:7px}.pc-self-details .pc-info strong{font-size:14px}
+.pc-self-details .pc-info>div{padding:9px}
+@media(max-width:390px){.pc-identity canvas{width:78px!important;height:95px!important;flex-basis:78px!important}.pc-identity{gap:8px!important;min-height:103px}.pc-identity h3{font-size:16px!important}.pc-metrics dd{font-size:24px!important}.pc-metrics dt{font-size:10px!important}.pc-additional dt{font-size:8px}}
+
+
+dialog.hub-player-center[open]{display:flex!important;flex-direction:column!important;overflow:hidden!important;height:min(92dvh,1040px);max-height:92dvh!important;padding-bottom:0!important}
+.hub-player-center>header{position:static!important;flex:0 0 auto}
+.hub-player-center>.hub-content{flex:1;overflow:auto;min-height:0;overscroll-behavior:contain;padding-bottom:12px}
+.pc-list-bottom{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;flex:0 0 auto;background:#f4faff;border-top:1px solid #d6e6f0;padding:9px 0 max(10px,env(safe-area-inset-bottom));margin:0 -7px}
+.pc-list-bottom>button{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:55px!important;border:0!important;background:transparent!important;color:#17385e!important;-webkit-text-fill-color:#17385e!important;padding:6px 2px!important;line-height:1.1!important}
+.pc-list-bottom>button[aria-current=page]{background:#a3e5df!important;border-radius:11px!important}
+.pc-list-bottom>button span{font-size:24px;line-height:1}
+.pc-list-bottom>button small{font-size:8px;font-weight:800}
+.pc-additional[hidden]{display:none!important}
+
+.pc-list-bottom svg{width:24px;height:24px;display:block}.hub-player-center button:focus-visible{outline:2px solid #198f99!important;outline-offset:2px}
+
+
+.pc-keeper-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.hub-inline-dossier .pc-compact-match{padding:9px!important;background:#f3f9fd!important;border:1px solid #d4e4ef!important;box-shadow:none!important;margin:0!important}
+.pc-compact-main{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.pc-compact-main>span:first-child{font-size:11px;line-height:1.5;color:#1c3b61;flex:1;min-width:100px}
+.pc-compact-main>span:last-child{font-size:9px;white-space:nowrap;color:#1b3a61;display:flex;gap:4px;align-items:baseline}
+.pc-compact-main b{font-size:13px}.pc-compact-main i{height:11px;width:1px;background:#bdcfdf;display:inline-block;margin:0 2px}
+.pc-compact-main .pc-match-point{font-size:15px;color:#108582}
+.pc-compact-match>small{font-size:9px;display:block;color:#4c748c;margin-top:5px}
+.pc-card{box-shadow:0 5px 14px #2c547b10!important}
+.pc-identity{min-height:102px!important}
+.pc-identity canvas{width:82px!important;height:100px!important;flex-basis:82px!important}
+.pc-identity>div{padding-top:19px!important}
+.pc-metrics{padding:7px 0!important}.pc-metrics dd{font-size:25px!important}.pc-metrics dt{font-size:10px!important}
+
+
+.hub-inline-dossier .hub-inline-report,.pc-self-details .pc-self-report{padding:0!important;background:transparent!important;border:0!important;margin:16px 0!important}
+.hub-inline-report>summary,.pc-self-report>summary{list-style:none!important;display:block!important}
+.hub-inline-report>summary::-webkit-details-marker,.pc-self-report>summary::-webkit-details-marker{display:none}
+.pc-report-heading{display:block;font-size:16px;font-weight:800;color:#17385e;margin-bottom:9px}
+.pc-report-month{display:block;padding:12px;border-radius:8px;background:linear-gradient(90deg,#d9f3ee,#e8f8f4);font-size:14px;font-weight:800;color:#087c7f}
+.pc-inline-matches>h4{margin-top:13px!important}
