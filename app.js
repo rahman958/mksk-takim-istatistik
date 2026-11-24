@@ -1400,6 +1400,8 @@ var openClubEmail;
   var quick=section(box,'HIZLI İŞLEMLER','zap');
   if(staffCan('matches'))addMenuButton(quick,'MAÇ İŞLE','YENİ MAÇ, KAYITLI MAÇLAR, SKOR VE PERFORMANS','trophy',function(){void matchCards.open();});
   if(staffCan('lineup'))addMenuButton(quick,'KADRO OLUŞTUR','İLK KADRO VE YEDEKLER','users-round',function(){simpleActivate(simplePick('lineup'));});
+  if(staffCan('lineup'))addMenuButton(quick,'TAKTİK TAHTASI','TEK METİNLE TAKTİK HAZIRLA / VİDEO PAYLAŞ','route',async function(){if(!staffCan('lineup'))return;try{if(!window.MKSK_OPEN_TACTICS)throw Error('Taktik tahtası yükleniyor. Birazdan tekrar dene.');await window.MKSK_OPEN_TACTICS();}catch(e){alert(e.message||'Taktik tahtası açılamadı.');}});
+
   if(staffCan('roster'))addMenuButton(quick,'TRANSFER GİRİŞİ','YENİ OYUNCU EKLE','user-plus',openTransferEntry);
   if(staffCan('live_match'))addMenuButton(quick,'CANLI MAÇ TAKİBİ','GOL, ASİST, KADRO VE PAYLAŞILACAK MAÇ ÖZETİ','radio',()=>openLiveMatch({db:supabase,season:selectedSeason}));
   if(staffCan('statistics'))addMenuButton(quick,'GÖRSEL VE ANALİZ PAYLAŞIMLARI','TAKIM LİSTESİ VE İSTATİSTİK GÖRSELLERİ','chart-column',openShareMenu);
