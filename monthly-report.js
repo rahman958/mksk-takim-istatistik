@@ -67,16 +67,18 @@ function playerFocus(old,cur,keeper){
   if(cur.rated>=2&&number(cur.best.points)-cur.min>=2)return 'Performans istikrarı. Puanların '+display(cur.min)+'–'+display(number(cur.best.points))+' arasında değişti. En iyi maçındaki hazırlık rutinini gelecek maçlarda da uygula.';
   return cur.rated<2?'Performans eğilimini değerlendirmek için en az iki puanlı maç kaydı gerekiyor.':'İyi giden yönlerini sürdür. Gelecek ay maç başına katkını ve puan ortalamanı yeniden karşılaştır.';
 }
-export async function openMonthlyReport({load,season,player=false,formatDate,initialPlayer=null}){
-  if(document.querySelector('.monthly-report[open]'))return;
+let monthlyInstance=0;
+export async function openMonthlyReport({load,season,player=false,formatDate,initialPlayer=null,inlineRoot=null,lockedPlayer=false,initialMonth=null}){
+  if(!inlineRoot&&document.querySelector('.monthly-report[open]'))return;
   installAnalyticsStyles();
-  const dialog=document.createElement('dialog');
-  dialog.className='player-hub-dialog monthly-report';
-  dialog.setAttribute('aria-labelledby','monthly-report-title');
-  dialog.innerHTML='<header><h2 id="monthly-report-title"><img src="güncel logo.jfif" alt="" width="36" height="36">'+(player?'AYLIK RAPORLARIM':'GENEL RAPOR')+'</h2><button type="button">Kapat ×</button></header><p role="status">Rapor hazırlanıyor…</p><div class="monthly-body"></div>';
-  dialog.querySelector('header button').onclick=()=>dialog.close();
+  const dialog=document.createElement(inlineRoot?'section':'dialog'),titleId='monthly-report-title-'+(++monthlyInstance);
+  dialog.className='player-hub-dialog monthly-report'+(inlineRoot?' monthly-inline':'');
+  if(inlineRoot){inlineRoot.querySelector('.monthly-inline')?.close();dialog.open=true;dialog.close=()=>{if(!dialog.open||!dialog.isConnected)return;dialog.open=false;dialog.dispatchEvent(new Event('close'));};}
+  dialog.setAttribute('aria-labelledby',titleId);
+  dialog.innerHTML='<header><h2 id="'+titleId+'"><img src="güncel logo.jfif" alt="" width="36" height="36">'+(player?'AYLIK RAPORLARIM':'GENEL RAPOR')+'</h2><button type="button">Kapat ×</button></header><p role="status">Rapor hazırlanıyor…</p><div class="monthly-body"></div>';
+  dialog.querySelector('header button').onclick=()=>{dialog.close();if(inlineRoot?.closest('details'))inlineRoot.closest('details').open=false;};
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
-  document.body.append(dialog);dialog.showModal();
+  if(inlineRoot)inlineRoot.append(dialog);else{document.body.append(dialog);dialog.showModal();}
   const status=dialog.querySelector('[role=status]'),body=dialog.querySelector('.monthly-body');
   try{
     let {games,players,teamMonths={},overview=null}=await load();
@@ -88,10 +90,11 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
       (player?'':'<nav aria-label="Rapor türü"><button type="button" data-view="team">Takım Özeti</button> <button type="button" data-view="player">Oyuncu Raporu</button></nav><label data-player-label>Oyuncu <select data-player></select></label>')+
       '<div data-report aria-live="polite"></div>';
     const month=body.querySelector('[data-month]'),picker=body.querySelector('[data-player]'),out=body.querySelector('[data-report]');
+    if(lockedPlayer&&picker){picker.disabled=true;picker.closest('label').hidden=true;body.querySelector('[data-view]')?.closest('nav')?.setAttribute('hidden','');}
     months.forEach(key=>month.add(new Option(monthLabel(key),key)));if(!months.length){month.add(new Option('Aylık maç kaydı yok',''));month.disabled=true;}
     players.forEach(p=>picker?.add(new Option(p.full_name,p.id)));
     if(picker&&initialPlayer&&players.some(p=>p.id===initialPlayer)){picker.value=initialPlayer;picker.dataset.userChosen='1';}
-    let view=player||initialPlayer?'player':'team',shareMetric='goals',allSeason=true;
+    let view=player||initialPlayer?'player':'team',shareMetric='goals',allSeason=!(initialMonth&&months.includes(initialMonth));if(!allSeason)month.value=initialMonth;
     const allButton=body.querySelector('[data-season-all]');
     if(!document.getElementById('report-period-style')){const style=document.createElement('style');style.id='report-period-style';style.textContent='.report-period-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.report-period-controls label{flex:1;min-width:130px}.report-period-controls button{min-height:46px!important;padding:12px!important;background:#244d76!important;color:#fff!important}.report-period-controls button[aria-pressed=true]{background:#176478!important;box-shadow:inset 0 -3px #9de0e8}.report-season-note{font-size:14px!important;line-height:1.6}';document.head.append(style);}
     const sharing=installReportSharing(body,{content:out,title:()=>allSeason?(view==='team'?'SEZON GENEL RAPORU':'OYUNCU SEZON RAPORU'):view==='team'?'GENEL RAPOR':'AYLIK OYUNCU RAPORU',subtitle:()=> (allSeason?'Sezonun tamamı':monthLabel(month.value))+' · '+season+(view==='player'?' · '+(player?players[0]?.full_name:players.find(p=>p.id===picker.value)?.full_name||''):''),status});
