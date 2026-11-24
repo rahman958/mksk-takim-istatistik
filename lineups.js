@@ -1,7 +1,7 @@
 import {renderLineupPoster} from './lineup-poster.js?v=20261124-lineup-designs-1';
 import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
-import {openTactics} from './tactic-board.js?v=20261124-tactic-visual-1';
+import {openTactics} from './tactic-board.js?v=20261125-tactics-permissions-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {chooseLineupPlayer,wireLineupInteraction} from './lineup-interaction.js?v=20261026-lineup-touch-1';
 // Reuse the application's authenticated client; do not create a second session.
@@ -72,7 +72,7 @@ function form(){panel.innerHTML='<div class="lineup-screen-heading"><span>MAÇ K
  panel.querySelector('form').onsubmit=save;panel.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action));const canvas=$('#lineup-canvas');
  const tactics=document.createElement('button');
  tactics.type='button';tactics.className='lineup-tactics-launch';tactics.textContent='TAKTİK TAHTASI';
- tactics.onclick=()=>openTactics(draft,who,()=>{dirty=true;slots();publicationDraftNotice();});canvas.before(tactics);
+ tactics.hidden=!window.MKSK_CAN_TACTICS?.();tactics.onclick=()=>{if(window.MKSK_CAN_TACTICS?.())openTactics(draft,who,()=>{dirty=true;slots();publicationDraftNotice();});};canvas.before(tactics);
  lineupPointerController?.cancel();lineupPointerController=wireLineupInteraction(canvas,{draft:()=>draft,roster:()=>roster,pick:openLineupPicker,changed:()=>{dirty=true;slots();}});draw();}
 function openLineupPlayer(id){if(roster.some(p=>p.id===id))window.dispatchEvent(new CustomEvent('mksk-open-lineup-player',{detail:{id}}));}
 function openLineupPicker(source){
@@ -135,14 +135,15 @@ function publicationDraftNotice(){const box=panel?.querySelector('.lineup-public
 function publicationControls(){const box=document.createElement('section');box.className='lineup-publication';box.innerHTML='<h4>KADROYU OYUNCULARA YAYIMLA</h4><p>YAYIN İÇİN MAÇ GÜNÜ VE SAATİNİ DOLDUR. SAHA BİLGİSİ İSTEĞE BAĞLIDIR. OYUNCU YALNIZCA KENDİ MEVKİSİNİ, İLK KADRO / YEDEK DURUMUNU VE ONA YAZDIĞIN GÖREVİ GÖRÜR. BU SEZONUN ÖNCEKİ YAYINI YENİSİYLE DEĞİŞİR.</p><p class="lineup-draft-note"></p><div class="lineup-actions"><button type="button" class="lineup-publish">KADROYU OYUNCULARA YAYIMLA</button><button type="button" class="lineup-withdraw" disabled>YAYINI GERİ ÇEK</button></div><p class="lineup-publication-state" role="status"></p>';panel.querySelector('.lineup-editor').after(box);box.querySelector('.lineup-publish').onclick=async()=>{if(dirty||!draft.id){status('ÖNCE KADROYU KAYDET.');return;}if(!draft.match_date||!draft.match_time){status('YAYIM İÇİN MAÇ GÜNÜ VE SAATİ GEREKLİ.');return;}if(!confirm('KAYITLI BU KADRO VE KİŞİSEL GÖREVLER OYUNCULARA YAYIMLANSIN MI? BU SEZONUN ÖNCEKİ YAYINI YENİSİYLE DEĞİŞİR.'))return;const b=box.querySelector('.lineup-publish');b.disabled=true;try{const r=await db.rpc('club_publish_lineup',{p_lineup:draft.id});if(r.error)throw r.error;status(r.data.unchanged?'BU KADRONUN AYNI SÜRÜMÜ ZATEN YAYIMDA.':'KADRO YAYIMLANDI. OYUNCULAR KENDİ GÖREVLERİNİ GÖREBİLİR.');await publicationInfo();}catch(e){status('YAYIMLANAMADI: '+e.message);}finally{publicationDraftNotice();}};box.querySelector('.lineup-withdraw').onclick=async()=>{if(!draft.id||!confirm('BU KADRONUN OYUNCULARDAKİ YAYINI GERİ ÇEKİLSİN Mİ? KAYITLI TASLAK SİLİNMEZ.'))return;const b=box.querySelector('.lineup-withdraw');b.disabled=true;try{const r=await db.rpc('club_withdraw_lineup',{p_lineup:draft.id});if(r.error)throw r.error;status('YAYIN GERİ ÇEKİLDİ. TASLAK KORUNDU.');await publicationInfo();}catch(e){status('İŞLEM YAPILAMADI: '+e.message);b.disabled=false;}};publicationDraftNotice();void publicationInfo();}
 async function publicationInfo(){const id=draft?.id,box=panel?.querySelector('.lineup-publication');if(!box)return;const out=box.querySelector('.lineup-publication-state'),withdraw=box.querySelector('.lineup-withdraw');if(!id){out.textContent='YENİ TASLAK · HENÜZ KAYDEDİLMEDİ / YAYIMLANMADI.';return;}const r=await db.from('club_lineup_publications').select('revision,published_at,withdrawn_at').eq('lineup_id',id).order('published_at',{ascending:false}).limit(1);if(draft?.id!==id||!box.isConnected)return;if(r.error){out.textContent='YAYIN DURUMU OKUNAMADI: '+r.error.message;return;}const row=r.data?.[0];withdraw.disabled=!row||Boolean(row.withdrawn_at);out.textContent=!row?'BU KADRO HENÜZ YAYIMLANMADI.':row.withdrawn_at?'ÖNCEKİ YAYIN GERİ ÇEKİLMİŞ.':'YAYIMDA · SÜRÜM '+row.revision+' · '+new Date(row.published_at).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'})+' · SONRADAN KAYDETTİĞİN DEĞİŞİKLİKLERİ TEKRAR YAYIMLAMALISIN.';}
 
+
 window.MKSK_OPEN_TACTICS=async()=>{
- const target=document.querySelector('#dashboard-nav [data-page=lineups]');if(!target||target.hidden)throw Error('Taktik yetkin bulunmuyor.');
- if(loading)throw Error('Kadro yükleniyor. Birazdan tekrar dene.');
- loading=true;
- try{await data();if(!draft||draft.season!==season()){draft=saved.length?structuredClone(saved[0]):blank();dirty=false;}
- openTactics(draft,who,()=>{dirty=true;if(panel?.querySelector('.lineup-editor'))form();});
- }finally{loading=false;}
+ if(!window.MKSK_CAN_TACTICS?.())throw Error('Taktik tahtası yetkin kapalı.');
+ const r=await db.rpc('club_tactics_data',{p_season:season()});if(r.error)throw r.error;
+ const players=r.data.players||[],editable=!!window.MKSK_CAN_LINEUP?.();
+ const target=editable&&draft?.season===season()?draft:structuredClone(r.data.lineup||blank());
+ openTactics(target,id=>players.find(p=>p.id===id),editable&&target===draft?()=>{dirty=true;if(panel?.querySelector('.lineup-editor'))form();}:null,{allowDuty:editable&&target===draft});
 };
+
 
 {const style=document.createElement('style');style.textContent='.lineup-color-preferences{margin:14px 0;padding:14px;border:1px solid #b8cce0;border-radius:14px;background:#f4f8fd;color:#173859}.lineup-color-preferences label{font-weight:800;color:#173859}.lineup-color-preferences select{display:block;width:100%;margin-top:8px;background:white!important;color:#173859!important;-webkit-text-fill-color:#173859!important;min-height:48px}.lineup-color-preferences p{font-size:13px;line-height:1.5;margin:8px 0 0;color:#36536f}';document.head.append(style);}
 
