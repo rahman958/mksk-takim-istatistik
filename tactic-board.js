@@ -15,7 +15,7 @@ function shrink(ctx,value,width){
   while(text.length>1&&ctx.measureText(text).width>width)text=text.slice(0,-2)+'…';
   return text;
 }
-export function openTactics(lineup,findPlayer,onDutyChange){
+export function openTactics(lineup,findPlayer,onDutyChange,options={}){
   if(document.querySelector('.mksk-tactics[open]'))return;
   const slots=lineup.positions.map(slot=>({...slot,player:findPlayer(slot.player_id)}));
   const initial=()=>slots.map(({x,y})=>({x,y}));
@@ -47,6 +47,7 @@ export function openTactics(lineup,findPlayer,onDutyChange){
     <details class="tactics-notes"><summary>Oyuncu görevleri</summary><label>Oyuncu<select data-field="player"></select></label><label>Görev notu<textarea data-field="note" maxlength="120" rows="2"></textarea></label><label>Oyuncu hareketi<select data-field="duty-arrow"></select></label><button type="button" data-action="assign">Oyuncunun kadro görevine ekle</button><button type="button" data-action="detach">Bu bölümün hareketini kaldır</button><p data-duty-status role="status"></p></details>
     <details><summary>Taktik şablonları</summary><label>Şablon seç<select data-field="template"></select></label><div class="tactics-row"><button type="button" data-action="load">Uygula</button><button type="button" data-action="save">Plan adıyla kaydet</button><button type="button" data-action="delete">Şablonu sil</button></div></details>
     <p role="status" class="tactics-status"></p>`;
+  if(options.allowDuty===false)dlg.querySelector('.tactics-notes').hidden=true;
   const q=selector=>dlg.querySelector(selector);
   const field=name=>q('[data-field="'+name+'"]');
   const action=name=>q('[data-action="'+name+'"]');
