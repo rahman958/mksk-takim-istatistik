@@ -10,7 +10,7 @@ export async function paintCardShirts(root){
   const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.save();g.scale(2,2);
   g.beginPath();g.moveTo(45,0);g.lineTo(27,7);g.lineTo(12,22);g.lineTo(0,59);g.lineTo(24,66);g.lineTo(27,46);g.lineTo(27,142);g.quadraticCurveTo(60,148,95,142);g.lineTo(95,46);g.lineTo(99,66);g.lineTo(120,59);g.lineTo(111,23);g.lineTo(94,8);g.lineTo(76,0);g.quadraticCurveTo(60,20,45,0);g.closePath();g.clip();
   if(c.dataset.keeper==='true'){g.fillStyle='#f6d32d';g.fillRect(0,0,120,146);g.drawImage(logo,76,26,17,17);}else g.drawImage(kit,14,0,267,325,0,0,120,146);
-  g.restore();c.setAttribute('aria-label',c.dataset.keeper==='true'?'MKSK yazılı kaleci forması':'MKSK yazılı kulüp forması');
+  g.restore();c.setAttribute('aria-label',c.dataset.keeper==='true'?'Kaleci forması':'Kulüp forması');
  });}catch{root.querySelectorAll('[data-card-shirt]').forEach(c=>{c.setAttribute('aria-label','MKSK forması yüklenemedi');const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.font='bold 24px Arial';g.fillStyle='#173d67';g.fillText('MKSK',20,70);});}
 }
 export function playerCardHtml(p,stats={},overview=null,{actions=true}={}){
@@ -55,7 +55,7 @@ export function initSelfPlayerCard(api){
     const played=(games.data||[]).filter(m=>m.status==='OYNADI').sort((a,b)=>String(b.match_date).localeCompare(String(a.match_date)));
     const recent=played.slice(0,5).reverse();const lastMonth=played.map(m=>String(m.match_date||'').slice(0,7)).find(m=>/^\d{4}-\d{2}$/.test(m));if(lastMonth&&!report.open){report.dataset.month=lastMonth;report.querySelector('.pc-report-month').textContent=new Date(lastMonth+'-01T12:00:00').toLocaleDateString('tr-TR',{month:'long',year:'numeric'}).toLocaleUpperCase('tr-TR')+' ›';}
 
-    const graph=document.createElement('details');graph.className='pc-own-form';graph.innerHTML='<summary>SON 5 MAÇIN PUAN GRAFİĞİ</summary>'+(recent.length?'<div class="pc-form">'+recent.map(m=>'<div><b>'+esc(m.points==null?'—':num(m.points))+'</b><small>'+esc(date(m.match_date).slice(0,5))+'</small></div>').join('')+'</div><p class="pc-help">Maç puanları 10 üzerindendir.</p>':'<p>Puanlı maç kaydı yok.</p>');own.querySelector('.pc-own-form')?.remove();own.querySelector('.pc-self-details').append(graph);
+    const graph=document.createElement('details');graph.className='pc-own-form';graph.innerHTML='<summary>SON 5 MAÇIN PUAN GRAFİĞİ</summary>'+(recent.length?'<div class="pc-form">'+recent.map(m=>'<div><b>'+esc(m.points==null?'—':num(m.points))+'</b><small>'+esc(date(m.match_date))+'</small></div>').join('')+'</div><p class="pc-help">Maç puanları 10 üzerindendir.</p>':'<p>Puanlı maç kaydı yok.</p>');own.querySelector('.pc-own-form')?.remove();own.querySelector('.pc-self-details').append(graph);
     history.innerHTML=played.map(m=>'<article class="pc-history-row"><strong>'+esc(m.opponent)+' · '+esc(date(m.match_date))+'</strong><p>'+num(m.goals)+' GOL · '+num(m.assists)+' ASİST · '+(m.points==null?'PUAN GİRİLMEDİ':esc(m.points)+' / 10 PUAN')+'</p><small>MAÇIN ADAMI: '+(m.man_of_match===true||num(m.man_of_match)>0?'EVET':'HAYIR')+'</small></article>').join('')||'<p>Bu sezon için oynanmış maç kaydı yok.</p>';
 
    }
