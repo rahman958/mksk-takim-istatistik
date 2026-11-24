@@ -1,4 +1,4 @@
-import {compileTactic} from './tactic-command.js?v=20261124-written-tactics-1';
+import {compileTactic} from './tactic-command.js?v=20261124-written-tactics-2';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 const storageKey='mksk-tactic-templates-v1';
 const phases=['Top bizde','Top rakipte','Hücuma geçiş','Savunmaya geçiş','Duran toplarımız','Rakibin duran topları','Maç içi senaryolar'];
