@@ -1,157 +1,7 @@
+import {compileTactic} from './tactic-command.js?v=20261124-written-tactics-1';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
 const storageKey='mksk-tactic-templates-v1';
 const phases=['Top bizde','Top rakipte','Hücuma geçiş','Savunmaya geçiş','Duran toplarımız','Rakibin duran topları','Maç içi senaryolar'];
-const presets=[
-  {
-    name: "Kenardan hücum",
-    note: "Bek bindirir, kanat içe hareket eder. Son pas için ceza alanı gerisine bak.",
-    arrows: [
-      {"type":"run","from":{"x":24,"y":60},"to":{"x":13,"y":19}},
-      {"type":"run","from":{"x":18,"y":35},"to":{"x":36,"y":24}},
-      {"type":"pass","from":{"x":13,"y":19},"to":{"x":49,"y":29}}
-    ]
-  },
-  {
-    name: "Geriden oyun kurma",
-    note: "Kaleci stoperi bulur. Orta saha pas açısı oluşturur, ters kanat geniş kalır.",
-    arrows: [
-      {"type":"pass","from":{"x":50,"y":90},"to":{"x":28,"y":72}},
-      {"type":"run","from":{"x":50,"y":49},"to":{"x":42,"y":63}},
-      {"type":"pass","from":{"x":28,"y":72},"to":{"x":42,"y":63}}
-    ]
-  },
-  {
-    name: "Yüksek pres",
-    note: "İlk koşu pası dışa yönlendirir. Yakın oyuncu baskıya çıkar, merkez pası kapatılır.",
-    arrows: [
-      {"type":"press","from":{"x":52,"y":31},"to":{"x":39,"y":14}},
-      {"type":"press","from":{"x":26,"y":37},"to":{"x":19,"y":22}},
-      {"type":"run","from":{"x":59,"y":46},"to":{"x":50,"y":38}}
-    ]
-  },
-  {
-    name: "Orta blok",
-    note: "Merkezi daralt, rakibi kenara yönlendir ve topun olduğu tarafa birlikte kay.",
-    arrows: [
-      {"type":"run","from":{"x":65,"y":59},"to":{"x":55,"y":58}},
-      {"type":"run","from":{"x":42,"y":58},"to":{"x":33,"y":56}},
-      {"type":"press","from":{"x":23,"y":51},"to":{"x":15,"y":44}}
-    ]
-  },
-  {
-    name: "Hızlı kontra",
-    note: "İlk pas öne, ikinci koşu boş koridora. Topu kazanan oyuncuya kısa destek ver.",
-    arrows: [
-      {"type":"pass","from":{"x":46,"y":70},"to":{"x":34,"y":49}},
-      {"type":"run","from":{"x":64,"y":53},"to":{"x":72,"y":20}},
-      {"type":"pass","from":{"x":34,"y":49},"to":{"x":72,"y":20}}
-    ]
-  },
-  {
-    name: "Top kaybı sonrası",
-    note: "Topa yakın oyuncular baskı yapar. Arkadakiler merkeze dönüp derinliği korur.",
-    arrows: [
-      {"type":"press","from":{"x":34,"y":35},"to":{"x":45,"y":43}},
-      {"type":"press","from":{"x":56,"y":35},"to":{"x":45,"y":43}},
-      {"type":"run","from":{"x":64,"y":52},"to":{"x":53,"y":66}}
-    ]
-  },
-  {
-    name: "Korner · hücum",
-    note: "Ön direğe koşuyla alan aç. İkinci oyuncu arka direğe gider, biri seken topu bekler.",
-    arrows: [
-      {"type":"pass","from":{"x":97,"y":3},"to":{"x":60,"y":13}},
-      {"type":"run","from":{"x":64,"y":28},"to":{"x":60,"y":13}},
-      {"type":"run","from":{"x":45,"y":26},"to":{"x":37,"y":12}}
-    ]
-  },
-  {
-    name: "Korner · savunma",
-    note: "Ön direk, merkez ve arka direği paylaş. Seken top için ceza alanı dışında bir oyuncu bırak.",
-    arrows: [
-      {"type":"run","from":{"x":71,"y":73},"to":{"x":65,"y":93}},
-      {"type":"run","from":{"x":50,"y":78},"to":{"x":50,"y":90}},
-      {"type":"run","from":{"x":29,"y":74},"to":{"x":38,"y":94}}
-    ]
-  },
-  {
-    name: "Frikik · hücum",
-    note: "Bir oyuncu topa yaklaşır, diğer oyuncu savunma arkasına hareket eder.",
-    arrows: [
-      {"type":"run","from":{"x":56,"y":31},"to":{"x":68,"y":27}},
-      {"type":"pass","from":{"x":67,"y":32},"to":{"x":49,"y":12}}
-    ]
-  },
-  {
-    name: "Frikik · savunma",
-    note: "Barajı ve arka direği yerleştir. Kaleci görüş alanını ve çevrilen topları kontrol eder.",
-    arrows: [
-      {"type":"run","from":{"x":56,"y":68},"to":{"x":57,"y":80}},
-      {"type":"run","from":{"x":70,"y":66},"to":{"x":66,"y":80}}
-    ]
-  },
-  {
-    name: "Taç",
-    note: "Yakına bir seçenek, çizgiye bir koşu. Topu geri alacak oyuncuyu belirle.",
-    arrows: [
-      {"type":"run","from":{"x":85,"y":48},"to":{"x":92,"y":58}},
-      {"type":"run","from":{"x":82,"y":59},"to":{"x":92,"y":40}},
-      {"type":"pass","from":{"x":98,"y":59},"to":{"x":92,"y":58}}
-    ]
-  },
-  {
-    name: "Kale vuruşu",
-    note: "Savunma iki yana açılır. Orta saha oyuncusu ilk pas için dönük konum alır.",
-    arrows: [
-      {"type":"run","from":{"x":40,"y":80},"to":{"x":22,"y":73}},
-      {"type":"run","from":{"x":60,"y":80},"to":{"x":78,"y":73}},
-      {"type":"pass","from":{"x":50,"y":93},"to":{"x":22,"y":73}}
-    ]
-  },
-  {
-    name: "Santra",
-    note: "İlk pasla topu güvene al. Kanatlar açılırken merkezde pas bağlantısı kur.",
-    arrows: [
-      {"type":"pass","from":{"x":50,"y":50},"to":{"x":50,"y":64}},
-      {"type":"run","from":{"x":26,"y":51},"to":{"x":13,"y":42}},
-      {"type":"run","from":{"x":74,"y":51},"to":{"x":87,"y":42}}
-    ]
-  },
-  {
-    name: "Penaltı",
-    note: "Vuracak oyuncuyu ve sırayı plan notuna yaz. Dönen top için yerleşimi hazırla.",
-    arrows: [
-      {"type":"shot","from":{"x":50,"y":12},"to":{"x":57,"y":1}}
-    ]
-  },
-  {
-    name: "Skoru koruma",
-    note: "Hatlar arası mesafeyi kısalt. Bir oyuncu çıkış pası için önde kalsın.",
-    arrows: [
-      {"type":"run","from":{"x":28,"y":56},"to":{"x":33,"y":71}},
-      {"type":"run","from":{"x":68,"y":57},"to":{"x":66,"y":71}},
-      {"type":"run","from":{"x":47,"y":38},"to":{"x":49,"y":50}}
-    ]
-  },
-  {
-    name: "Gol arama",
-    note: "Bir oyuncu savunma arkasına koşar. Kenardan geriye pası ve seken topu planla.",
-    arrows: [
-      {"type":"run","from":{"x":52,"y":42},"to":{"x":63,"y":20}},
-      {"type":"pass","from":{"x":85,"y":19},"to":{"x":51,"y":28}},
-      {"type":"shot","from":{"x":51,"y":28},"to":{"x":50,"y":2}}
-    ]
-  },
-  {
-    name: "Eksik oyuncuyla oyun",
-    note: "Merkezi kapat, rakibi dışa yönlendir. Top kazanılınca öndeki oyuncuyu bul.",
-    arrows: [
-      {"type":"run","from":{"x":29,"y":55},"to":{"x":38,"y":65}},
-      {"type":"run","from":{"x":71,"y":56},"to":{"x":62,"y":66}},
-      {"type":"pass","from":{"x":50,"y":66},"to":{"x":54,"y":36}}
-    ]
-  }
-];
 const colors={run:'#74dcf6',press:'#ff9bac',pass:'#e3f0ff',shot:'#ffd58b',dribble:'#b2f3be'};
 const labels={run:'Koşu',press:'Pres',pass:'Pas',shot:'Şut',dribble:'Top sürme'};
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -187,7 +37,6 @@ export function openTactics(lineup,findPlayer,onDutyChange){
   dlg.innerHTML=`<header><h2 id="mksk-tactics-title">Taktik Tahtası</h2><form method="dialog"><button>Kapat</button></form></header>
     <label>Plan adı<input data-field="name" maxlength="60" value="Maç planı"></label>
     <label>Oyun planı<select data-field="phase">${phases.map((name,i)=>'<option value="'+i+'">'+name+'</option>').join('')}</select></label>
-    <details><summary>Hazır futbol taktikleri</summary><label>Taktik seç<select data-field="preset"></select></label><p data-preset-note></p><button type="button" data-action="preset">Yeni adım olarak ekle</button></details>
     <details><summary>Bölümün maç planı</summary><label>Plan notu<textarea data-field="phase-note" maxlength="360" rows="3" placeholder="Diziliş, pres tetikleyicisi, oyuncu değişikliği veya duran top sırası"></textarea></label></details>
     <div class="tactics-row"><label>Adım<select data-field="step"></select></label><button type="button" data-action="add">Adım ekle</button><button type="button" data-action="remove">Adımı sil</button></div>
     <label>Adım açıklaması<input data-field="title" maxlength="80" placeholder="Örn. Arka direğe koşu"></label>
@@ -202,6 +51,25 @@ export function openTactics(lineup,findPlayer,onDutyChange){
   const field=name=>q('[data-field="'+name+'"]');
   const action=name=>q('[data-action="'+name+'"]');
   const canvas=q('canvas'),ctx=canvas.getContext('2d');
+
+  const commandBox=document.createElement('section');commandBox.className='tactics-command';
+  commandBox.innerHTML='<label>BÜTÜN TAKTİĞİNİ BURAYA YAZ<textarea rows="6" maxlength="6000" data-command placeholder="Top bizdeyken kanatlar açılsın, orta saha öne yaklaşsın. Top rakipteyken önde baskı yapalım, savunma çizgisi yükselsin. Baskı aşılırsa savunma geri çekilsin."></textarea></label><button type="button" data-build>TAKTİĞİ OLUŞTUR</button><p>Oyuncunun tam adını veya mevkisini yaz. Cümleleri noktayla ayır. Anlaşılmayan talimatları aşağıda göreceksin.</p><div data-command-result role="status"></div>';
+  q('header').after(commandBox);
+  const advanced=document.createElement('details');advanced.innerHTML='<summary>ELLE DÜZENLE / KAYITLI PLANLAR</summary>';
+  const playRow=action('play').closest('.tactics-row'),shareRow=action('share').closest('.tactics-row');
+  [...dlg.children].forEach(n=>{if(n!==commandBox&&!n.matches('header,canvas,.tactics-status')&&n!==playRow&&n!==shareRow)advanced.append(n);});
+  dlg.append(advanced);
+  const style=document.createElement('style');style.textContent='.tactics-command textarea{width:100%;min-height:140px;background:white!important;color:#142e50!important;-webkit-text-fill-color:#142e50!important;padding:12px;border:1px solid #9eb4cc;border-radius:12px;line-height:1.5}.tactics-command button{width:100%;margin:10px 0;background:#126b79!important;color:white!important}.tactics-command p{font-size:14px;line-height:1.5;color:#183858!important}.mksk-tactics{max-height:92dvh;overflow:auto!important}.mksk-tactics button{min-height:44px}.mksk-tactics [data-command-result]{white-space:pre-wrap}';dlg.append(style);
+  let generatedText='';
+  q('[data-build]').onclick=()=>{
+   const text=q('[data-command]').value.trim(),result=compileTactic(text,slots),out=q('[data-command-result]');
+   if(result.issues.length){out.textContent='Şu talimatları netleştir:\n'+result.issues.join('\n');action('play').disabled=true;return;}
+   checkpoint();plan.phases[0]={positions:initial(),note:'',steps:result.steps};phase=0;step=0;generatedText=text;plan.commandText=text;update();action('play').disabled=false;
+   out.textContent=result.steps.length+' sahne hazır. Hareketleri önizlemede kontrol et.\n'+result.steps.map((s,i)=>(i+1)+'. '+s.note).join('\n');
+  };
+  q('[data-command]').oninput=()=>{if(q('[data-command]').value.trim()!==generatedText){action('play').disabled=true;q('[data-command-result]').textContent='Metin değişti. Taktiği yeniden oluştur.';}};
+  action('play').disabled=true;
+
   const current=()=>plan.phases[phase];
   const frame=()=>current().steps[step];
   const positions=()=>frame().positions||current().positions;
@@ -261,7 +129,7 @@ export function openTactics(lineup,findPlayer,onDutyChange){
     start=null;
     field('phase').value=String(phase);
     field('phase-note').value=current().note||'';
-    action('preset').disabled=current().steps.length>=12;
+
     field('step').replaceChildren(...current().steps.map((_,i)=>new Option('Adım '+(i+1),String(i))));
     field('step').value=String(step);field('title').value=frame().title;
     action('remove').disabled=current().steps.length===1;
@@ -319,15 +187,6 @@ export function openTactics(lineup,findPlayer,onDutyChange){
   };
   field('phase').onchange=()=>{phase=Number(field('phase').value);step=0;update();};
   field('phase-note').onchange=()=>{checkpoint();current().note=field('phase-note').value.trim();};
-  field('preset').replaceChildren(...presets.map(({name},i)=>new Option(name,String(i))));
-  field('preset').onchange=()=>{q('[data-preset-note]').textContent=presets[field('preset').value].note;};
-  field('preset').onchange();
-  action('preset').onclick=()=>{
-    const preset=presets[field('preset').value];
-    checkpoint();
-    const next={...blankStep(),title:preset.name,arrows:copy(preset.arrows),positions:copy(positions()),note:preset.note};
-    step=current().steps.push(next)-1;update();status(preset.note);
-  };
   field('mode').onchange=()=>{start=null;hint();draw();};
   field('step').onchange=()=>{step=Number(field('step').value);update();};
   field('title').onchange=()=>{checkpoint();frame().title=field('title').value.trim();};
@@ -392,7 +251,7 @@ export function openTactics(lineup,findPlayer,onDutyChange){
     const name=field('template').value,saved=loadTemplates()[name];
     if(!name||!saved){status('Bir şablon seç.');return;}
     if(saved.size!==slots.length){status('Bu şablon '+saved.size+' kişilik bir kadro için.');return;}
-    checkpoint();plan=restorePlan(saved.plan);phase=0;step=0;field('name').value=name;update();status('Şablon uygulandı. Görevleri kadroya göre kontrol et.');
+    checkpoint();plan=restorePlan(saved.plan);phase=0;step=0;field('name').value=name;generatedText=plan.commandText||'';q('[data-command]').value=generatedText;action('play').disabled=false;update();status('Şablon uygulandı. Görevleri kadroya göre kontrol et.');
   };
   action('delete').onclick=()=>{
     const name=field('template').value;if(!name)return;
@@ -454,10 +313,12 @@ export function openTactics(lineup,findPlayer,onDutyChange){
       <form method="dialog"><button>Kapat</button></form></header>
       <canvas width="600" height="690" role="img" aria-label="Oynatılan taktiğin saha çizimi"></canvas>
       <div class="tactics-player-step" aria-live="polite"><small data-playing-count></small><strong data-playing-title></strong><p data-playing-note></p></div>
-      <div class="tactics-row"><button type="button" data-previous>Önceki</button><button type="button" data-toggle>▶ Oynat</button><button type="button" data-next>Sonraki</button></div>`;
+      <div class="tactics-row"><button type="button" data-previous>Önceki</button><button type="button" data-toggle>▶ Oynat</button><button type="button" data-next>Sonraki</button></div><div class="tactics-row"><button type="button" data-video>VİDEOYU İNDİR</button><button type="button" data-video-share>VİDEOYU PAYLAŞ</button></div><p data-video-status role="status"></p>`;
     const el=selector=>preview.querySelector(selector);
     const view=el('canvas').getContext('2d');
     const previous=el('[data-previous]'), toggle=el('[data-toggle]'), next=el('[data-next]');
+    let recorder=null,recording=false,recordStream=null,exportCanvas=null,exportCtx=null,shareVideo=false;
+    const videoStatus=el('[data-video-status]'),videoButtons=[el('[data-video]'),el('[data-video-share]')];
     const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const lerp=(from,to,t)=>({x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t});
     const arrowMs=720;
@@ -486,16 +347,38 @@ export function openTactics(lineup,findPlayer,onDutyChange){
           if(runner!==-1)layout[runner]=lerp(layout[runner],arrow.to,progress);
         }
       });
-      draw(view,{...item,markers,arrows:elapsed===0||reducedMotion?item.arrows:arrows},layout,null);
+      draw(view,{...item,markers,arrows:elapsed===0||(reducedMotion&&!recording)?item.arrows:arrows},layout,null);
       if(ball){
         const at=point(ball.at);
         view.fillStyle='#fff';view.strokeStyle='#143759';view.lineWidth=2;
         view.beginPath();view.arc(at.x,at.y,8,0,Math.PI*2);view.fill();view.stroke();
       }
     }
+
+    function paintExport(){
+     if(!exportCtx)return;const g=exportCtx;g.fillStyle='#10294b';g.fillRect(0,0,760,1000);g.fillStyle='#fff';g.font='bold 28px Arial';g.fillText('MKSK 2008 · TAKTİK PLANI',30,44);g.font='20px Arial';g.fillText((selected+1)+' / '+sequence.length+' · '+sequence[selected].title,30,78);g.drawImage(el('canvas'),80,100,600,690);
+     g.font='20px Arial';let line='',y=832;for(const word of (sequence[selected].note||'').split(/\s+/)){if(g.measureText(line+' '+word).width>690){g.fillText(line,30,y);y+=27;line='';}line+=(line?' ':'')+word;}g.fillText(line,30,y);
+    }
+    function setRecording(value){recording=value;controls();videoButtons.forEach(b=>b.disabled=value);}
+    async function recordVideo(share){
+     if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){videoStatus.textContent='Bu tarayıcı video kaydını desteklemiyor. Chrome veya Edge ile aç.';return;}
+     pause();selected=0;elapsed=0;ended=false;shareVideo=share;exportCanvas=document.createElement('canvas');exportCanvas.width=760;exportCanvas.height=1000;exportCtx=exportCanvas.getContext('2d');showStep();paintExport();
+     try{
+      const mime=['video/mp4','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)throw Error('Video biçimi desteklenmiyor.');
+      recordStream=exportCanvas.captureStream(25);const activeRecorder=new MediaRecorder(recordStream,{mimeType:mime,videoBitsPerSecond:2200000});recorder=activeRecorder;const chunks=[];
+      activeRecorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+      activeRecorder.onstop=async()=>{recordStream?.getTracks().forEach(t=>t.stop());setRecording(false);if(!preview.open)return;const blob=new Blob(chunks,{type:activeRecorder.mimeType}),ext=activeRecorder.mimeType.includes('mp4')?'mp4':'webm';if(!blob.size){videoStatus.textContent='Video oluşturulamadı. Yeniden dene.';return;}const file=new File([blob],'mksk-taktik.'+ext,{type:blob.type});
+       try{if(shareVideo&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'MKSK Taktik Planı'});videoStatus.textContent='Video paylaşıldı.';}else{const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;preview.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);videoStatus.textContent='Video indirildi. Dosyayı paylaşabilirsin.';}}catch(e){videoStatus.textContent=e.name==='AbortError'?'Paylaşım iptal edildi.':'Paylaşılamadı. Videoyu indir düğmesini kullan.';}
+      };
+      activeRecorder.onerror=()=>{pause();recordStream?.getTracks().forEach(t=>t.stop());setRecording(false);videoStatus.textContent='Kayıt tamamlanamadı. Yeniden dene.';};
+      setRecording(true);activeRecorder.start();videoStatus.textContent='Video hazırlanıyor… Bu pencereyi açık tut.';playing=true;lastTick=null;animation=requestAnimationFrame(tick);
+     }catch(e){recordStream?.getTracks().forEach(t=>t.stop());setRecording(false);videoStatus.textContent=e.message;}
+    }
+    el('[data-video]').onclick=()=>recordVideo(false);el('[data-video-share]').onclick=()=>recordVideo(true);
+
     function controls(){
-      previous.disabled=selected===0;
-      next.disabled=selected===sequence.length-1;
+      previous.disabled=recording||selected===0;
+      next.disabled=recording||selected===sequence.length-1;toggle.disabled=recording;
       toggle.textContent=playing?'Duraklat':ended?'↻ Tekrar oynat':'▶ Oynat';
     }
     function showStep(){
@@ -517,13 +400,13 @@ export function openTactics(lineup,findPlayer,onDutyChange){
       const total=duration();
       if(elapsed>=total){
         if(selected===sequence.length-1){
-          elapsed=total;ended=true;pause();paint();return;
+          elapsed=total;ended=true;pause();paint();paintExport();if(recording&&recorder?.state==='recording')recorder.stop();return;
         }
         elapsed=0;selected++;showStep();
-      }else if(!reducedMotion){
+      }else if(!reducedMotion||recording){
         paint();
       }
-      animation=requestAnimationFrame(tick);
+      paintExport();animation=requestAnimationFrame(tick);
     }
     function jump(offset){
       pause();selected+=offset;elapsed=0;ended=false;showStep();
@@ -535,7 +418,7 @@ export function openTactics(lineup,findPlayer,onDutyChange){
       if(ended){selected=0;elapsed=0;ended=false;showStep();}
       playing=true;controls();animation=requestAnimationFrame(tick);
     };
-    preview.addEventListener('close',()=>{pause();preview.remove();},{once:true});
+    preview.addEventListener('close',()=>{pause();if(recorder?.state==='recording')recorder.stop();recordStream?.getTracks().forEach(t=>t.stop());preview.remove();},{once:true});
     document.body.append(preview);preview.showModal();showStep();
   };
   action('share').onclick=()=>exportBoard(true);
