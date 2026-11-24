@@ -1,4 +1,4 @@
-import {playerCardHtml,paintCardShirts} from './player-card.js?v=20261125-player-cards-1';
+import {playerCardHtml,paintCardShirts} from './player-card.js?v=20261125-player-cards-2';
 import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {rosterGroup,sortRosterPlayers} from './roster-export.js?v=20261026-player-hub-2';
@@ -164,7 +164,7 @@ export function initPlayerHub(api){
            if(inlineHost&&matches.length)history.innerHTML=compactMatchHistory(matches);
            if(inlineHost&&!reportDetails.open){const month=matches.map(x=>String(x.match.match_date||'').slice(0,7)).filter(x=>/^\d{4}-\d{2}$/.test(x)).sort().reverse()[0];if(month){reportDetails.dataset.month=month;reportDetails.querySelector('.pc-report-month').textContent=new Date(month+'-01T12:00:00').toLocaleDateString('tr-TR',{month:'long',year:'numeric'}).toLocaleUpperCase('tr-TR')+' ›';}}
            if(matches.length){
-             const recent=matches.slice(0,5).reverse();
+             const recent=matches.slice(0,5).reverse();chart.style.setProperty('--hub-chart-count',String(recent.length));
              chart.innerHTML='<div class="hub-chart-scale" aria-hidden="true"><span>10</span><span>5</span><span>0</span></div><div class="hub-chart-bars">'+recent.map(({match,entry},index)=>{
                const score=entry.points==null||entry.points===''?NaN:Number(entry.points);
                const rated=Number.isFinite(score)&&score>=0&&score<=10;
@@ -173,7 +173,7 @@ export function initPlayerHub(api){
                return `<button type="button" data-match-index="${recent.length-1-index}" aria-label="${esc(match.opponent)} · ${esc(date)} · ${esc(detail)}">
                  <span class="hub-chart-track" aria-hidden="true">${rated?`<span class="hub-chart-bar" style="height:${score*10}%"></span>`:''}</span>
                  <span class="hub-chart-value">${rated?esc(score.toLocaleString('tr-TR')):'—'}</span>
-                 <span class="hub-chart-date">${esc(date.slice(0,5))}</span>
+                 <span class="hub-chart-date">${esc(date)}</span>
                </button>`;
              }).join('')+'</div>';
              const cards=history.querySelectorAll('.hub-season-match');
@@ -212,9 +212,9 @@ export function initPlayerHub(api){
   }catch(e){if(d.isConnected)box.textContent='DOSYA AÇILAMADI: '+e.message;}
   return d;
  }
- async function openDirectory(initial='active'){
+ async function openDirectory(initial='active',focusId=null){
   if(!allowed('roster'))return;
-  const existing=document.querySelector('.hub-player-center[open]');if(existing)return existing.focus();
+  const existing=document.querySelector('.hub-player-center[open]');if(existing){if(focusId)void existing._focusPlayer?.(focusId);return existing.focus();}
   const d=modal('OYUNCULAR'),box=d.querySelector('.hub-content');d.classList.add('hub-player-center');d.setAttribute('aria-label','Oyuncular');const title=d.querySelector('h2');title.outerHTML='<div class="pc-list-brand"><img src="güncel logo.jfif" alt="MKSK logosu"><span><strong>MKSK 2008</strong><small>OYUNCULAR</small></span></div>';d.querySelector('.hub-close').textContent='×';d.querySelector('.hub-close').setAttribute('aria-label','Oyuncu listesini kapat');
   box.innerHTML='<p class="pc-sr-only">Oyuncular alt alta. Kartı açınca maçlar, raporlar ve diğer bilgiler aynı yerde görünür.</p><div class="hub-center-toolbar"><label><span class="pc-sr-only">İsim / forma numarası ara</span><input class="hub-center-search" type="search" placeholder="İsim veya forma numarası ara" autocomplete="off"></label><button type="button" class="hub-center-refresh" aria-label="Oyuncuları yenile">↻</button></div><details class="pc-list-options"><summary>Liste seçenekleri</summary><nav class="hub-center-tabs" aria-label="Oyuncu listesi"><button type="button" data-center="active">OYUNCULAR</button>'+(api.owner()?'<button type="button" data-center="archived">SİLİNEN OYUNCULAR</button>':'')+'</nav></details><p class="hub-center-status" role="status"></p><div class="hub-person-list"></div>';
 
@@ -225,6 +225,18 @@ export function initPlayerHub(api){
 
   let overview=null;const expandedIds=new Set();let rows=[],mode=initial==='archived'&&api.owner()?'archived':'active',request=0;
   const status=box.querySelector('.hub-center-status'),search=box.querySelector('input'),list=box.querySelector('.hub-person-list');
+
+  const tools=document.createElement('aside');tools.className='pc-scroll-actions';tools.hidden=true;tools.innerHTML='<button type="button" data-card-top>↑ KARTA DÖN</button><button type="button" data-card-tools>İŞLEMLER <small></small></button>';nav.before(tools);
+  let visibleCard=null,actionFrame=0;
+  function updateTools(){actionFrame=0;if(!d.open)return;const bounds=box.getBoundingClientRect(),bar=box.querySelector('.hub-center-toolbar')?.getBoundingClientRect();const candidates=[...list.querySelectorAll('[data-card-player]')].filter(c=>c.querySelector('.pc-details').open&&c.getBoundingClientRect().bottom>bounds.top+60&&c.getBoundingClientRect().top<bounds.bottom);if(!candidates.includes(visibleCard))visibleCard=candidates[0]||null;
+   const identity=visibleCard?.querySelector('.pc-identity');tools.hidden=!identity||identity.getBoundingClientRect().bottom>Math.max(bounds.top,bar?.bottom||bounds.top);if(!tools.hidden)tools.querySelector('small').textContent=visibleCard.querySelector('h3').textContent;
+  }
+  function scheduleTools(){if(!actionFrame)actionFrame=requestAnimationFrame(updateTools);}
+  box.addEventListener('scroll',scheduleTools,{passive:true});list.addEventListener('toggle',event=>{const card=event.target.closest('[data-card-player]');if(card?.querySelector('.pc-details').open)visibleCard=card;scheduleTools();},true);
+  tools.querySelector('[data-card-top]').onclick=()=>visibleCard?.scrollIntoView({block:'start'});
+  tools.querySelector('[data-card-tools]').onclick=()=>visibleCard?.querySelector('.pc-actions').click();
+  d.addEventListener('close',()=>cancelAnimationFrame(actionFrame),{once:true});
+
   async function load(){
    const token=++request;status.textContent='Oyuncular yükleniyor…';list.querySelectorAll('.pc-detail-content').forEach(n=>n._dispose?.());list.replaceChildren();
    try{
@@ -249,7 +261,7 @@ export function initPlayerHub(api){
     const stats=(p.player_season_stats||[]).find(row=>row.season===api.season())||{season:api.season()};
     return '<article class="pc-card" data-card-player="'+esc(p.id)+'">'+playerCardHtml(p,stats,overview)+'<details class="pc-details" '+(expandedIds.has(p.id)?'open':'')+'><summary>DETAYLARI GÖSTER</summary><div class="pc-detail-content"></div></details></article>';
    }).join('')||'<p>Bu aramaya uygun oyuncu yok.</p>';
-   void paintCardShirts(list);
+   void paintCardShirts(list);scheduleTools();
    list.querySelectorAll('[data-card-player]').forEach(card=>{
     const id=card.dataset.cardPlayer,details=card.querySelector('.pc-details'),host=card.querySelector('.pc-detail-content');let pending=null;
     if(!allowed('statistics')){card.querySelector('.pc-metrics').hidden=true;card.querySelector('.pc-additional').hidden=true;}
@@ -263,7 +275,9 @@ export function initPlayerHub(api){
   search.oninput=draw;box.querySelector('.hub-center-refresh').onclick=load;box.querySelectorAll('[data-center]').forEach(b=>b.onclick=()=>{mode=b.dataset.center;void load();});
   const refresh=()=>{if(d.open)void load();};document.addEventListener('mksk-player-directory-refresh',refresh);window.addEventListener('mksk-player-score-changed',refresh);
   d.addEventListener('close',()=>{request++;list.querySelectorAll('.pc-detail-content').forEach(n=>n._dispose?.());document.removeEventListener('mksk-player-directory-refresh',refresh);window.removeEventListener('mksk-player-score-changed',refresh);},{once:true});
-  await load();
+
+  d._focusPlayer=async id=>{if(mode!=='active'){mode='active';await load();}if(!d.open)return;search.value='';draw();const card=[...list.querySelectorAll('[data-card-player]')].find(c=>c.dataset.cardPlayer===id);if(card){card.querySelector('.pc-details').open=true;card.scrollIntoView({block:'start'});}else status.textContent='Oyuncu aktif listede bulunamadı.';};
+  await load();if(focusId)await d._focusPlayer(focusId);
  }
  async function orderDialog(){if(!check()||!api.owner())return;const d=modal('TAKIM LİSTESİNİN SIRASI'),box=d.querySelector('.hub-content');box.textContent='YÜKLENİYOR…';try{const response=await db.rpc('club_roster_order',{p_action:'get'});if(response.error)throw response.error;let revision=response.data.revision;let rows=sortRosterPlayers(await people(),response.data.ids||[]),dirty=false;
    const draw=()=>{box.innerHTML='<p>RAHMAN İSMAİL BENEK EN ÜSTTE SABİT. OYUNCULARI KENDİ MEVKİ GRUPLARINDA TAŞI.</p><div class="hub-order-list">'+rows.map((p,i)=>{const fixed=norm(p.full_name)==='rahman ismail benek',up=i>0&&rosterGroup(rows[i-1])===rosterGroup(p)&&norm(rows[i-1].full_name)!=='rahman ismail benek',down=i<rows.length-1&&rosterGroup(rows[i+1])===rosterGroup(p);return '<article><strong>'+esc(p.full_name)+'</strong><small>'+esc(rosterGroup(p))+'</small>'+(!fixed?'<button type="button" data-move="-1" data-index="'+i+'" '+(!up?'disabled':'')+' aria-label="'+esc(p.full_name)+' yukarı">↑ YUKARI</button><button type="button" data-move="1" data-index="'+i+'" '+(!down?'disabled':'')+' aria-label="'+esc(p.full_name)+' aşağı">↓ AŞAĞI</button>':'<small>SABİT</small>')+'</article>';}).join('')+'</div><footer><button type="button" class="hub-save" '+(!dirty?'disabled':'')+'>SIRALAMAYI KAYDET</button><p role="status">'+(dirty?'DEĞİŞİKLİKLER HENÜZ KAYDEDİLMEDİ':'')+'</p></footer>';
@@ -276,9 +290,9 @@ export function initPlayerHub(api){
  function setup(){const nav=document.getElementById('dashboard-nav');if(!nav)return;let launch=nav.querySelector('.hub-directory');if(!launch){launch=document.createElement('button');launch.type='button';launch.className='hub-directory';launch.dataset.page='player_files';launch.textContent='OYUNCU YÖNETİMİ';launch.onclick=openDirectory;nav.appendChild(launch);}launch.hidden=!allowed('roster');let order=nav.querySelector('.hub-order');if(!order){order=document.createElement('button');order.type='button';order.className='hub-order';order.dataset.page='roster_order';order.textContent='LİSTE SIRALAMASI';order.onclick=orderDialog;nav.appendChild(order);}order.hidden=!check()||!api.owner();
   let cards=nav.querySelector('.hub-matches');if(!cards){cards=document.createElement('button');cards.type='button';cards.className='hub-matches';cards.dataset.page='match_cards';cards.textContent='MAÇ KARTLARI';cards.onclick=matches;nav.appendChild(cards);}cards.hidden=!allowed('matches')&&!allowed('statistics');
   const home=document.getElementById('simple-admin-menu');if(home&&!home.querySelector('.hub-home-matches')&&(allowed('matches')||allowed('statistics'))){const b=document.createElement('button');b.type='button';b.className='hub-home-matches';b.textContent='MAÇ KARTLARI / DETAYLAR';b.onclick=matches;home.appendChild(b);}
-  document.querySelectorAll('#roster-list .name-row[data-player]').forEach(row=>{if(row.querySelector('.hub-file-button'))return;const b=document.createElement('button');b.type='button';b.className='hub-file-button';b.textContent='OYUNCU DOSYASI';b.onclick=e=>{e.stopPropagation();dossier(row.dataset.player);};(row.querySelector('.name-actions')||row).appendChild(b);});
+  document.querySelectorAll('#roster-list .name-row[data-player]').forEach(row=>{if(row.querySelector('.hub-file-button'))return;const b=document.createElement('button');b.type='button';b.className='hub-file-button';b.textContent='OYUNCU DOSYASI';b.onclick=e=>{e.stopPropagation();openDirectory('active',row.dataset.player);};(row.querySelector('.name-actions')||row).appendChild(b);});
   document.querySelectorAll('[data-recall]').forEach(recall=>{if(recall.parentElement.querySelector('.hub-readers'))return;const b=document.createElement('button');b.type='button';b.className='hub-readers';b.textContent='KİM OKUDU?';b.onclick=()=>readers(recall.dataset.recall);recall.after(b);});
  }
  let queued=false;new MutationObserver(()=>{if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;setup();});}}).observe(document.body,{childList:true,subtree:true});setup();
- return {dossier,orderDialog,readers,matches,openDirectory};
+ return {dossier:id=>openDirectory('active',id),orderDialog,readers,matches,openDirectory};
 }
