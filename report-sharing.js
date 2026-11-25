@@ -20,10 +20,11 @@ function blocks(root){
  visit(root);return out;
 }
 export function installReportSharing(host,{content,title,subtitle,status}){
- const toolbar=document.createElement('div');toolbar.className='ra-share-tools';toolbar.dataset.shareControls='';
- toolbar.innerHTML='<button type="button" data-export="share">PAYLAŞ</button><button type="button" data-export="image">GÖRSELİ İNDİR</button><button type="button" data-export="print">PDF / YAZDIR</button>';
+ const toolbar=document.createElement('details');toolbar.className='ra-share-tools';toolbar.dataset.shareControls='';
+ toolbar.innerHTML='<summary>PAYLAŞ / İNDİR</summary><div class="ra-export-options"><button type="button" data-export="share">PAYLAŞ</button><button type="button" data-export="image">GÖRSELİ İNDİR</button><button type="button" data-export="print">PDF / YAZDIR</button></div>';
  const preview=document.createElement('div');preview.className='ra-export-pages';preview.hidden=true;
  content.before(toolbar);content.after(preview);
+ const style=document.createElement('style');style.textContent='.monthly-report .ra-share-tools{position:static!important;top:auto!important;z-index:auto!important;display:block!important;margin:10px 0;max-width:100%}.ra-share-tools>summary{display:block;list-style:none;cursor:pointer;background:#214d75;color:white;padding:12px 16px;border-radius:10px;font-weight:800;width:fit-content}.ra-share-tools>summary::-webkit-details-marker{display:none}.ra-export-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:8px}.ra-export-options button{min-width:0!important;font-size:13px!important;white-space:normal!important}.monthly-report .report-period-controls{position:static!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.report-period-controls [data-month-picker]{grid-column:1/-1;width:100%;min-width:0}.report-period-controls [hidden]{display:none!important}.report-period-controls select{width:100%;box-sizing:border-box}.monthly-report .report-refresh{font-size:12px!important;min-height:36px!important}.monthly-report .report-period-controls button{min-width:0!important}';toolbar.append(style);
  let urls=[],generation=0,disposed=false;
  function clear(){generation++;urls.forEach(u=>URL.revokeObjectURL(u));urls=[];preview.replaceChildren();preview.hidden=true;}
  toolbar.querySelector('[data-export="print"]').onclick=()=>{
@@ -67,5 +68,5 @@ export function installReportSharing(host,{content,title,subtitle,status}){
  }
  toolbar.querySelector('[data-export="share"]').onclick=()=>exportReport(true);
  toolbar.querySelector('[data-export="image"]').onclick=()=>exportReport(false);
- const invalidate=()=>clear();return {invalidate,destroy:()=>{disposed=true;clear();}};
+ const invalidate=()=>{toolbar.open=false;clear();};return {invalidate,destroy:()=>{disposed=true;clear();}};
 }

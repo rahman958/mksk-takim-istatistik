@@ -1,5 +1,5 @@
 import {personalAnalytics,managementAnalytics,installAnalyticsStyles,teamTotals,playerGames} from './report-analytics.js?v=20261123-season-general-1';
-import {installReportSharing} from './report-sharing.js?v=20261124-audit-1';
+import {installReportSharing} from './report-sharing.js?v=20261126-simplify-1';
 const fmt=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
 const monthFmt=new Intl.DateTimeFormat('tr-TR',{month:'long',year:'numeric',timeZone:'UTC'});
 const monthLabel=key=>monthFmt.format(new Date(key+'-01T00:00:00Z'));
@@ -86,7 +86,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
     let months=[...new Set(games.map(monthKey).filter(key=>/^\d{4}-\d{2}$/.test(key)))].sort().reverse();
     
     status.textContent='';
-    body.innerHTML='<p>'+esc(season)+' · Rapor dönemi</p><div class="report-period-controls"><label>Rapor ayı <select data-month></select></label><button type="button" data-season-all aria-pressed="false">SEZON GENELİ</button></div>'+
+    body.innerHTML='<div class="report-period-controls" aria-label="Rapor dönemi"><button type="button" data-season-all aria-pressed="false">SEZON GENELİ</button><button type="button" data-month-mode aria-pressed="false">AY SEÇ</button><label data-month-picker hidden>Rapor ayı <select data-month></select></label></div><p>'+esc(season)+' · Rapor dönemi</p>'+
       (player?'':'<nav aria-label="Rapor türü"><button type="button" data-view="team">Takım Özeti</button> <button type="button" data-view="player">Oyuncu Raporu</button></nav><label data-player-label>Oyuncu <select data-player></select></label>')+
       '<div data-report aria-live="polite"></div>';
     const month=body.querySelector('[data-month]'),picker=body.querySelector('[data-player]'),out=body.querySelector('[data-report]');
@@ -101,7 +101,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
     dialog.addEventListener('close',sharing.destroy,{once:true});
     const forPlayer=(rows,id)=>player?rows:playerGames(rows,id);
     const refresh=document.createElement('button');refresh.type='button';refresh.textContent='GÜNCEL VERİLERİ YENİLE';refresh.className='report-refresh';body.querySelector('[data-report]').before(refresh);
-    refresh.onclick=async()=>{if(refresh.disabled)return;refresh.disabled=true;status.textContent='Güncel kadro ve maç kayıtları yükleniyor…';try{const next=await load();if(!dialog.open)return;({games,players,teamMonths={},overview=null}=next);const selected=month.value,available=[...new Set(games.map(monthKey))].filter(key=>/^\d{4}-\d{2}$/.test(key)).sort().reverse();months=available;month.replaceChildren(...available.map(key=>new Option(monthLabel(key),key)));if(available.includes(selected))month.value=selected;if(!available.length){month.add(new Option('Aylık maç kaydı yok',''));allSeason=true;}month.disabled=!available.length;render();status.textContent='Güncel kadro ve kayıtlarla yenilendi.';}catch(error){status.textContent='Yenilenemedi. '+error.message;}finally{refresh.disabled=false;}};
+    refresh.onclick=async()=>{if(refresh.disabled)return;refresh.disabled=true;status.textContent='Güncel kadro ve maç kayıtları yükleniyor…';try{const next=await load();if(!dialog.open)return;({games,players,teamMonths={},overview=null}=next);const selected=month.value,available=[...new Set(games.map(monthKey))].filter(key=>/^\d{4}-\d{2}$/.test(key)).sort().reverse();months=available;body.querySelector('[data-month-mode]').disabled=!available.length;month.replaceChildren(...available.map(key=>new Option(monthLabel(key),key)));if(available.includes(selected))month.value=selected;if(!available.length){month.add(new Option('Aylık maç kaydı yok',''));allSeason=true;}month.disabled=!available.length;render();status.textContent='Güncel kadro ve kayıtlarla yenilendi.';}catch(error){status.textContent='Yenilenemedi. '+error.message;}finally{refresh.disabled=false;}};
     function renderContent(){
       sharing.invalidate();status.textContent='';allButton.setAttribute('aria-pressed',String(allSeason));
       if(allSeason){renderSeason();return;}
@@ -217,6 +217,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
     const sections=document.createElement('nav');sections.className='report-section-tabs';sections.setAttribute('aria-label','Rapor bölümleri');out.before(sections);
     const sectionStyle=document.createElement('style');sectionStyle.textContent='.monthly-report .report-section-tabs{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;margin:16px 0!important;width:100%;box-sizing:border-box}.monthly-report .report-section-tabs button{display:block!important;width:100%!important;min-width:0!important;min-height:48px!important;margin:0!important;padding:13px 16px!important;background:#e8eff8!important;color:#173957!important;-webkit-text-fill-color:#173957!important;border:1px solid #a9bfd5!important;border-radius:10px!important;font-size:16px!important;font-weight:750!important;line-height:1.4!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere}.monthly-report .report-section-tabs button[aria-pressed=true]{background:#245578!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#245578!important;box-shadow:inset 5px 0 #8ed5e6}.monthly-report .report-section-tabs button:focus-visible{outline:3px solid #277eb2;outline-offset:2px}[data-report-section][hidden]{display:none!important}.monthly-report button[data-view=team]{background:#1763a3!important;border:2px solid #1763a3!important}.monthly-report button[data-view=player]{background:#7142a3!important;border:2px solid #7142a3!important}.monthly-report button[data-season-all]{background:#08766f!important;border:2px solid #08766f!important}.monthly-report button[data-view],.monthly-report button[data-season-all]{color:#fff!important;-webkit-text-fill-color:#fff!important;min-height:48px!important;font-weight:800!important;white-space:normal!important}.monthly-report button[data-view][aria-pressed=true],.monthly-report button[data-season-all][aria-pressed=true]{outline:3px solid #193958!important;outline-offset:3px;box-shadow:inset 0 -4px #ffffff77!important}.monthly-report .report-active-scope{padding:12px 14px!important;border:1px solid #91b7cc;border-radius:10px;background:#e3f2f5;color:#153e55!important;-webkit-text-fill-color:#153e55!important;font-weight:800!important}.monthly-report .report-section-scope{font-size:13px!important;line-height:1.5!important;color:#3b546d!important;-webkit-text-fill-color:#3b546d!important;font-weight:700!important;margin:8px 0!important}';dialog.append(sectionStyle);
     function render(){
+      body.querySelector('[data-month-picker]').hidden=allSeason;body.querySelector('[data-month-mode]').setAttribute('aria-pressed',String(!allSeason));
       renderContent();
       body.querySelectorAll('[data-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));
       const blocks=[...out.children].flatMap(node=>node.classList.contains('ra-analysis')?[...node.children]:[node]).filter(node=>!/^H[1-6]$/.test(node.tagName));
@@ -240,6 +241,7 @@ export async function openMonthlyReport({load,season,player=false,formatDate,ini
       apply();
     }
 
+    const monthMode=body.querySelector('[data-month-mode]'),monthPicker=body.querySelector('[data-month-picker]');monthMode.disabled=!months.length;monthMode.onclick=()=>{if(!months.length)return;allSeason=false;monthPicker.hidden=false;render();};
     month.onchange=()=>{allSeason=false;render();};allButton.onclick=()=>{allSeason=true;render();};
     if(picker)picker.onchange=()=>{picker.dataset.userChosen='1';render();};
     body.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{view=button.dataset.view;render();});

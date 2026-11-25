@@ -8,12 +8,12 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261117-unified-bell-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage, drawPlayerListImage, prioritizeClubPlayers, clubPlayerPriority } from './roster-export.js?v=20261123-general-score-1';
-import { initPlayerHub } from './player-hub.js?v=20261125-mobile-audit-1';
-import { initQuickEntry } from './quick-entry.js?v=20261123-general-score-1';
-import { matchCards } from './match-cards.js?v=20261123-general-score-1';
+import { initPlayerHub } from './player-hub.js?v=20261126-simplify-1';
+import { initQuickEntry } from './quick-entry.js?v=20261126-simplify-1';
+import { matchCards } from './match-cards.js?v=20261126-simplify-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
 import './compact-sections.js?v=20261118-history-open-1';
-import {openMonthlyReport} from './monthly-report.js?v=20261125-inline-reports-1';
+import {openMonthlyReport} from './monthly-report.js?v=20261126-simplify-1';
 
 function openClubMonthlyReport(personal=false,initialPlayer=null,inlineRoot=null,initialMonth=null){
   const season=selectedSeason, id=window.__mkskPlayerHomeRecord?.id||selfGrowthPlayer;
@@ -788,17 +788,17 @@ var primaryStaffBase=openStaffPanel;openStaffPanel=async function(){await primar
 var primaryShellBase=simpleAdminShell;simpleAdminShell=function(){primaryShellBase();var host=el('simple-admin-menu');if(!host||!staffState?.owner)return;var b=document.createElement('button');b.type='button';b.className='primary-shortcut';b.textContent='YETKİLER / ANA YÖNETİCİ';b.onclick=openStaffPanel;host.appendChild(b);};
 var primaryApplyBase=staffApply;staffApply=function(){primaryApplyBase();document.querySelectorAll('.primary-shortcut').forEach(b=>b.hidden=!staffState?.owner);};
 (function(){var s=document.createElement('style');s.textContent='.primary-shortcut{margin:8px 0 0 8px;min-height:44px!important;padding:11px!important;font-size:12px!important;background:#246979!important;color:#fff!important;-webkit-text-fill-color:#fff!important}.primary-shortcut[hidden]{display:none!important}';document.head.appendChild(s);})();
-var quickEntryApp=null,quickAdminBase=loadAdmin;loadAdmin=async function(){await quickAdminBase();if(!quickEntryApp)quickEntryApp=initQuickEntry({db:()=>supabase,can:area=>staffCan(area)||(area==='statistics'&&staffCan('matches')),season:()=>selectedSeason,openMatch:()=>staffCan('matches')?matchCards.open():null,changed:()=>{void loadAdmin();}});quickEntryApp.setup();};
+var quickEntryApp=null,quickAdminBase=loadAdmin;loadAdmin=async function(){await quickAdminBase();if(!quickEntryApp)quickEntryApp=initQuickEntry({db:()=>supabase,can:area=>staffCan(area)||(area==='statistics'&&staffCan('matches')),season:()=>selectedSeason,openPlayer:id=>playerHubInstance?.dossier(id),openDirectory:()=>playerHubInstance?.openDirectory(),openMatch:()=>staffCan('matches')?matchCards.open():null,changed:()=>{void loadAdmin();}});quickEntryApp.setup();};
 var legacyEntryOpen=entryOpen;entryOpen=function(){if(quickEntryApp)return quickEntryApp.open();return legacyEntryOpen.apply(this,arguments);};
 var oldQuickBulk=openBulkStats;openBulkStats=function(){return quickEntryApp?quickEntryApp.open():oldQuickBulk();};
-document.addEventListener('click',function(e){var b=e.target.closest('[data-club-tool="match"]');if(!b||!quickEntryApp)return;e.preventDefault();e.stopImmediatePropagation();quickEntryApp.open();},true);
-function hideLegacyEntryLinks(){document.querySelectorAll('#dashboard-nav [data-club-tool="match"],#dashboard-nav [data-page="bulk_statistics"]').forEach(b=>b.hidden=true);}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-club-tool="match"]');if(!b||!quickEntryApp)return;e.preventDefault();e.stopImmediatePropagation();void matchCards.open();},true);
+function hideLegacyEntryLinks(){document.querySelectorAll('#dashboard-nav [data-club-tool="match"],#dashboard-nav [data-page="bulk_statistics"],#dashboard-nav [data-page="data_entry"],#dashboard-nav .hub-matches').forEach(b=>b.hidden=true);}
 var quickStaffApply=staffApply;staffApply=function(){quickStaffApply();hideLegacyEntryLinks();quickEntryApp?.setup();};
 var quickInstallBulk=installBulkStats;installBulkStats=function(){quickInstallBulk();hideLegacyEntryLinks();};
 var legacyMetadataSave=savePlayer;savePlayer=async function(e){e.preventDefault();var f=e.target,msg=f.querySelector('.save-message');try{var latest=await supabase.from('player_season_stats').select('*').eq('player_id',f.dataset.id).eq('season',selectedSeason).maybeSingle();if(latest.error)throw latest.error;Object.keys(statLabels).forEach(k=>{var input=f.querySelector('[name="'+k+'"]');if(input)input.value=latest.data?.[k]??0;});return await legacyMetadataSave(e);}catch(error){if(msg)msg.textContent='Kaydedilemedi: '+error.message;return false;}};
 
 var playerHubInstance=null,playerHubLoadAdmin=loadAdmin;
-loadAdmin=async function(){await playerHubLoadAdmin();if(!playerHubInstance)playerHubInstance=initPlayerHub({db:supabase,can:area=>staffCan(area),owner:()=>!!staffState?.owner,season:()=>selectedSeason,edit:hubOpenPlayerEditor,action:hubDossierAction,monthly:(id,root,month)=>openClubMonthlyReport(false,id,root,month),changed:async()=>{await loadAdmin();},mountInvite:mountPlayerInvite});};
+loadAdmin=async function(){await playerHubLoadAdmin();if(!playerHubInstance)playerHubInstance=initPlayerHub({db:supabase,can:area=>staffCan(area),owner:()=>!!staffState?.owner,season:()=>selectedSeason,edit:hubOpenPlayerEditor,action:hubDossierAction,monthly:(id,root,month)=>openClubMonthlyReport(false,id,root,month),matches:()=>matchCards.open('saved'),changed:async()=>{await loadAdmin();},mountInvite:mountPlayerInvite});};
 var hubPageAllowed=staffPageAllowed;staffPageAllowed=function(page){if(page==='player_files')return staffCan('roster');if(page==='roster_order')return !!staffState?.owner;if(page==='match_cards')return staffCan('matches');return hubPageAllowed(page);};
 var matchPlayerShell=simplePlayerShell;simplePlayerShell=function(){matchPlayerShell();const box=el('simple-player-menu');if(box&&!box.querySelector('.player-match-cards')){const b=document.createElement('button');b.type='button';b.className='player-match-cards';b.textContent='MAÇLARIM VE FORM';b.onclick=()=>{setPlayerPage('form_graph');el('player-form-chart')?.querySelector('.form-games')?.scrollIntoView({block:'start'});};box.appendChild(b);}};
 
@@ -1222,7 +1222,7 @@ var openClubEmail;
       var seen=new Set(),q=d.querySelector('input').value.toLocaleLowerCase('tr-TR');
       var rows=simpleNative(true).filter(function(b){return !b.classList.contains('own-profile-launch')&&!b.classList.contains('own-admin-return');}).filter(function(b){return b.textContent.trim().toLocaleUpperCase('tr-TR').indexOf('FORMA NUMARALARI')===-1;}).filter(function(b){var k=easyMenuKey(b);return !b.classList.contains('player-preview-launch')&&!b.classList.contains('archive-nav')&&!['roster','deleted','match','data_entry','bulk_statistics','preview','player_preview','comparison'].includes(k);}).map(function(target){var key=easyMenuKey(target);return {key:key,label:key==='player_info'?'DOĞUM TARİHLERİ / TAKIM SÜRESİ':key==='match_cards'?'MAÇ İŞLE':target.textContent.trim(),description:key==='match_cards'?'MAÇ BİLGİSİ, OYUNCU VE KARTLAR':easyMenuDescription(key),group:nativeGroup(key),target:target,action:key==='match_cards'?function(){return matchCards.open();}:null};});
       rows=rows.concat(tools.filter(row=>{
-        if(row.key==='player_data')return staffCanEnterPlayerData();
+        if(row.key==='player_data')return staffCanEnterPlayerData()&&!staffCan('roster');
         const area={match_cards:'matches',email:'notifications',history:'history',backup:'backup',transfer_entry:'roster',player_preview:'preview'}[row.key];
         return row.key==='free_jerseys' ? staffCan('roster') || staffCan('free_jerseys') : !area||staffCan(area);
       })).filter(function(row){if(seen.has(row.key))return false;seen.add(row.key);return (row.label+' '+row.description).toLocaleLowerCase('tr-TR').includes(q);});
@@ -1419,7 +1419,7 @@ var openClubEmail;
   if(staffCan('visual_center'))addMenuButton(quick,'GÖRSEL MERKEZİ','MAÇ SONUCU, OYUNCU KARTI VE PAYLAŞIM GÖRSELLERİ','image',()=>openVisualCenter({db:supabase,season:()=>selectedSeason,can:staffCan}));
   if(staffCan('analytics'))addMenuButton(quick,'GENEL RAPOR','AYLIK TAKIM VE OYUNCU RAPORLARI','calendar-days',()=>openClubMonthlyReport());
   var players=section(box,'OYUNCULAR','folder-user');
-  if(staffCanEnterPlayerData())addMenuButton(players,'OYUNCU / ANTRENMAN VERİLERİ','YETKİLİ OLDUĞUN ALANLARI DÜZENLE','chart-line',function(){void quickEntryApp?.open();});
+  if(!staffCan('roster')&&staffCanEnterPlayerData())addMenuButton(players,'OYUNCU VERİLERİ','YETKİLİ OLDUĞUN OYUNCU İSTATİSTİKLERİ','chart-line',()=>quickEntryApp?.open());
   if(staffCan('roster'))addMenuButton(players,'OYUNCU DOSYALARI','OYUNCULARIN TÜM BİLGİLERİ VE İŞLEMLERİ','contact-round',function(){playerHubInstance?.openDirectory();});
   addMenuButton(players,'OYUNCU İSTATİSTİK ÖZETİ','KOMPAKT KARTLAR VE SEZON LİDERLERİ','chart-column',function(){ensureSeasonOverview().open();});
   var manage=section(box,'YÖNETİM VE İLETİŞİM','shield-check');
@@ -2323,3 +2323,8 @@ setPlayerPage=function(page){const result=cardOwnPage.apply(this,arguments);self
 {const s=document.createElement('style');s.textContent='#easy-bottom button{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:57px!important;min-width:0!important}#easy-bottom button svg{width:24px;height:24px;flex:0 0 auto}#easy-bottom button span{font-size:clamp(8px,2.2vw,11px)!important;line-height:1.2!important;max-width:100%;white-space:normal;overflow-wrap:anywhere}#easy-bottom button[aria-current=true]{background:#a3e5df!important;color:#143b5e!important;-webkit-text-fill-color:#143b5e!important}';document.head.append(s);}
 
 installDialogScrollGuards();
+
+/* Every match shortcut uses the same three-tab centre; player totals stay in that player's card. */
+matchCards.configure({can:staffCan,openPlayer:id=>{if(staffCan('roster'))return playerHubInstance?.dossier(id);if(staffCanEnterPlayerData())return quickEntryApp?.open(id);}});
+const simplifyActionsBase=easyActions;
+easyActions=function(){return staffCan('matches')?matchCards.open():simplifyActionsBase();};
