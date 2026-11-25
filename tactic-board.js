@@ -101,9 +101,14 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
   const status=text=>{q('.tactics-status').textContent=text;};
   const checkpoint=()=>{undo.push({plan:copy(plan),phase,step});if(undo.length>40)undo.shift();action('undo').disabled=false;};
   const playerLabel=i=>slots[i].player?.full_name||slots[i].role;
-  function draw(ctxOverride=ctx, item=frame(), players=positions(), cursor=start){
-    const ctx=ctxOverride;
-    const palette=boardThemes[fieldColor],arrowColors=fieldColor==='navy'?colors:{run:'#146bb1',press:'#b62c52',pass:'#263c59',shot:'#a05b11',dribble:'#14714a'};ctx.fillStyle=palette[0];ctx.fillRect(0,0,600,690);
+
+  let pitchCache=null,pitchColor=null,pitchLogo=null,tokenAssets=null;
+  const tokenCache=new Map();
+  function cachedPitch(){
+   if(pitchCache&&pitchColor===fieldColor&&pitchLogo===boardLogo)return pitchCache;
+   pitchCache=document.createElement('canvas');pitchCache.width=600;pitchCache.height=690;
+   pitchColor=fieldColor;pitchLogo=boardLogo;const ctx=pitchCache.getContext('2d');
+    const palette=boardThemes[fieldColor];ctx.fillStyle=palette[0];ctx.fillRect(0,0,600,690);
     ctx.fillStyle=palette[1];
     for(let i=0;i<6;i+=2)ctx.fillRect(30,30+i*105,540,105);
     ctx.strokeStyle=palette[2];ctx.lineWidth=2;
@@ -114,6 +119,24 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
     for(const y of [30,618])ctx.strokeRect(234,y,132,42);
 
     if(boardLogo){ctx.save();ctx.globalAlpha=.13;const crop=Math.min(boardLogo.width,boardLogo.height)*.79;ctx.beginPath();ctx.arc(300,345,62,0,Math.PI*2);ctx.clip();ctx.drawImage(boardLogo,(boardLogo.width-crop)/2,(boardLogo.height-crop)/2,crop,crop,238,283,124,124);ctx.restore();}
+
+   return pitchCache;
+  }
+  function cachedPlayer(i){
+   if(tokenAssets!==boardKit){tokenCache.clear();tokenAssets=boardKit;}
+   if(tokenCache.has(i))return tokenCache.get(i);
+   const tile=document.createElement('canvas');tile.width=240;tile.height=224;const g=tile.getContext('2d');g.scale(2,2);
+   const x=60,y=34,slot=slots[i];
+   if(boardLogo&&boardKit)drawBoardShirt(g,x,y,/^(GK|KL|KALE|KALECİ|KALECI)$/i.test(String(slot.role)));
+   else{g.fillStyle='#e6effc';g.beginPath();g.arc(x,y,20,0,Math.PI*2);g.fill();}
+   g.textAlign='center';g.fillStyle='#fff';g.beginPath();g.roundRect(x-16,y+24,32,21,5);g.fill();g.fillStyle='#10294b';g.font='bold 16px Arial';g.fillText(String(slot.player?.jersey_number??slot.role),x,y+40,30);
+   g.font='bold 12px Arial';const caption=shrink(g,playerLabel(i),108);g.fillStyle='#fff';g.beginPath();g.roundRect(x-57,y+47,114,21,5);g.fill();g.fillStyle='#10294b';g.fillText(caption,x,y+62,108);
+   tokenCache.set(i,tile);return tile;
+  }
+
+  function draw(ctxOverride=ctx, item=frame(), players=positions(), cursor=start){
+    const ctx=ctxOverride;
+    const arrowColors=fieldColor==='navy'?colors:{run:'#146bb1',press:'#b62c52',pass:'#263c59',shot:'#a05b11',dribble:'#14714a'};ctx.drawImage(cachedPitch(),0,0);
     for(const {at,type,to} of item.markers){
       const a=point(at);
       if(type==='zone'){
@@ -134,15 +157,7 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
       ctx.lineTo(b.x-20*Math.cos(angle-.45),b.y-20*Math.sin(angle-.45));
       ctx.lineTo(b.x-20*Math.cos(angle+.45),b.y-20*Math.sin(angle+.45));ctx.closePath();ctx.fill();
     }
-    players.forEach((pos,i)=>{
-      const {x,y}=point(pos),slot=slots[i];
-
-      if(boardLogo&&boardKit)drawBoardShirt(ctx,x,y,/^(GK|KL|KALE|KALECİ|KALECI)$/i.test(String(slot.role)));
-      else{ctx.fillStyle='#e6effc';ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fill();}
-      ctx.textAlign='center';ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(x-16,y+24,32,21,5);ctx.fill();ctx.fillStyle='#10294b';ctx.font='bold 16px Arial';ctx.fillText(String(slot.player?.jersey_number??slot.role),x,y+40,30);
-      const label=playerLabel(i);ctx.font='bold 12px Arial';const caption=shrink(ctx,label,108);ctx.fillStyle='#ffffff';ctx.beginPath();ctx.roundRect(x-57,y+47,114,21,5);ctx.fill();ctx.fillStyle='#10294b';ctx.fillText(caption,x,y+62,108);
-
-    });
+    players.forEach((pos,i)=>{const {x,y}=point(pos);ctx.drawImage(cachedPlayer(i),x-60,y-34,120,112);});
     if(cursor?.point){
       const a=point(cursor.point);ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(a.x,a.y,7,0,Math.PI*2);ctx.stroke();
     }
@@ -328,7 +343,9 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
     finally{button.disabled=false;}
   }
   action('play').onclick=async()=>{
+    if(document.querySelector('.mksk-tactics-player[open]'))return;
     try{await assetsReady;}catch(e){status(e.message);return;}
+    if(!dlg.open||document.querySelector('.mksk-tactics-player[open]'))return;
     const sequence=current().steps;
     const basePositions=current().positions;
     const preview=document.createElement('dialog');
@@ -340,9 +357,9 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
       <div class="tactics-player-step" aria-live="polite"><small data-playing-count hidden></small><strong data-playing-title></strong><p data-playing-note></p></div>
       <div class="tactics-row"><button type="button" data-previous hidden>Önceki</button><button type="button" data-toggle>▶ Oynat</button><button type="button" data-next hidden>Sonraki</button></div><div class="tactics-row"><button type="button" data-video>VİDEOYU İNDİR</button><button type="button" data-video-share>VİDEOYU PAYLAŞ</button></div><p data-video-status role="status"></p>`;
     const el=selector=>preview.querySelector(selector);
-    const view=el('canvas').getContext('2d');
+    const previewCanvas=el('canvas'),view=previewCanvas.getContext('2d');
     const previous=el('[data-previous]'), toggle=el('[data-toggle]'), next=el('[data-next]');
-    let recorder=null,recording=false,recordStream=null,exportCanvas=null,exportCtx=null,shareVideo=false;
+    let recorder=null,recording=false,recordStream=null,exportCanvas=null,exportCtx=null,shareVideo=false,exportBackdrop=null,exportStep=-1,lastExport=-Infinity;
     const videoStatus=el('[data-video-status]'),videoButtons=[el('[data-video]'),el('[data-video-share]')];
     const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const lerp=(from,to,t)=>({x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t});
@@ -381,17 +398,25 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
       }
     }
 
-    function paintExport(){
-     if(!exportCtx)return;const g=exportCtx;g.fillStyle='#10294b';g.fillRect(0,0,760,1000);g.fillStyle='#fff';g.font='bold 28px Arial';g.fillText('MKSK 2008 · TAKTİK PLANI',30,44);g.font='20px Arial';g.fillText(sequence[selected].title,30,78);g.drawImage(el('canvas'),80,100,600,690);
-     g.font='20px Arial';let line='',y=832;for(const word of (sequence[selected].note||'').split(/\s+/)){if(g.measureText(line+' '+word).width>690){g.fillText(line,30,y);y+=27;line='';}line+=(line?' ':'')+word;}g.fillText(line,30,y);
+
+    function paintExport(now=performance.now(),force=false){
+     if(!exportCtx||!recording&&!force)return;
+     if(!force&&now-lastExport<1000/30)return;lastExport=now;
+     const g=exportCtx;
+     if(exportStep!==selected){
+      exportStep=selected;exportBackdrop=document.createElement('canvas');exportBackdrop.width=760;exportBackdrop.height=1000;
+      const bg=exportBackdrop.getContext('2d');bg.fillStyle='#10294b';bg.fillRect(0,0,760,1000);bg.fillStyle='#fff';bg.font='bold 28px Arial';bg.fillText('MKSK 2008 · TAKTİK PLANI',30,44);bg.font='20px Arial';bg.fillText(sequence[selected].title,30,78);
+      let line='',y=832;for(const word of (sequence[selected].note||'').split(/\s+/)){if(bg.measureText(line+' '+word).width>690){bg.fillText(line,30,y);y+=27;line='';}line+=(line?' ':'')+word;}bg.fillText(line,30,y);
+     }
+     g.drawImage(exportBackdrop,0,0);g.drawImage(previewCanvas,80,100,600,690);
     }
     function setRecording(value){recording=value;controls();videoButtons.forEach(b=>b.disabled=value);}
     async function recordVideo(share){
      if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){videoStatus.textContent='Bu tarayıcı video kaydını desteklemiyor. Chrome veya Edge ile aç.';return;}
-     pause();selected=0;elapsed=0;ended=false;shareVideo=share;exportCanvas=document.createElement('canvas');exportCanvas.width=760;exportCanvas.height=1000;exportCtx=exportCanvas.getContext('2d');showStep();paintExport();
+     pause();selected=0;elapsed=0;ended=false;shareVideo=share;exportCanvas=document.createElement('canvas');exportCanvas.width=760;exportCanvas.height=1000;exportCtx=exportCanvas.getContext('2d');exportStep=-1;lastExport=-Infinity;showStep();paintExport(performance.now(),true);
      try{
       const mime=['video/mp4','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)throw Error('Video biçimi desteklenmiyor.');
-      recordStream=exportCanvas.captureStream(25);const activeRecorder=new MediaRecorder(recordStream,{mimeType:mime,videoBitsPerSecond:2200000});recorder=activeRecorder;const chunks=[];
+      recordStream=exportCanvas.captureStream(30);const activeRecorder=new MediaRecorder(recordStream,{mimeType:mime,videoBitsPerSecond:1800000});recorder=activeRecorder;const chunks=[];
       activeRecorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
       activeRecorder.onstop=async()=>{recordStream?.getTracks().forEach(t=>t.stop());setRecording(false);if(!preview.open)return;const blob=new Blob(chunks,{type:activeRecorder.mimeType}),ext=activeRecorder.mimeType.includes('mp4')?'mp4':'webm';if(!blob.size){videoStatus.textContent='Video oluşturulamadı. Yeniden dene.';return;}const file=new File([blob],'mksk-taktik.'+ext,{type:blob.type});
        try{if(shareVideo&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'MKSK Taktik Planı'});videoStatus.textContent='Video paylaşıldı.';}else{const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;preview.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);videoStatus.textContent='Video indirildi. Dosyayı paylaşabilirsin.';}}catch(e){videoStatus.textContent=e.name==='AbortError'?'Paylaşım iptal edildi.':'Paylaşılamadı. Videoyu indir düğmesini kullan.';}
@@ -421,18 +446,19 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
     }
     function tick(now){
       if(!playing||!preview.open)return;
+      if(document.hidden){lastTick=null;animation=requestAnimationFrame(tick);return;}
       if(lastTick!==null)elapsed+=now-lastTick;
       lastTick=now;
       const total=duration();
       if(elapsed>=total){
         if(selected===sequence.length-1){
-          elapsed=total;ended=true;pause();paint();paintExport();if(recording&&recorder?.state==='recording')recorder.stop();return;
+          elapsed=total;ended=true;pause();paint();paintExport(now,true);if(recording&&recorder?.state==='recording')recorder.stop();return;
         }
-        elapsed=0;selected++;showStep();
+        elapsed-=total;selected++;showStep();
       }else if(!reducedMotion||recording){
         paint();
       }
-      paintExport();animation=requestAnimationFrame(tick);
+      paintExport(now);animation=requestAnimationFrame(tick);
     }
     function jump(offset){
       pause();selected+=offset;elapsed=0;ended=false;showStep();
@@ -444,7 +470,8 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
       if(ended){selected=0;elapsed=0;ended=false;showStep();}
       playing=true;controls();animation=requestAnimationFrame(tick);
     };
-    preview.addEventListener('close',()=>{pause();if(recorder?.state==='recording')recorder.stop();recordStream?.getTracks().forEach(t=>t.stop());preview.remove();},{once:true});
+    const closeWithBoard=()=>{if(preview.open)preview.close();};dlg.addEventListener('close',closeWithBoard,{once:true});
+    preview.addEventListener('close',()=>{dlg.removeEventListener('close',closeWithBoard);pause();if(recorder?.state==='recording')recorder.stop();recordStream?.getTracks().forEach(t=>t.stop());preview.remove();},{once:true});
     document.body.append(preview);preview.showModal();showStep();
   };
   action('share').onclick=()=>exportBoard(true);
