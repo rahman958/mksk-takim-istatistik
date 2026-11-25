@@ -1,7 +1,7 @@
 import {renderLineupPoster} from './lineup-poster.js?v=20261124-lineup-designs-1';
 import {prioritizeClubPlayers,clubPlayerPriority} from './roster-export.js?v=20261119-player-order-1';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
-import {openTactics} from './tactic-board.js?v=20261125-tactics-permissions-1';
+import {openTactics} from './tactic-board.js?v=20261125-phase-plan-1';
 import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import {chooseLineupPlayer,wireLineupInteraction} from './lineup-interaction.js?v=20261026-lineup-touch-1';
 // Reuse the application's authenticated client; do not create a second session.
