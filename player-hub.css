@@ -248,3 +248,16 @@ dialog.hub-player-center[open]{display:flex!important;flex-direction:column!impo
 .pc-form{overflow-x:auto;max-width:100%;padding-bottom:4px}
 .pc-form>div{flex:1 0 65px;box-sizing:border-box}
 .pc-form small{font-size:9px!important;white-space:nowrap}
+
+/* Selected player remains isolated until returning to the list. */
+.hub-player-center [data-card-player][hidden],.pc-list-return[hidden]{display:none!important}
+.hub-player-center .pc-list-return{width:100%;margin:8px 0!important;font-size:13px!important}
+.monthly-inline .report-period-controls{position:static!important;top:auto!important;z-index:auto!important}
+dialog[open]{box-sizing:border-box;max-width:calc(100vw - 16px)}
+@media(max-width:480px){
+ .report-period-controls{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%;box-sizing:border-box}
+ .report-period-controls>*{min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box}
+ .report-period-controls button,.report-period-controls select{font-size:14px!important}
+ #easy-bottom button{min-width:0!important;padding-left:2px!important;padding-right:2px!important}
+ #easy-bottom button small{font-size:9px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
+}
