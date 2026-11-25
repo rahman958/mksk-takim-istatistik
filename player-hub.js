@@ -223,12 +223,16 @@ export function initPlayerHub(api){
   const defs=[['home','ANA SAYFA','⌂'],['players','OYUNCULAR','♙'],['actions','MAÇ İŞLE','▤'],['messages','MESAJLAR','▱'],['menu','MENÜ','☰']];
   defs.forEach(([key,label,icon])=>{if(key==='messages'&&!allowed('messages'))return;const b=document.createElement('button');b.type='button';b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+navIcons[key]+'</svg><small>'+label+'</small>';if(key==='players')b.setAttribute('aria-current','page');b.onclick=()=>{if(key==='players'){box.scrollTop=0;return;}const target=document.querySelector('#easy-bottom [data-easy-tab="'+key+'"]');if(target){d.addEventListener('close',()=>target.click(),{once:true});d.close();}};nav.append(b);});d.append(nav);
 
-  let overview=null;const expandedIds=new Set();let rows=[],mode=initial==='archived'&&api.owner()?'archived':'active',request=0;
+  let focusedId=null,listScroll=0;let overview=null;const expandedIds=new Set();let rows=[],mode=initial==='archived'&&api.owner()?'archived':'active',request=0;
   const status=box.querySelector('.hub-center-status'),search=box.querySelector('input'),list=box.querySelector('.hub-person-list');
 
   const tools=document.createElement('aside');tools.className='pc-scroll-actions';tools.hidden=true;tools.innerHTML='<button type="button" data-card-top>↑ KARTA DÖN</button><button type="button" data-card-tools>İŞLEMLER <small></small></button>';nav.before(tools);
+  const back=document.createElement('button');back.type='button';back.className='pc-list-return';back.textContent='← OYUNCU LİSTESİ';back.hidden=true;box.querySelector('.hub-center-toolbar').after(back);
+  function focusCard(id){if(!focusedId)listScroll=box.scrollTop;focusedId=id;expandedIds.clear();expandedIds.add(id);back.hidden=false;list.querySelectorAll('[data-card-player]').forEach(c=>{const own=c.dataset.cardPlayer===id;c.hidden=!own;if(!own){c.querySelector('.pc-details').open=false;c.querySelector('.pc-detail-content')._dispose?.();}});visibleCard=[...list.querySelectorAll('[data-card-player]')].find(c=>c.dataset.cardPlayer===id)||null;box.scrollTop=0;}
+  function leaveCard(){focusedId=null;expandedIds.clear();back.hidden=true;list.querySelectorAll('[data-card-player]').forEach(c=>{c.hidden=false;c.querySelector('.pc-details').open=false;c.querySelector('.pc-detail-content')._dispose?.();});visibleCard=null;tools.hidden=true;box.scrollTop=listScroll;}
+  back.onclick=leaveCard;
   let visibleCard=null,actionFrame=0;
-  function updateTools(){actionFrame=0;if(!d.open)return;const bounds=box.getBoundingClientRect(),bar=box.querySelector('.hub-center-toolbar')?.getBoundingClientRect();const candidates=[...list.querySelectorAll('[data-card-player]')].filter(c=>c.querySelector('.pc-details').open&&c.getBoundingClientRect().bottom>bounds.top+60&&c.getBoundingClientRect().top<bounds.bottom);if(!candidates.includes(visibleCard))visibleCard=candidates[0]||null;
+  function updateTools(){actionFrame=0;if(!d.open)return;const bounds=box.getBoundingClientRect(),bar=box.querySelector('.hub-center-toolbar')?.getBoundingClientRect();const candidates=[...list.querySelectorAll('[data-card-player]')].filter(c=>c.querySelector('.pc-details').open&&c.getBoundingClientRect().bottom>bounds.top+60&&c.getBoundingClientRect().top<bounds.bottom);visibleCard=focusedId?[...list.querySelectorAll('[data-card-player]')].find(c=>c.dataset.cardPlayer===focusedId)||null:null;
    const identity=visibleCard?.querySelector('.pc-identity');tools.hidden=!identity||identity.getBoundingClientRect().bottom>Math.max(bounds.top,bar?.bottom||bounds.top);if(!tools.hidden)tools.querySelector('small').textContent=visibleCard.querySelector('h3').textContent;
   }
   function scheduleTools(){if(!actionFrame)actionFrame=requestAnimationFrame(updateTools);}
@@ -266,13 +270,13 @@ export function initPlayerHub(api){
     const id=card.dataset.cardPlayer,details=card.querySelector('.pc-details'),host=card.querySelector('.pc-detail-content');let pending=null;
     if(!allowed('statistics')){card.querySelector('.pc-metrics').hidden=true;card.querySelector('.pc-additional').hidden=true;}
     async function ensure(){const current=host.querySelector('.hub-inline-dossier');if(current?.querySelector('.hub-dossier-action-bar'))return current;if(!pending)pending=dossier(id,host);await pending;return host.querySelector('.hub-inline-dossier');}
-    details.ontoggle=()=>{details.querySelector('summary').textContent=details.open?'DETAYLARI GİZLE':'DETAYLARI GÖSTER';if(details.open){expandedIds.add(id);void ensure();}else{expandedIds.delete(id);host._dispose?.();pending=null;}};
-    card.querySelector('.pc-actions').onclick=async()=>{details.open=true;expandedIds.add(id);const own=await ensure();if(own?.open&&details.open)own.querySelector('.hub-dossier-action-bar button')?.click();};
-    if(details.open)void ensure();
+    details.ontoggle=()=>{details.querySelector('summary').textContent=details.open?'DETAYLARI GİZLE':'DETAYLARI GÖSTER';if(details.open){focusCard(id);void ensure();}else{expandedIds.delete(id);host._dispose?.();pending=null;if(focusedId===id)leaveCard();}};
+    card.querySelector('.pc-actions').onclick=async()=>{details.open=true;focusCard(id);const own=await ensure();if(own?.open&&details.open)own.querySelector('.hub-dossier-action-bar button')?.click();};
+    if(details.open){if(focusedId&&focusedId!==id)details.open=false;else{focusCard(id);void ensure();}}
    });
    list.querySelectorAll('[data-restore]').forEach(b=>b.onclick=async()=>{const p=rows.find(x=>x.id===b.dataset.restore);if(!confirm(p.full_name+' geri alınsın mı? Yönetici yetkileri otomatik açılmaz.'))return;b.disabled=true;try{if(!api.owner())throw Error('Ana yönetici yetkisi gerekiyor.');const r=await db.rpc('club_archive_player',{target_player:p.id,restore_player:true});if(r.error)throw r.error;await api.changed?.();await load();}catch(error){status.textContent='Geri alınamadı: '+error.message;b.disabled=false;}});
   }
-  search.oninput=draw;box.querySelector('.hub-center-refresh').onclick=load;box.querySelectorAll('[data-center]').forEach(b=>b.onclick=()=>{mode=b.dataset.center;void load();});
+  search.oninput=()=>{leaveCard();draw();};box.querySelector('.hub-center-refresh').onclick=load;box.querySelectorAll('[data-center]').forEach(b=>b.onclick=()=>{leaveCard();mode=b.dataset.center;void load();});
   const refresh=()=>{if(d.open)void load();};document.addEventListener('mksk-player-directory-refresh',refresh);window.addEventListener('mksk-player-score-changed',refresh);
   d.addEventListener('close',()=>{request++;list.querySelectorAll('.pc-detail-content').forEach(n=>n._dispose?.());document.removeEventListener('mksk-player-directory-refresh',refresh);window.removeEventListener('mksk-player-score-changed',refresh);},{once:true});
 
