@@ -1,5 +1,6 @@
-import {compileTactic} from './tactic-command.js?v=20261124-written-tactics-2';
+import {compileTactic} from './tactic-command.js?v=20261125-phase-plan-1';
 import {readTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
+const clubTacticOne="Hücuma kaleci beklere pas atarak çıkar. Savunma üçlenir, savunma çizgisi orta sahaya yaklaşır. Kanatlar dikine ve içeri doğru paslaşarak girer, gol aranır. Rakip atağında her oyuncu bir rakip oyuncusu alır; orta sahadaki oyuncu savunmaya geçer ve savunma dört olur. Forvetteki oyuncu orta sahaya geçer; yüksek pres ve önde baskı olur. Topu kazanınca ilk dizilişe geçilir.";
 const storageKey='mksk-tactic-templates-v1';
 const phases=['Top bizde','Top rakipte','Hücuma geçiş','Savunmaya geçiş','Duran toplarımız','Rakibin duran topları','Maç içi senaryolar'];
 const colors={run:'#74dcf6',press:'#ff9bac',pass:'#e3f0ff',shot:'#ffd58b',dribble:'#b2f3be'};
@@ -68,6 +69,7 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
   const commandBox=document.createElement('section');commandBox.className='tactics-command';
   commandBox.innerHTML='<label>BÜTÜN TAKTİĞİNİ BURAYA YAZ<textarea rows="6" maxlength="6000" data-command placeholder="Top bizdeyken kanatlar açılsın, orta saha öne yaklaşsın. Top rakipteyken önde baskı yapalım, savunma çizgisi yükselsin. Baskı aşılırsa savunma geri çekilsin."></textarea></label><button type="button" data-build>TAKTİĞİ OLUŞTUR</button><p>Oyuncunun tam adını veya mevkisini yaz. Cümleleri noktayla ayır. Anlaşılmayan talimatları aşağıda göreceksin.</p><div data-command-result role="status"></div>';
   q('header').after(commandBox);
+  const preset=document.createElement('button');preset.type='button';preset.textContent='TAKTİK 1 · KAYITLI PLANI AÇ';preset.dataset.clubPreset='';preset.onclick=()=>{field('template').value='TAKTİK 1';action('load').click();};commandBox.prepend(preset);
 
   const colorLabel=document.createElement('label');colorLabel.textContent='SAHA RENGİ';const colorSelect=document.createElement('select');colorSelect.setAttribute('data-board-color','');Object.entries({white:'BEYAZ',blue:'AÇIK MAVİ',mint:'AÇIK SAHA',navy:'LACİVERT'}).forEach(([key,label])=>colorSelect.add(new Option(label,key)));colorSelect.value=fieldColor;colorLabel.append(colorSelect);commandBox.append(colorLabel);colorSelect.onchange=()=>{fieldColor=colorSelect.value;draw();};
   const brand=document.createElement('img');brand.src=new URL('güncel logo.jfif',import.meta.url).href;brand.alt='MKSK kulüp logosu';brand.width=48;brand.height=48;brand.style.cssText='object-fit:cover;border-radius:50%;margin-right:10px;flex-shrink:0';q('header').prepend(brand);
@@ -82,7 +84,7 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
    const text=q('[data-command]').value.trim(),result=compileTactic(text,slots),out=q('[data-command-result]');
    if(result.issues.length){out.textContent='Şu talimatları netleştir:\n'+result.issues.join('\n');action('play').disabled=true;return;}
    checkpoint();plan.phases[0]={positions:initial(),note:'',steps:result.steps};phase=0;step=0;generatedText=text;plan.commandText=text;update();action('play').disabled=false;
-   out.textContent='Taktiğin hazır. Hareketleri önizlemede kontrol et.';
+   out.textContent='Uygulanacak plan:\n'+result.steps.map(s=>s.title+': '+s.note).join('\n');
   };
   q('[data-command]').oninput=()=>{if(q('[data-command]').value.trim()!==generatedText){action('play').disabled=true;q('[data-command-result]').textContent='Metin değişti. Taktiği yeniden oluştur.';}};
   action('play').disabled=true;
@@ -255,7 +257,7 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
   action('assign').onclick=()=>saveAssignment(false);
   action('detach').onclick=()=>saveAssignment(true);
   function templates(selected=''){
-    const names=Object.keys(loadTemplates()).sort((a,b)=>a.localeCompare(b,'tr'));
+    const names=[...new Set(['TAKTİK 1',...Object.keys(loadTemplates())])].sort((a,b)=>a.localeCompare(b,'tr'));
     field('template').replaceChildren(new Option('Şablon seç',''),...names.map(name=>new Option(name,name)));
     field('template').value=selected;
   }
@@ -269,13 +271,14 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
   };
   action('load').onclick=()=>{
     const name=field('template').value,saved=loadTemplates()[name];
+    if(name==='TAKTİK 1'&&!saved){field('name').value=name;q('[data-command]').value=clubTacticOne;q('[data-build]').click();return;}
     if(!name||!saved){status('Bir şablon seç.');return;}
     if(saved.size!==slots.length){status('Bu şablon '+saved.size+' kişilik bir kadro için.');return;}
     checkpoint();plan=restorePlan(saved.plan);phase=0;step=0;field('name').value=name;generatedText=plan.commandText||'';q('[data-command]').value=generatedText;action('play').disabled=false;update();status('Şablon uygulandı. Görevleri kadroya göre kontrol et.');
   };
   action('delete').onclick=()=>{
     const name=field('template').value;if(!name)return;
-    const saved=loadTemplates();delete saved[name];
+    const saved=loadTemplates();if(name==='TAKTİK 1'&&!saved[name]){status('Kulübün TAKTİK 1 planı kayıtlı kalır. Düzenleyip kendi kopyanı kaydedebilirsin.');return;}delete saved[name];
     try{localStorage.setItem(storageKey,JSON.stringify(saved));templates();status('Şablon silindi.');}
     catch{status('Şablon silinemedi.');}
   };
@@ -348,16 +351,17 @@ export function openTactics(lineup,findPlayer,onDutyChange,options={}){
     el('[data-playing-plan]').textContent=(field('name').value.trim()||'Maç planı')+' · '+phases[phase];
 
     function duration(){
-      return Math.max(1800,sequence[selected].arrows.length*arrowMs+420);
+      return Math.max(1800,(Math.max(0,...sequence[selected].arrows.map((a,i)=>a.at??i))+1)*arrowMs+420);
     }
     function paint(){
       const item=sequence[selected];
       const layout=copy(item.positions||basePositions);
-      const markers=item.markers.filter(marker=>marker.type!=='ball');
+      const markers=copy(item.markers.filter(marker=>marker.type!=='ball'));
+      (item.opponentMoves||[]).forEach(move=>{const marker=markers.filter(m=>m.type==='opponent')[move.index];if(marker)marker.at=lerp(move.from,move.to,Math.max(0,Math.min(1,elapsed/arrowMs)));});
       let ball=item.markers.find(marker=>marker.type==='ball');
       const arrows=[];
       item.arrows.forEach((arrow,i)=>{
-        const progress=Math.max(0,Math.min(1,(elapsed-i*arrowMs)/arrowMs));
+        const progress=Math.max(0,Math.min(1,(elapsed-(arrow.at??i)*arrowMs)/arrowMs));
         if(progress===0)return;
         const at=lerp(arrow.from,arrow.to,progress);
         arrows.push({...arrow,to:at});
