@@ -259,5 +259,5 @@ dialog[open]{box-sizing:border-box;max-width:calc(100vw - 16px)}
  .report-period-controls>*{min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box}
  .report-period-controls button,.report-period-controls select{font-size:14px!important}
  #easy-bottom button{min-width:0!important;padding-left:2px!important;padding-right:2px!important}
- #easy-bottom button small{font-size:9px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
+ #easy-bottom button small,#easy-bottom button span{font-size:9px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
 }
