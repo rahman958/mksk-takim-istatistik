@@ -1,5 +1,6 @@
+import {installDialogScrollGuards} from './dialog-scroll.js?v=20261125-mobile-audit-1';
 import {initSelfPlayerCard} from './player-card.js?v=20261125-player-cards-2';
-import {openVisualCenter} from './visual-center.js?v=20261125-score-card-1';
+import {openVisualCenter} from './visual-center.js?v=20261125-mobile-audit-1';
 import {openCenteredSection,installCenteredStyle,positiveLeaders} from './centered-flow.js?v=20261124-centered-content-2';
 import {openLiveMatch} from './live-match.js?v=20261123-live-match-1';
 import {readTacticDuty,renderTacticDuty} from './tactic-duty.js?v=20261117-player-tactic-1';
@@ -7,7 +8,7 @@ import { formatClubDate } from './club-date.js?v=20261114-date-format-1';
 import { installPlayerNotifications } from './player-notifications.js?v=20261117-unified-bell-1';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { drawRosterImage, drawPlayerListImage, prioritizeClubPlayers, clubPlayerPriority } from './roster-export.js?v=20261123-general-score-1';
-import { initPlayerHub } from './player-hub.js?v=20261125-player-cards-2';
+import { initPlayerHub } from './player-hub.js?v=20261125-mobile-audit-1';
 import { initQuickEntry } from './quick-entry.js?v=20261123-general-score-1';
 import { matchCards } from './match-cards.js?v=20261123-general-score-1';
 import {initSeasonOverview} from './season-overview.js?v=20261027-season-overview-1';
@@ -2320,3 +2321,5 @@ const cardOwnPage=setPlayerPage;
 setPlayerPage=function(page){const result=cardOwnPage.apply(this,arguments);selfPlayerCard?.visibility(playerDashboardPage);return result;};
 
 {const s=document.createElement('style');s.textContent='#easy-bottom button{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:57px!important;min-width:0!important}#easy-bottom button svg{width:24px;height:24px;flex:0 0 auto}#easy-bottom button span{font-size:clamp(8px,2.2vw,11px)!important;line-height:1.2!important;max-width:100%;white-space:normal;overflow-wrap:anywhere}#easy-bottom button[aria-current=true]{background:#a3e5df!important;color:#143b5e!important;-webkit-text-fill-color:#143b5e!important}';document.head.append(s);}
+
+installDialogScrollGuards();
