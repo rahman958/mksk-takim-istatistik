@@ -3,6 +3,7 @@ const norm=s=>String(s||'').toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replac
 const clone=v=>JSON.parse(JSON.stringify(v));
 const clamp=n=>Math.max(5,Math.min(95,n));
 export function compileTactic(text,slots){
+ const phased=compilePhasePlan(text,slots);if(phased)return phased;
  const lines=String(text||'').split(/[.!?;\n]+/).map(s=>s.trim()).filter(Boolean);
  const issues=[],steps=[];let phase='Top bizde',layout=slots.map(s=>({x:Number(s.x),y:Number(s.y)}));
  if(!lines.length)return {steps,issues:['Önce taktiğini yaz.']};
@@ -65,4 +66,45 @@ export function compileTactic(text,slots){
   }else if(!issues.length)issues.push('Hareket oluşturulamadı: '+sentence);
  }
  return {steps,issues:[...new Set(issues)]};
+}
+
+function compilePhasePlan(text,slots){
+ const n=norm(text);
+ if(!/rakip atag|top rakip/.test(n)||!/topu kaz/.test(n)||!/savunma.*3|savunma.*uc/.test(n))return null;
+ const roles=slots.map(s=>norm(s.role)),ids=re=>roles.map((r,i)=>re.test(r)?i:-1).filter(i=>i>=0);
+ const keepers=ids(/^(gk|kl|kaleci)$/),backs=ids(/^(stp|slb|sgb|cb|lb|rb)$/),mids=ids(/^(os|dos|oos|cm|dm|am)$/),wings=ids(/^(slk|sgk|lw|rw)$/),strikers=ids(/^(f|st|fw)$/);
+ const issues=[];
+ if(keepers.length!==1)issues.push('Bu plan için kadroda bir kaleci olmalı.');
+ if(backs.length!==3)issues.push('Üçlü savunmadan dörtlüye geçiş için ilk kadroda üç savunmacı seç.');
+ if(!mids.length)issues.push('Savunmaya geçecek orta saha oyuncusu kadroda bulunamadı.');
+ if(!wings.length)issues.push('İçeri kat edecek kanat oyuncusu kadroda bulunamadı.');
+ if(strikers.length!==1)issues.push('Orta sahaya dönecek bir forvet seç.');
+ const fullbacks=ids(/^(slb|sgb|lb|rb)$/);
+ if(!fullbacks.length)issues.push('Kalecinin pas vereceği bek kadroda bulunamadı.');
+ if(issues.length)return {steps:[],issues};
+ let layout=slots.map(s=>({x:Number(s.x),y:Number(s.y)}));const initial=clone(layout),steps=[];
+ const opponents=Array.from({length:slots.length-1},(_,i)=>({type:'opponent',at:{x:12+(i%4)*25,y:25+Math.floor(i/4)*22}}));
+ function scene(title,note,targets,passes=[]){
+  const before=clone(layout),arrows=[];
+  targets.forEach(({i,to})=>{arrows.push({playerIndex:i,from:clone(layout[i]),to:clone(to),type:title==='Top rakipte'?'press':'run',at:0});layout[i]=clone(to);});
+  passes.forEach(([a,b],j)=>arrows.push({playerIndex:a,from:clone(layout[a]),to:b===null?{x:50,y:2}:clone(layout[b]),type:b===null?'shot':'pass',at:j+(targets.length?1:0)}));
+  steps.push({title,note,positions:before,arrows,markers:[...clone(opponents),{type:'ball',at:clone(before[passes[0]?.[0]??keepers[0]])}]});
+ }
+ scene('Top bizde','Kaleci, beke pas vererek hücumu başlatır.',[],[[keepers[0],fullbacks[0]]]);
+ const sorted=[...backs].sort((a,b)=>layout[a].x-layout[b].x);
+ scene('Top bizde','Üçlü savunma çizgisi orta sahaya yaklaşır.',sorted.map((i,j)=>({i,to:{x:20+j*30,y:57}})),[[fullbacks[0],mids[0]]]);
+ const attack=wings.map(i=>({i,to:{x:layout[i].x<50?34:66,y:23}}));
+ scene('Top bizde','Kanatlar dikine ilerleyip içeri kat eder; paslaşarak gol aranır.',attack,[[mids[0],wings[0]],...(wings.length>1?[[wings[0],wings[1]]]:[]),[wings[wings.length-1],strikers[0]],[strikers[0],null]]);
+ const defenders=[...backs,mids[0]].sort((a,b)=>layout[a].x-layout[b].x);
+ const targets=defenders.map((i,j)=>({i,to:{x:12+j*25,y:58}}));
+ targets.push({i:strikers[0],to:{x:50,y:39}});
+ wings.forEach((i,j)=>targets.push({i,to:{x:opponents[j].at.x,y:opponents[j].at.y+7}}));
+ scene('Top rakipte','Orta saha savunmaya katılır ve savunma dörtlenir. Forvet orta sahaya döner; kanatlar önde adam karşılayarak baskı yapar.',targets);
+ // Each outfield player is assigned a distinct opponent; assignments are visible in the scene.
+ steps[steps.length-1].opponentMoves=slots.map((_,i)=>i).filter(i=>i!==keepers[0]).map((i,j)=>({index:j,from:clone(opponents[j].at),to:{x:layout[i].x,y:layout[i].y-6}}));
+ steps[steps.length-1].marking=slots.map((_,i)=>i).filter(i=>i!==keepers[0]).map((i,j)=>({playerIndex:i,opponentIndex:j}));
+ const defending=steps[steps.length-1];defending.markers.find(m=>m.type==='ball').at=clone(opponents[0].at);defending.arrows.push({from:clone(opponents[0].at),to:clone(opponents[1].at),type:'pass',at:0});
+ scene('Topu kazandık','Top kazanılınca oyuncular ilk kadrodaki yerlerine döner.',initial.map((to,i)=>({i,to})));
+ const recovery=steps[steps.length-1];recovery.markers.find(m=>m.type==='ball').at=clone(opponents[1].at);recovery.arrows.push({from:clone(opponents[1].at),to:clone(initial[mids[0]]),type:'pass',at:0});
+ return {steps,issues:[]};
 }
